@@ -10,7 +10,7 @@
   "checkIntervalHours": 12,
   "backupBeforeUpdate": true,
   "currentVersion": "1.0.0",
-  "lastCheckTime": "2026-08-22T10:26:35.409Z",
+  "lastCheckTime": "2026-08-22T11:38:25.044Z",
   "lastUpdateTime": "2026-08-22T10:43:01.275Z",
   "lastCheckResult": {
     "hasUpdate": false,
@@ -22,6 +22,6 @@
     "downloadUrl": "https://github.com/senanye/AccountsExplorerwep/archive/refs/heads/main.zip",
     "commitSha": "4a673ba",
     "commitMessage": "Initial commit",
-    "checkedAt": "2026-08-22T10:26:35.409Z"
+    "checkedAt": "2026-08-22T11:38:25.044Z"
   }
 }

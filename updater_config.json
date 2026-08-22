@@ -1,0 +1,27 @@
+{
+  "enabled": true,
+  "provider": "github",
+  "repo": "senanye/AccountsExplorerwep",
+  "repoUrl": "https://github.com/senanye/AccountsExplorerwep.git",
+  "branch": "main",
+  "token": "",
+  "customUrl": "",
+  "autoCheckOnStartup": true,
+  "checkIntervalHours": 12,
+  "backupBeforeUpdate": true,
+  "currentVersion": "1.0.0",
+  "lastCheckTime": "2026-08-22T10:26:35.409Z",
+  "lastUpdateTime": "2026-08-22T10:43:01.275Z",
+  "lastCheckResult": {
+    "hasUpdate": false,
+    "currentVersion": "1.0.0",
+    "latestVersion": "1.0.0",
+    "releaseTitle": "المستودع: senanye/AccountsExplorerwep (main)",
+    "releaseNotes": "آخر التزام: Initial commit [4a673ba]",
+    "publishedAt": "2026-08-22T10:02:56Z",
+    "downloadUrl": "https://github.com/senanye/AccountsExplorerwep/archive/refs/heads/main.zip",
+    "commitSha": "4a673ba",
+    "commitMessage": "Initial commit",
+    "checkedAt": "2026-08-22T10:26:35.409Z"
+  }
+}

@@ -1,0 +1,3044 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <title>مستكشف الحسابات</title>
+  <!-- Google Fonts: Cairo & Tajawal -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&family=Tajawal:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="style.css?v=20260811_03">
+  <!-- JsBarcode Library for Thermal Barcode Printing -->
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+
+  <!-- Login Overlay Window -->
+  <div class="login-overlay-container" id="loginOverlay">
+    <div class="login-window">
+      <!-- Title Bar -->
+      <div class="login-titlebar">
+        <div class="login-title">تسجيل دخول 0</div>
+        <button class="login-titlebar-close" onclick="window.close()" title="إغلاق">&times;</button>
+      </div>
+      
+      <!-- Content Grid -->
+      <div class="login-body">
+        <!-- Left Side: Fields -->
+        <div class="login-fields-side">
+          <form id="loginForm" onsubmit="handleLoginSubmit(event)">
+            <div class="login-field-row">
+              <div class="login-field-label">وقت الدخول</div>
+              <div class="login-field-input-wrapper">
+                <input type="text" id="loginTime" value="" readonly class="login-readonly-input">
+                <button type="button" class="login-icon-btn" tabindex="-1"><i class="fa-solid fa-caret-down"></i></button>
+              </div>
+            </div>
+
+            <div class="login-field-row">
+              <div class="login-field-label">رقم التسجيل</div>
+              <div class="login-field-input-wrapper">
+                <input type="text" id="loginRegNo" value="746281981" class="login-readonly-input" readonly>
+                <button type="button" class="login-icon-btn" tabindex="-1"><i class="fa-solid fa-caret-down"></i></button>
+              </div>
+            </div>
+
+            <div class="login-field-row">
+              <div class="login-field-label">مزود البيانات</div>
+              <div class="login-field-input-wrapper">
+                <input type="text" id="loginProvider" value="bw" class="login-readonly-input" readonly>
+                <button type="button" class="login-icon-btn" onclick="openDbModal()" title="إعدادات الاتصال بقاعدة البيانات"><i class="fa-solid fa-plus"></i></button>
+                <button type="button" class="login-icon-btn" tabindex="-1"><i class="fa-solid fa-caret-down"></i></button>
+              </div>
+            </div>
+
+            <div class="login-field-row">
+              <div class="login-field-label">العام المالي</div>
+              <div class="login-field-input-wrapper">
+                <input type="text" id="loginYear" value="26">
+              </div>
+            </div>
+
+            <div class="login-field-row">
+              <div class="login-field-label">الفرع</div>
+              <div class="login-field-input-wrapper">
+                <select id="loginBranchSelect" required>
+                  <!-- Populated dynamically -->
+                </select>
+                <button type="button" class="login-icon-btn" onclick="showToast('سيتم إضافة فروع جديدة من لوحة التحكم', 'info')" title="إضافة فرع"><i class="fa-solid fa-plus"></i></button>
+                <button type="button" class="login-icon-btn" tabindex="-1"><i class="fa-solid fa-caret-down"></i></button>
+              </div>
+              <div class="login-field-error-msg" id="loginBranchError"></div>
+            </div>
+
+            <div class="login-field-row">
+              <div class="login-field-label">اسم المستخدم</div>
+              <div class="login-field-input-wrapper">
+                <select id="loginUserSelect" required>
+                  <!-- Populated dynamically -->
+                </select>
+                <button type="button" class="login-icon-btn" onclick="showToast('إدارة المستخدمين تتم بعد تسجيل الدخول بصلاحيات مدير النظام', 'info')" title="إضافة مستخدم"><i class="fa-solid fa-plus"></i></button>
+                <button type="button" class="login-icon-btn" tabindex="-1"><i class="fa-solid fa-caret-down"></i></button>
+              </div>
+              <div class="login-field-error-msg" id="loginUserError"></div>
+            </div>
+
+            <div class="login-field-row">
+              <div class="login-field-label">كلمة السر</div>
+              <div class="login-field-input-wrapper">
+                <input type="password" id="loginPassword" value="1" required placeholder="●●●●●●">
+              </div>
+              <div class="login-field-error-msg" id="loginPasswordError"></div>
+            </div>
+          </form>
+        </div>
+
+        <!-- Right Side: Branding Logo & Version -->
+        <div class="login-branding-side">
+          <div class="login-logo-container">
+            <div class="branding-logo-circle">
+              <i class="fa-solid fa-circle-nodes"></i>
+            </div>
+            <div class="branding-title">Ali Senan</div>
+          </div>
+          <div class="login-version-text">تم الاصدار بتاريخ 19/08/2026</div>
+        </div>
+      </div>
+      
+      <!-- Footer Buttons Row -->
+      <div class="login-footer">
+        <div class="login-footer-right">
+          <button type="button" class="btn-login-action" onclick="openDbModal()" title="إعدادات الاتصال بقاعدة البيانات">
+            <i class="fa-solid fa-database"></i>
+            <span>بيانات الاتصال</span>
+          </button>
+          <button type="button" class="btn-login-action" onclick="showToast('شاشة الصيانة محمية بكلمة مرور خاصة بمسؤول النظام', 'warning')">
+            <i class="fa-solid fa-user-gear"></i>
+            <span>صيانه</span>
+          </button>
+          <button type="button" class="btn-login-action" onclick="fetchAndDisplayIP()">
+            <i class="fa-solid fa-network-wired"></i>
+            <span>GetIp</span>
+          </button>
+          <button type="button" class="btn-login-action" onclick="openBackupModal()" title="إنشاء نسخة احتياطية لقاعدة البيانات">
+            <i class="fa-solid fa-copy"></i>
+            <span>نسخه احتياطيه</span>
+          </button>
+        </div>
+        <div class="login-footer-left">
+          <button type="button" id="loginSubmitBtn" class="btn-login-submit" onclick="submitLoginForm()">
+            <i class="fa-solid fa-check"></i>
+            <span>موافق</span>
+          </button>
+          <button type="button" class="btn-login-cancel" onclick="resetLoginForm()">
+            <i class="fa-solid fa-xmark"></i>
+            <span>الغاء</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- App Wrapper -->
+  <div class="app-container hidden">
+    
+    <!-- Top Navigation / Title Bar -->
+    <header class="app-header">
+      <div class="header-right">
+        <div class="breadcrumbs">
+          <span class="breadcrumb-item text-muted" id="providerHeaderName">عرض تجريبي</span>
+          <span class="breadcrumb-separator">&gt;&gt;</span>
+          <span class="breadcrumb-item active-branch" id="branchHeaderName">الفرع الرئيسي</span>
+        </div>
+      </div>
+      
+      <div class="header-center">
+        <div class="search-container">
+          <input type="text" id="menuSearch" placeholder="ابحث عن الشاشات والوظائف هنا..." autocomplete="off">
+          <i class="fa-solid fa-magnifying-glass search-icon"></i>
+        </div>
+      </div>
+      
+      <div class="header-left">
+        <!-- WhatsApp Status Badge -->
+        <div class="whatsapp-badge disconnected" id="whatsappHeaderBadge" onclick="openWhatsappModal()" title="إعدادات وحالة إرسال الواتساب التلقائي">
+          <i class="fa-brands fa-whatsapp"></i>
+          <span id="whatsappHeaderBadgeText">الواتساب: غير متصل</span>
+        </div>
+
+        <!-- DB Connection Status Button -->
+        <button class="db-status-btn disconnected" id="dbSettingsBtn" title="إعدادات الاتصال بقاعدة البيانات">
+          <span class="pulse-indicator"></span>
+          <i class="fa-solid fa-database"></i>
+          <span class="db-status-text">غير متصل</span>
+        </button>
+
+        <!-- POS Management Button -->
+        <button class="pos-hdr-btn" id="posHdrBtn" onclick="openPosManagementTab()" title="إدارة ومزامنة نقاط البيع (POS2026)">
+          <i class="fa-solid fa-cash-register"></i>
+          <span>نقاط البيع</span>
+        </button>
+
+        <!-- Thermal Barcode Designer Button -->
+        <button class="pos-hdr-btn barcode-hdr-btn" id="barcodeHdrBtn" onclick="openBarcodePrintDesignerTab()" title="تصميم وملصق الباركود الحراري">
+          <i class="fa-solid fa-barcode"></i>
+          <span>ملصق الباركود</span>
+        </button>
+
+        <!-- System Auto-Update Button -->
+        <button class="pos-hdr-btn updater-hdr-btn" id="updaterHdrBtn" onclick="openSystemUpdateModal()" title="تحديث النظام التلقائي عبر GitHub والروابط المباشرة">
+          <i class="fa-solid fa-cloud-arrow-down"></i>
+          <span>تحديث النظام</span>
+          <span class="updater-badge-dot hidden" id="updaterBadgeDot" title="يتوفر إصدار جديد!"></span>
+        </button>
+
+        
+        <!-- UI Zoom Controls -->
+        <div class="zoom-controls-wrapper" title="تكبير وتصغير حجم عناصر الشاشة والخطوط">
+          <button type="button" class="zoom-btn" onclick="changeUiZoom(-0.1)" title="تصغير حجم الشاشة"><i class="fa-solid fa-magnifying-glass-minus"></i></button>
+          <span id="zoomPercentText" class="zoom-text">100%</span>
+          <button type="button" class="zoom-btn" onclick="changeUiZoom(0.1)" title="تكبير حجم الشاشة"><i class="fa-solid fa-magnifying-glass-plus"></i></button>
+          <button type="button" class="zoom-btn reset" onclick="resetUiZoom()" title="إعادة التعيين إلى 100%"><i class="fa-solid fa-rotate-left"></i></button>
+        </div>
+        
+        <button class="info-btn" id="infoBtn" title="معلومات النظام">
+          <i class="fa-solid fa-circle-info"></i>
+        </button>
+        
+        <!-- Window Controls Simulation -->
+        <div class="window-controls">
+          <span class="win-btn minimize" title="تصغير"><i class="fa-solid fa-minus"></i></span>
+          <span class="win-btn maximize" title="تكبير"><i class="fa-solid fa-square"></i></span>
+          <span class="win-btn close" title="إغلاق"><i class="fa-solid fa-xmark"></i></span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Top Navigation -->
+    <nav id="topNav" class="top-nav collapsed">
+      <button class="hamburger-btn" id="topNavToggle" title="القائمة الرئيسية">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+      <ul class="top-nav-list" id="topNavList">
+        <div class="sidebar-loading">
+          <div class="spinner"></div>
+          <span>جاري تحميل القوائم...</span>
+        </div>
+      </ul>
+      <div class="top-nav-left-section">
+        <div class="system-mode" id="systemModeIndicator">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+          <span>نمط العرض التجريبي</span>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main Workspace -->
+    <div class="app-workspace">
+
+      <!-- Main Content Area -->
+      <main class="app-content">
+        <!-- Tabs Nav -->
+        <div class="tabs-nav-bar" id="tabsNavBar">
+          <!-- Dynamic Tabs will insert here -->
+        </div>
+
+        <!-- Tabs Content Container -->
+        <div class="tabs-content-container" id="tabsContentContainer">
+          
+          <!-- POS Management & Realtime Dashboard Tab Content Pane -->
+                    <!-- POS Management & Realtime Dashboard Tab Content Pane (Enhanced Pro UI) -->
+          <div class="tab-pane" id="pane-pos-management">
+            <div class="pos-ops-dashboard" style="display: flex; flex-direction: column; gap: 12px; padding: 14px; background: #0b1329; min-height: 100%;">
+              
+              <!-- 1. Google Stitch Elevated Command Deck -->
+              <div style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border: 1px solid #334155; border-radius: 12px; padding: 12px 18px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);">
+                
+                <!-- Row 1: Scope & Date Selectors -->
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                  
+                  <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                    
+                    <!-- Point Selector with Live Ping Badge -->
+                    <div style="background: #0f172a; border: 1px solid #475569; padding: 5px 12px; border-radius: 8px; display: flex; align-items: center; gap: 8px;">
+                      <i class="fa-solid fa-cash-register" style="color: #38bdf8; font-size: 1.1rem;"></i>
+                      <label for="posPointSelect" style="margin: 0; font-weight: 800; font-size: 0.88rem; color: #f8fafc;">نقطة البيع:</label>
+                      <select id="posPointSelect" onchange="window.onPosPointSelect()" style="background: #1e293b; color: #fff; border: 1px solid #64748b; border-radius: 6px; padding: 5px 10px; font-weight: bold; font-size: 0.85rem; min-width: 170px;">
+                        <option value="31">[31] الاميرة 11</option>
+                      </select>
+                      <button type="button" class="pos-icon-btn" onclick="window.loadPosPoints(true)" title="تحديث قائمة نقاط البيع" style="background: #334155; color: #fff; border: none; border-radius: 6px; padding: 5px 8px; cursor: pointer;">
+                        <i class="fa-solid fa-rotate"></i>
+                      </button>
+                    </div>
+
+                    <!-- Live Health Dot -->
+                    <div class="pos-live-health-badge" id="posPointLiveStatusBadge" onclick="window.testSelectedPosPointLiveConnection()" title="انقر لفحص الاتصال المباشر بنقطة البيع" style="background: #0f172a; border: 1px solid #475569; padding: 5px 10px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 0.82rem; font-weight: bold;">
+                      <span class="pos-ping-dot checking" id="posLivePingDot"></span>
+                      <span id="posLivePingText">فحص الاتصال...</span>
+                    </div>
+
+                    <!-- Period Date Range with Quick Pills -->
+                    <div style="background: #0f172a; border: 1px solid #475569; padding: 5px 12px; border-radius: 8px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                      <i class="fa-regular fa-calendar-days" style="color: #38bdf8;"></i>
+                      <span style="font-weight: 800; font-size: 0.85rem; color: #cbd5e1;">الفترة:</span>
+                      <input type="date" id="posOpsStartDate" value="2026-08-01" onchange="window.loadPosOpsDashboard()" style="background: #1e293b; color: #fff; border: 1px solid #64748b; border-radius: 6px; padding: 4px 8px; font-size: 0.82rem;">
+                      <span style="color: #94a3b8;">-</span>
+                      <input type="date" id="posOpsEndDate" value="2026-08-21" onchange="window.loadPosOpsDashboard()" style="background: #1e293b; color: #fff; border: 1px solid #64748b; border-radius: 4px; padding: 4px 8px; font-size: 0.82rem;">
+                      <div class="pos-quick-date-btns">
+                        <button type="button" class="pos-quick-date-btn" onclick="window.setPosDateRange('today')">اليوم</button>
+                        <button type="button" class="pos-quick-date-btn" onclick="window.setPosDateRange('yesterday')">الأمس</button>
+                        <button type="button" class="pos-quick-date-btn" onclick="window.setPosDateRange('week')">7 أيام</button>
+                        <button type="button" class="pos-quick-date-btn" onclick="window.setPosDateRange('month')">هذا الشهر</button>
+                      </div>
+                    </div>
+
+                    <!-- Currency Filter -->
+                    <div style="background: #0f172a; border: 1px solid #475569; padding: 5px 10px; border-radius: 8px; display: flex; align-items: center; gap: 6px;">
+                      <i class="fa-solid fa-coins" style="color: #34d399;"></i>
+                      <select id="posOpsCurrencyFilter" onchange="window.loadPosOpsDashboard()" style="background: #1e293b; color: #fff; border: 1px solid #64748b; border-radius: 6px; padding: 4px 8px; font-size: 0.82rem;">
+                        <option value="">كافة العملات</option>
+                        <option value="1">[1] ريال سعودي (ر.س)</option>
+                        <option value="2">[2] ريال يمني (ر.ي)</option>
+                        <option value="3">[3] دولار ($)</option>
+                        <option value="4">[4] درهم (د.ا)</option>
+                      </select>
+                    </div>
+
+                  </div>
+
+                  <!-- Row 2: Action Hub (Clean Elevated Buttons) -->
+                  <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                    
+                    <button type="button" class="btn btn-danger btn-sm" onclick="window.postSelectedPosTransactions()" title="ترحيل حركات نقطة البيع إلى الحسابات والمخازن العامة" style="font-weight: 800; padding: 6px 14px; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 4px rgba(225, 29, 72, 0.3);">
+                      <i class="fa-solid fa-bolt-lightning"></i>
+                      <span>ترحيل الحركات</span>
+                    </button>
+
+                    <button type="button" class="btn btn-primary btn-sm" onclick="window.syncSelectedPosPointData()" title="مزامنة بيانات وحركات نقطة البيع المختارة إلى السيرفر الرئيسي" style="font-weight: 800; padding: 6px 14px; display: flex; align-items: center; gap: 6px; background-color: #0284c7; border-color: #0284c7;">
+                      <i class="fa-solid fa-cloud-arrow-down"></i>
+                      <span>مزامنة الحركات</span>
+                    </button>
+
+                    <button type="button" class="btn btn-success btn-sm" onclick="window.syncItemsToSelectedPosPoint()" title="مزامنة وتزويد الأصناف من السيرفر الرئيسي لنقطة البيع" style="font-weight: 800; padding: 6px 14px; display: flex; align-items: center; gap: 6px;">
+                      <i class="fa-solid fa-cloud-arrow-up"></i>
+                      <span>تزويد الأصناف</span>
+                    </button>
+
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.printPosDashboardReport()" title="طباعة التقرير المالي الشامل" style="font-weight: 800; padding: 6px 12px; display: flex; align-items: center; gap: 6px;">
+                      <i class="fa-solid fa-print"></i>
+                      <span>طباعة</span>
+                    </button>
+
+                    <button type="button" class="btn btn-warning btn-sm text-dark" onclick="window.sendPosDashboardWhatsApp()" title="إرسال عبر واتساب" style="font-weight: 800; padding: 6px 12px; display: flex; align-items: center; gap: 6px;">
+                      <i class="fa-brands fa-whatsapp"></i>
+                      <span>واتساب</span>
+                    </button>
+
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.loadPosOpsDashboard()" title="تحديث البيانات" style="padding: 6px 10px;">
+                      <i class="fa-solid fa-arrows-rotate"></i>
+                    </button>
+
+                  </div>
+
+                </div>
+
+              </div>
+
+              <!-- 2. Google Stitch Segmented Tab Bar -->
+              <div class="pos-ops-nav-tabs" style="display: flex; gap: 6px; overflow-x: auto; background: #0f172a; padding: 6px; border-radius: 10px; border: 1px solid #334155;">
+                <button type="button" class="pos-ops-nav-btn active" id="btnPosOpsTab-daily-report" onclick="window.switchPosOpsTab('daily-report')" style="color: #38bdf8; font-weight: 900; background: rgba(56, 189, 248, 0.15); border: 1px solid #38bdf8;">
+                  <i class="fa-solid fa-calendar-check" style="color: #38bdf8;"></i> تقرير حركة النقاط اليومية
+                </button>
+                <button type="button" class="pos-ops-nav-btn" id="btnPosOpsTab-sales" onclick="window.switchPosOpsTab('sales')">
+                  <i class="fa-solid fa-cart-shopping"></i> المبيعات والمرتجعات
+                  <span class="pos-tab-badge" id="badgeCountSales">0</span>
+                </button>
+                <button type="button" class="pos-ops-nav-btn" id="btnPosOpsTab-expenses" onclick="window.switchPosOpsTab('expenses')">
+                  <i class="fa-solid fa-hand-holding-dollar"></i> المصروفات والسندات
+                </button>
+                <button type="button" class="pos-ops-nav-btn" id="btnPosOpsTab-purchases" onclick="window.switchPosOpsTab('purchases')">
+                  <i class="fa-solid fa-truck-ramp-box"></i> المشتريات والمخزون
+                </button>
+                <button type="button" class="pos-ops-nav-btn" id="btnPosOpsTab-transfers" onclick="window.switchPosOpsTab('transfers')">
+                  <i class="fa-solid fa-boxes-packing"></i> التحويلات المخزنية
+                </button>
+                <button type="button" class="pos-ops-nav-btn" id="btnPosOpsTab-overview" onclick="window.switchPosOpsTab('overview')">
+                  <i class="fa-solid fa-chart-pie"></i> لوحة المؤشرات والـ KPI
+                </button>
+                <button type="button" class="pos-ops-nav-btn" id="btnPosOpsTab-summary" onclick="window.switchPosOpsTab('summary')">
+                  <i class="fa-solid fa-calculator"></i> تسوية الوردية والختامي
+                </button>
+                <button type="button" class="pos-ops-nav-btn" id="btnPosOpsTab-all-summary" onclick="window.switchPosOpsTab('all-summary')" style="color: #fbbf24;">
+                  <i class="fa-solid fa-ranking-star"></i> مقارنة كافة النقاط
+                </button>
+                <button type="button" class="pos-ops-nav-btn" id="btnPosOpsTab-audit" onclick="window.switchPosOpsTab('audit')">
+                  <i class="fa-solid fa-shield-halved"></i> سجل التدقيق
+                </button>
+                <button type="button" class="pos-ops-nav-btn" id="btnPosOpsTab-settings" onclick="window.switchPosOpsTab('settings')">
+                  <i class="fa-solid fa-gears"></i> إعدادات النقاط (tblPointList)
+                </button>
+              </div>
+
+              <!-- 3. Tab Panes -->
+
+              <!-- ========================================================= -->
+              <!-- PANE 1: DAILY POS MOVEMENT REPORT (تقرير حركة نقاط البيع اليومية) -->
+              <!-- ========================================================= -->
+              <div class="pos-subpane active" id="posOpsPane-daily-report">
+                
+                <div style="background: #0f172a; border: 1px solid #334155; border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 12px;">
+                  
+                  <!-- Filter & Action Toolbar -->
+                  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; background: #1e293b; padding: 10px 14px; border-radius: 8px; border: 1px solid #334155;">
+                    
+                    <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                      <div class="pos-ops-date-badge" style="background: #0f172a; border: 1px solid #475569; padding: 4px 10px; border-radius: 6px; display: flex; align-items: center; gap: 6px;">
+                        <i class="fa-regular fa-calendar-days text-info"></i>
+                        <span style="font-weight: bold; font-size: 0.85rem;">الفترة:</span>
+                        <input type="date" id="posDailyRptStartDate" value="2026-08-01" onchange="window.loadPosDailyMovementReport()" style="background: #1e293b; color: #fff; border: 1px solid #64748b; border-radius: 4px; padding: 4px 8px; font-size: 0.82rem;">
+                        <span>-</span>
+                        <input type="date" id="posDailyRptEndDate" value="2026-08-21" onchange="window.loadPosDailyMovementReport()" style="background: #1e293b; color: #fff; border: 1px solid #64748b; border-radius: 4px; padding: 4px 8px; font-size: 0.82rem;">
+                        <div class="pos-quick-date-btns">
+                          <button type="button" class="pos-quick-date-btn" onclick="window.setPosDailyRptDateRange('today')">اليوم</button>
+                          <button type="button" class="pos-quick-date-btn" onclick="window.setPosDailyRptDateRange('yesterday')">الأمس</button>
+                          <button type="button" class="pos-quick-date-btn" onclick="window.setPosDailyRptDateRange('week')">7 أيام</button>
+                          <button type="button" class="pos-quick-date-btn" onclick="window.setPosDailyRptDateRange('month')">هذا الشهر</button>
+                          <button type="button" class="pos-quick-date-btn" onclick="window.setPosDailyRptDateRange('all')">الكل</button>
+                        </div>
+                      </div>
+
+                      <div style="background: #0f172a; border: 1px solid #475569; padding: 4px 10px; border-radius: 6px; display: flex; align-items: center; gap: 6px;">
+                        <i class="fa-solid fa-filter" style="color: #38bdf8;"></i>
+                        <select id="posDailyRptPointSelect" onchange="window.loadPosDailyMovementReport()" style="background: #1e293b; color: #fff; border: 1px solid #64748b; border-radius: 4px; padding: 4px 8px; font-size: 0.82rem;">
+                          <option value="">كافة نقاط البيع</option>
+                        </select>
+                      </div>
+
+                      <div class="pos-search-wrapper" style="min-width: 180px;">
+                        <i class="fa-solid fa-magnifying-glass pos-search-icon"></i>
+                        <input type="text" id="posDailyRptSearchInput" oninput="window.filterPosDailyReportLive()" placeholder="ابحث باسم النقطة أو التاريخ...">
+                      </div>
+                    </div>
+
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                      <button type="button" class="btn btn-sm btn-primary" onclick="window.loadPosDailyMovementReport()" style="font-weight: bold; display: flex; align-items: center; gap: 5px;">
+                        <i class="fa-solid fa-rotate"></i> تحديث التقرير
+                      </button>
+                      <button type="button" class="btn btn-sm btn-success" onclick="window.exportPosDailyReportToExcel()" style="font-weight: bold; display: flex; align-items: center; gap: 5px;">
+                        <i class="fa-solid fa-file-excel"></i> تصدير Excel
+                      </button>
+                      <button type="button" class="btn btn-sm btn-info text-white" onclick="window.printPosDailyMovementReport()" style="font-weight: bold; display: flex; align-items: center; gap: 5px;">
+                        <i class="fa-solid fa-print"></i> طباعة التقرير
+                      </button>
+                      <button type="button" class="btn btn-sm btn-warning text-dark" onclick="window.sendPosDailyReportWhatsApp()" style="font-weight: bold; display: flex; align-items: center; gap: 5px;">
+                        <i class="fa-brands fa-whatsapp"></i> واتساب
+                      </button>
+                    </div>
+
+                  </div>
+
+                  <!-- Table Box matching Excel spreadsheet exactly -->
+                  <div class="pos-ops-table-box" style="border-radius: 8px; overflow: hidden; border: 1px solid #334155;">
+                    <div style="overflow-x: auto; max-height: 520px;">
+                      <table class="pos-ops-table pos-excel-table" id="posDailyMovementReportTable" style="width: 100%; border-collapse: collapse; text-align: center;">
+                        <thead>
+                          <tr style="background: #1e293b; color: #f8fafc; border-bottom: 2px solid #38bdf8;">
+                            <th style="padding: 12px 14px; min-width: 130px; text-align: center; border: 1px solid #334155; font-size: 0.95rem; font-weight: 800;">اليوم</th>
+                            <th style="padding: 12px 14px; min-width: 160px; text-align: right; border: 1px solid #334155; font-size: 0.95rem; font-weight: 800;">نقطة البيع</th>
+                            <th style="padding: 12px 14px; min-width: 120px; text-align: center; border: 1px solid #334155; color: #38bdf8; font-size: 0.95rem; font-weight: 800;">مبيعات</th>
+                            <th style="padding: 12px 14px; min-width: 120px; text-align: center; border: 1px solid #334155; color: #fb7185; font-size: 0.95rem; font-weight: 800;">مردود مبيعات</th>
+                            <th style="padding: 12px 14px; min-width: 120px; text-align: center; border: 1px solid #334155; color: #f59e0b; font-size: 0.95rem; font-weight: 800;">مصروفات</th>
+                            <th style="padding: 12px 14px; min-width: 120px; text-align: center; border: 1px solid #334155; color: #a78bfa; font-size: 0.95rem; font-weight: 800;">مشتريات</th>
+                            <th style="padding: 12px 14px; min-width: 140px; text-align: center; border: 1px solid #334155; color: #34d399; font-size: 0.95rem; font-weight: 900;">متبقي في الصندوق</th>
+                          </tr>
+                        </thead>
+                        <tbody id="posDailyMovementTableBody">
+                          <tr>
+                            <td colspan="7" style="padding: 30px; color: #94a3b8; text-align: center;">
+                              <i class="fa-solid fa-spinner fa-spin"></i> جاري تحميل تقرير حركة نقاط البيع اليومية...
+                            </td>
+                          </tr>
+                        </tbody>
+                        <tfoot id="posDailyMovementTableFoot">
+                          <!-- Dynamic Excel-style blue Grand Totals row inserted here -->
+                        </tfoot>
+                      </table>
+                    </div>
+                    <div class="pos-table-status-bar" id="posDailyReportStatusBar" style="padding: 10px 16px; background: #1e293b; color: #cbd5e1; font-size: 0.88rem; font-weight: 700; border-top: 1px solid #334155; display: flex; justify-content: space-between; align-items: center;">
+                      <span id="posDailyReportRowCount">إجمالي السجلات: 0</span>
+                      <span id="posDailyReportSummaryStatus" style="color: #34d399;">المتبقي الصافي في الصناديق: 0.00 د.أ</span>
+                    </div>
+                  </div>
+
+                </div>
+
+              </div>
+
+              <!-- ========================================================= -->
+              <!-- PANE 2: KPI & Financial Overview (المؤشرات والمخطط البياني) -->
+              <!-- ========================================================= -->
+              <div class="pos-subpane" id="posOpsPane-overview">
+                <div class="pos-ops-summary-section" style="display: flex; gap: 12px; flex-wrap: wrap;">
+                  
+                  <!-- Left: Donut Chart Card -->
+                  <div class="pos-donut-card">
+                    <div class="pos-donut-header">
+                      <h4><i class="fa-solid fa-chart-pie" style="color: #22d3ee;"></i> مخطط التوزيع المالي والمخزني</h4>
+                      <span class="pos-donut-total-tag" id="dbDistributionTotal">0.00 د.أ</span>
+                    </div>
+
+                    <div class="pos-donut-chart-container">
+                      <svg width="150" height="150" viewBox="0 0 150 150" id="posDonutSvg">
+                        <circle cx="75" cy="75" r="55" fill="none" stroke="#334155" stroke-width="18" />
+                        <circle id="donutSegSales" cx="75" cy="75" r="55" fill="none" stroke="#0284c7" stroke-width="18" stroke-dasharray="114 345" stroke-dashoffset="0" stroke-linecap="round" />
+                        <circle id="donutSegReturns" cx="75" cy="75" r="55" fill="none" stroke="#f43f5e" stroke-width="18" stroke-dasharray="114 345" stroke-dashoffset="-114" stroke-linecap="round" />
+                        <circle id="donutSegExpenses" cx="75" cy="75" r="55" fill="none" stroke="#f59e0b" stroke-width="18" stroke-dasharray="8 345" stroke-dashoffset="-228" stroke-linecap="round" />
+                        <circle id="donutSegStock" cx="75" cy="75" r="55" fill="none" stroke="#d946ef" stroke-width="18" stroke-dasharray="114 345" stroke-dashoffset="-236" stroke-linecap="round" />
+                      </svg>
+                      <div class="pos-donut-center-text">
+                        <i class="fa-solid fa-vault"></i>
+                        <span class="center-val" id="dbDonutCenterVal">0.0k</span>
+                        <span style="font-size: 0.65rem; color: #94a3b8;">إجمالي التداول</span>
+                      </div>
+                    </div>
+
+                    <div class="pos-donut-legend">
+                      <div class="pos-legend-item">
+                        <span class="pos-legend-lbl"><span class="pos-legend-dot" style="background:#0284c7;"></span> حجم المبيعات</span>
+                        <div style="display:flex; align-items:center; gap:6px;">
+                          <span class="pos-legend-val" id="donutValSales">0.00</span>
+                          <span class="pos-pct-badge" style="background: #0284c7;" id="donutPctSales">0%</span>
+                        </div>
+                      </div>
+                      <div class="pos-legend-item">
+                        <span class="pos-legend-lbl"><span class="pos-legend-dot" style="background:#f43f5e;"></span> المردود والمرتجعات</span>
+                        <div style="display:flex; align-items:center; gap:6px;">
+                          <span class="pos-legend-val" id="donutValReturns">0.00</span>
+                          <span class="pos-pct-badge" style="background: #e11d48;" id="donutPctReturns">0%</span>
+                        </div>
+                      </div>
+                      <div class="pos-legend-item">
+                        <span class="pos-legend-lbl"><span class="pos-legend-dot" style="background:#f59e0b;"></span> المصاريف وسندات الصرف</span>
+                        <div style="display:flex; align-items:center; gap:6px;">
+                          <span class="pos-legend-val" id="donutValExpenses">0.00</span>
+                          <span class="pos-pct-badge" style="background: #d97706;" id="donutPctExpenses">0%</span>
+                        </div>
+                      </div>
+                      <div class="pos-legend-item">
+                        <span class="pos-legend-lbl"><span class="pos-legend-dot" style="background:#d946ef;"></span> المتبقي في المخزون</span>
+                        <div style="display:flex; align-items:center; gap:6px;">
+                          <span class="pos-legend-val" id="donutValStock">0.00</span>
+                          <span class="pos-pct-badge" style="background: #c026d3;" id="donutPctStock">0%</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Right: 8 Financial Indicator Cards -->
+                  <div class="pos-cards-8-grid">
+                    <div class="pos-glow-card card-sales" onclick="window.switchPosOpsTab('sales')">
+                      <div class="pos-glow-card-top">
+                        <span class="pos-glow-card-title">إجمالي المبيعات</span>
+                        <span class="pos-glow-card-icon"><i class="fa-solid fa-chart-line"></i></span>
+                      </div>
+                      <div class="pos-glow-card-val" id="dbCardSales">0.00 د.أ</div>
+                      <div class="pos-glow-card-sub" id="dbCardSalesSub">نقدي 0.00 د.أ</div>
+                    </div>
+
+                    <div class="pos-glow-card card-returns" onclick="window.switchPosOpsTab('sales'); window.filterPosSalesSub('returns');">
+                      <div class="pos-glow-card-top">
+                        <span class="pos-glow-card-title">مرتجع المبيعات</span>
+                        <span class="pos-glow-card-icon"><i class="fa-solid fa-box-archive"></i></span>
+                      </div>
+                      <div class="pos-glow-card-val" id="dbCardReturns">0.00 د.أ</div>
+                      <div class="pos-glow-card-sub" id="dbCardReturnsSub">المبالغ المستردة للزبائن</div>
+                    </div>
+
+                    <div class="pos-glow-card card-purchases" onclick="window.switchPosOpsTab('purchases')">
+                      <div class="pos-glow-card-top">
+                        <span class="pos-glow-card-title">إجمالي المشتريات</span>
+                        <span class="pos-glow-card-icon"><i class="fa-solid fa-truck-fast"></i></span>
+                      </div>
+                      <div class="pos-glow-card-val" id="dbCardPurchases">0.00 د.أ</div>
+                      <div class="pos-glow-card-sub" id="dbCardPurchasesSub">فواتير توريد المستودع</div>
+                    </div>
+
+                    <div class="pos-glow-card card-transfers" onclick="window.switchPosOpsTab('transfers')">
+                      <div class="pos-glow-card-top">
+                        <span class="pos-glow-card-title">التحويلات المخزنية</span>
+                        <span class="pos-glow-card-icon"><i class="fa-solid fa-right-left"></i></span>
+                      </div>
+                      <div class="pos-glow-card-val" id="dbCardTransfers">0.00 د.أ</div>
+                      <div class="pos-glow-card-sub" id="dbCardTransfersSub">وارد: 0.00 د.أ</div>
+                    </div>
+
+                    <div class="pos-glow-card card-expenses" onclick="window.switchPosOpsTab('expenses')">
+                      <div class="pos-glow-card-top">
+                        <span class="pos-glow-card-title">المصروفات وسندات الصرف</span>
+                        <span class="pos-glow-card-icon"><i class="fa-solid fa-arrow-trend-up"></i></span>
+                      </div>
+                      <div class="pos-glow-card-val" id="dbCardExpenses">0.00 د.أ</div>
+                      <div class="pos-glow-card-sub" id="dbCardExpensesSub">المدفوعات والمصاريف التشغيلية</div>
+                    </div>
+
+                    <div class="pos-glow-card card-receipts" onclick="window.switchPosOpsTab('expenses')">
+                      <div class="pos-glow-card-top">
+                        <span class="pos-glow-card-title">إجمالي سندات القبض</span>
+                        <span class="pos-glow-card-icon"><i class="fa-solid fa-arrow-trend-down"></i></span>
+                      </div>
+                      <div class="pos-glow-card-val" id="dbCardReceipts">0.00 د.أ</div>
+                      <div class="pos-glow-card-sub" id="dbCardReceiptsSub">المقبوضات والإيداعات</div>
+                    </div>
+
+                    <div class="pos-glow-card card-cash" onclick="window.switchPosOpsTab('summary')">
+                      <div class="pos-glow-card-top">
+                        <span class="pos-glow-card-title">رصيد الصندوق الفعلي المتوقع</span>
+                        <span class="pos-glow-card-icon"><i class="fa-solid fa-vault"></i></span>
+                      </div>
+                      <div class="pos-glow-card-val" id="dbCardCash">0.00 د.أ</div>
+                      <div class="pos-glow-card-sub" id="dbCardCashSub">السيولة النقدية المتبقية</div>
+                    </div>
+
+                    <div class="pos-glow-card card-summary-report" onclick="window.switchPosOpsTab('summary')">
+                      <div class="pos-glow-card-top">
+                        <span class="pos-glow-card-title">تسوية الوردية والتقرير الختامي</span>
+                        <span class="pos-glow-card-icon"><i class="fa-solid fa-file-signature"></i></span>
+                      </div>
+                      <div class="pos-glow-card-val"><i class="fa-solid fa-calculator"></i> تسوية الصندوق</div>
+                      <div class="pos-glow-card-sub">إغلاق الوردية والتقرير اليومي Z-Report</div>
+                    </div>
+
+                  </div>
+
+                </div>
+              </div>
+
+              <!-- ========================================================= -->
+              <!-- PANE: Sales & Returns Operations -->
+              <!-- ========================================================= -->
+              <div class="pos-subpane" id="posOpsPane-sales">
+
+                
+                <!-- Filter Bar & Batch Toolbar -->
+                <div class="pos-subpane-toolbar">
+                  
+                  <!-- Sub Pill Switcher: All / Sales Only / Returns Only -->
+                  <div class="pos-subpill-bar">
+                    <button type="button" class="pos-subpill-btn active" id="subpill-sales-all" onclick="window.filterPosSalesSub('all')">
+                      <i class="fa-solid fa-layer-group"></i> كافة الحركات
+                    </button>
+                    <button type="button" class="pos-subpill-btn" id="subpill-sales-sales" onclick="window.filterPosSalesSub('sales')">
+                      <i class="fa-solid fa-bag-shopping"></i> فواتير المبيعات
+                    </button>
+                    <button type="button" class="pos-subpill-btn" id="subpill-sales-returns" onclick="window.filterPosSalesSub('returns')">
+                      <i class="fa-solid fa-rotate-left"></i> فواتير المردود (المرتجع)
+                    </button>
+                  </div>
+
+                  <!-- Quick Search Box -->
+                  <div class="pos-search-wrapper">
+                    <i class="fa-solid fa-magnifying-glass pos-search-icon"></i>
+                    <input type="text" id="posSalesSearchInput" oninput="window.filterPosSalesLiveTable()" placeholder="ابحث برقم الفاتورة، الباركود، اسم الصنف، أو الكاشير...">
+                    <button type="button" class="pos-search-clear" onclick="window.clearPosSalesSearch()">&times;</button>
+                  </div>
+
+                  <!-- Payment Method & Posting Status Filters -->
+                  <div class="pos-filter-dropdowns">
+                    <select id="posSalesPayFilter" onchange="window.filterPosSalesLiveTable()" class="pos-mini-select">
+                      <option value="">كافة طرق الدفع</option>
+                      <option value="نقدي">نقدي</option>
+                      <option value="آجل">آجل / ذمم</option>
+                      <option value="شبكة">شبكة / بطاقة</option>
+                    </select>
+
+                    <select id="posSalesPostFilter" onchange="window.filterPosSalesLiveTable()" class="pos-mini-select">
+                      <option value="">كافة الحالات</option>
+                      <option value="unposted">⏳ غير مرحل فقط</option>
+                      <option value="posted">✅ مرحل فقط</option>
+                    </select>
+                  </div>
+
+                  <!-- Batch Action & Export Buttons -->
+                  <div class="pos-toolbar-actions">
+                    <button type="button" class="btn btn-sm btn-danger" id="btnBatchPostSales" onclick="window.postSelectedBatchSales()" title="ترحيل الفواتير المحددة فقط" style="font-weight: bold; display: flex; align-items: center; gap: 4px;">
+                      <i class="fa-solid fa-bolt"></i> ترحيل المحددة (<span id="posBatchSelectedCount">0</span>)
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-success" onclick="window.exportPosSalesToExcel()" style="font-weight: bold; display: flex; align-items: center; gap: 4px;">
+                      <i class="fa-solid fa-file-excel"></i> تصدير Excel
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="window.downloadPosSalesPdf()" style="font-weight: bold; display: flex; align-items: center; gap: 4px;">
+                      <i class="fa-solid fa-file-pdf"></i> تحميل PDF
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-warning" onclick="window.sendPosSalesWhatsApp()" style="font-weight: bold; display: flex; align-items: center; gap: 4px;">
+                      <i class="fa-brands fa-whatsapp"></i> واتساب
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Table Box -->
+                <div class="pos-ops-table-box">
+                  <div style="overflow-x: auto; max-height: 460px;">
+                    <table class="pos-ops-table" id="posSalesTable">
+                      <thead>
+                        <tr>
+                          <th style="width: 35px; text-align: center;">
+                            <input type="checkbox" id="chkPosSelectAllSales" onchange="window.toggleSelectAllPosSales(this)" title="تحديد/إلغاء تحديد الكل">
+                          </th>
+                          <th style="width: 40px;">#</th>
+                          <th>رقم الفاتورة</th>
+                          <th>التاريخ والوقت</th>
+                          <th>الباركود</th>
+                          <th style="min-width: 180px;">اسم الصنف</th>
+                          <th>الكمية</th>
+                          <th>السعر</th>
+                          <th>الإجمالي</th>
+                          <th>العملة</th>
+                          <th>الحساب</th>
+                          <th>الكاشير / البائع</th>
+                          <th>طريقة الدفع</th>
+                          <th>حالة الترحيل</th>
+                          <th style="width: 120px; text-align: center;">إجراءات</th>
+                        </tr>
+                      </thead>
+                      <tbody id="posSalesTableBody">
+                        <tr><td colspan="15" class="text-center text-muted" style="padding: 30px;"><i class="fa-solid fa-spinner fa-spin"></i> جاري تحميل بيانات المبيعات...</td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <!-- Table Sticky Footer Summary -->
+                  <div class="pos-table-footer-summary" id="posSalesFooterSummary">
+                    <div class="pos-footer-stat">
+                      <span class="lbl">عدد الفواتير:</span>
+                      <span class="val" id="posFootTotalInvoices">0</span>
+                    </div>
+                    <div class="pos-footer-stat">
+                      <span class="lbl">إجمالي الكميات:</span>
+                      <span class="val" id="posFootTotalQty">0</span>
+                    </div>
+                    <div class="pos-footer-stat">
+                      <span class="lbl">إجمالي القيمة:</span>
+                      <span class="val text-cyan" id="posFootTotalAmount">0.00 د.أ</span>
+                    </div>
+                    <div class="pos-footer-stat">
+                      <span class="lbl">الفواتير المرحلة:</span>
+                      <span class="val text-success" id="posFootPostedCount">0</span>
+                    </div>
+                    <div class="pos-footer-stat">
+                      <span class="lbl">غير المرحلة:</span>
+                      <span class="val text-danger" id="posFootUnpostedCount">0</span>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+              <!-- ========================================================= -->
+              <!-- PANE 2: Purchases & Inventory -->
+              <!-- ========================================================= -->
+              <div class="pos-subpane" id="posOpsPane-purchases">
+                <div class="pos-subpane-toolbar">
+                  <div class="pos-subpill-bar">
+                    <button type="button" class="pos-subpill-btn active" id="subpill-purchases-invoices" onclick="window.switchPosPurchasesSubTab('invoices')">
+                      <i class="fa-solid fa-receipt"></i> فواتير المشتريات والتوريد
+                    </button>
+                    <button type="button" class="pos-subpill-btn" id="subpill-purchases-stock" onclick="window.switchPosPurchasesSubTab('stock')">
+                      <i class="fa-solid fa-warehouse"></i> رصيد المخزون الفعلي بالنقطة
+                    </button>
+                  </div>
+
+                  <div class="pos-search-wrapper" style="max-width: 320px;">
+                    <i class="fa-solid fa-magnifying-glass pos-search-icon"></i>
+                    <input type="text" id="posPurchasesSearchInput" oninput="window.filterPosPurchasesLiveTable()" placeholder="ابحث بالصنف أو الباركود...">
+                  </div>
+
+                  <div class="pos-toolbar-actions">
+                    <button type="button" class="btn btn-sm btn-outline-success" onclick="window.exportPosInventoryToExcel()" style="font-weight: bold; display: flex; align-items: center; gap: 4px;">
+                      <i class="fa-solid fa-file-excel"></i> تصدير المخزون Excel
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Purchases Invoices Box -->
+                <div class="pos-ops-table-box" id="posPurchasesInvoicesBox">
+                  <div style="overflow-x: auto; max-height: 460px;">
+                    <table class="pos-ops-table">
+                      <thead>
+                        <tr>
+                          <th style="width: 40px;">#</th>
+                          <th>رقم الفاتورة</th>
+                          <th>التاريخ</th>
+                          <th>الباركود</th>
+                          <th style="min-width: 180px;">اسم الصنف</th>
+                          <th>الكمية</th>
+                          <th>سعر التوريد</th>
+                          <th>الإجمالي</th>
+                          <th>العملة</th>
+                          <th>الحساب</th>
+                          <th>المستلم</th>
+                          <th>طريقة الدفع</th>
+                          <th>الحالة</th>
+                        </tr>
+                      </thead>
+                      <tbody id="posPurchasesTableBody">
+                        <tr><td colspan="13" class="text-center text-muted" style="padding: 25px;"><i class="fa-solid fa-spinner fa-spin"></i> جاري تحميل المشتريات...</td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <!-- Stock Box -->
+                <div class="pos-ops-table-box" id="posPurchasesStockBox" style="display: none;">
+                  <div style="overflow-x: auto; max-height: 460px;">
+                    <table class="pos-ops-table">
+                      <thead>
+                        <tr>
+                          <th>الباركود</th>
+                          <th style="min-width: 200px;">اسم الصنف</th>
+                          <th>الوحدة</th>
+                          <th>سعر البيع</th>
+                          <th>سعر التكلفة</th>
+                          <th>الكمية المتاحة بالنقطة</th>
+                          <th>حالة الرصيد</th>
+                        </tr>
+                      </thead>
+                      <tbody id="posInventoryTbody">
+                        <tr><td colspan="7" class="text-center text-muted" style="padding: 25px;">جاري تحميل المخزون...</td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ========================================================= -->
+              <!-- PANE 3: Stock Transfers -->
+              <!-- ========================================================= -->
+              <div class="pos-subpane" id="posOpsPane-transfers">
+                <div class="pos-ops-table-box">
+                  <div style="overflow-x: auto; max-height: 460px;">
+                    <table class="pos-ops-table">
+                      <thead>
+                        <tr>
+                          <th style="width: 50px;">#</th>
+                          <th>رقم الإشعار / الفاتورة</th>
+                          <th>التاريخ</th>
+                          <th>نوع التحويل</th>
+                          <th>البيان / الوصف</th>
+                          <th>عدد المواد</th>
+                          <th>إجمالي القيمة</th>
+                          <th>المستخدم</th>
+                        </tr>
+                      </thead>
+                      <tbody id="posTransfersTableBody">
+                        <tr><td colspan="8" class="text-center text-muted" style="padding: 25px;">لا توجد تحويلات مخزنية مسجلة لنقطة البيع في هذه الفترة</td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ========================================================= -->
+              <!-- PANE 4: Expenses & Vouchers -->
+              <!-- ========================================================= -->
+              <div class="pos-subpane" id="posOpsPane-expenses">
+                <div class="pos-subpane-toolbar">
+                  <span style="font-weight: 800; color: #fbbf24; font-size: 0.9rem;">
+                    <i class="fa-solid fa-hand-holding-dollar"></i> قائمة المصروفات وسندات الصرف والقبض
+                  </span>
+                  
+                  <div class="pos-search-wrapper" style="max-width: 320px;">
+                    <i class="fa-solid fa-magnifying-glass pos-search-icon"></i>
+                    <input type="text" id="posExpensesSearchInput" oninput="window.filterPosExpensesLiveTable()" placeholder="ابحث برقم السند أو البيان...">
+                  </div>
+
+                  <div class="pos-toolbar-actions">
+                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="window.downloadPosExpensesPdf()" style="font-weight: bold; display: flex; align-items: center; gap: 4px;">
+                      <i class="fa-solid fa-file-pdf"></i> تحميل PDF
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-warning" onclick="window.sendPosExpensesWhatsApp()" style="font-weight: bold; display: flex; align-items: center; gap: 4px;">
+                      <i class="fa-brands fa-whatsapp"></i> إرسال واتساب
+                    </button>
+                  </div>
+                </div>
+
+                <div class="pos-ops-table-box">
+                  <div style="overflow-x: auto; max-height: 460px;">
+                    <table class="pos-ops-table">
+                      <thead>
+                        <tr>
+                          <th style="width: 40px;">#</th>
+                          <th>رقم السند</th>
+                          <th>التاريخ والوقت</th>
+                          <th>النوع</th>
+                          <th>البيان وملاحظات الصرف</th>
+                          <th>المبلغ</th>
+                          <th>العملة</th>
+                          <th>الحساب</th>
+                          <th>المستخدم</th>
+                          <th>الحالة</th>
+                        </tr>
+                      </thead>
+                      <tbody id="posExpensesTableBody">
+                        <tr><td colspan="10" class="text-center text-muted" style="padding: 25px;"><i class="fa-solid fa-spinner fa-spin"></i> جاري تحميل المصروفات والسندات...</td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ========================================================= -->
+              <!-- PANE 5: Shift Settlement & Final Summary Report -->
+              <!-- ========================================================= -->
+              <div class="pos-subpane" id="posOpsPane-summary">
+                
+                <div class="pos-summary-grid-layout">
+                  
+                  <!-- Left: Financial Closing Statement Sheet -->
+                  <div class="pos-summary-sheet-card">
+                    <div class="pos-summary-sheet-header">
+                      <div>
+                        <h3 style="font-weight: 900; color: #38bdf8; margin: 0 0 4px 0;">
+                          <i class="fa-solid fa-file-invoice-dollar"></i> التقرير المالي والختامي لنقطة البيع
+                        </h3>
+                        <p style="margin: 0; color: #94a3b8; font-size: 0.82rem;" id="posSummaryDateRangeText">الفترة: من 2026/08/01 إلى 2026/08/10</p>
+                      </div>
+                      <div class="pos-sheet-actions">
+                        <button type="button" class="btn btn-outline-danger btn-sm" onclick="window.downloadPosDashboardPdf()" style="font-weight: bold; display: flex; align-items: center; gap: 4px;">
+                          <i class="fa-solid fa-file-pdf"></i> تحميل PDF
+                        </button>
+                        <button type="button" class="btn btn-primary btn-sm" onclick="window.printPosDashboardReport()" style="font-weight: bold; display: flex; align-items: center; gap: 4px;">
+                          <i class="fa-solid fa-print"></i> طباعة التقرير
+                        </button>
+                        <button type="button" class="btn btn-success btn-sm" onclick="window.sendPosDashboardWhatsApp()" style="font-weight: bold; display: flex; align-items: center; gap: 4px;">
+                          <i class="fa-brands fa-whatsapp"></i> إرسال واتساب
+                        </button>
+                      </div>
+                    </div>
+
+                    <table class="pos-summary-table">
+                      <tbody>
+                        <tr>
+                          <td class="lbl"><i class="fa-solid fa-chart-line text-cyan"></i> (+) إجمالي المبيعات (Gross Sales)</td>
+                          <td class="val text-cyan" id="sumRptSales">0.00 د.أ</td>
+                        </tr>
+                        <tr>
+                          <td class="lbl"><i class="fa-solid fa-box-archive text-rose"></i> (-) مردود المبيعات والمرتجعات (Sales Returns)</td>
+                          <td class="val text-rose" id="sumRptReturns">0.00 د.أ</td>
+                        </tr>
+                        <tr class="highlight-row">
+                          <td class="lbl"><i class="fa-solid fa-sack-dollar text-emerald"></i> (=) صافي الإيراد والمبيعات (Net Sales)</td>
+                          <td class="val text-emerald" id="sumRptNetSales">0.00 د.أ</td>
+                        </tr>
+                        <tr>
+                          <td class="lbl"><i class="fa-solid fa-truck-fast text-amber"></i> (-) إجمالي المشتريات والتوريد (Purchases)</td>
+                          <td class="val text-amber" id="sumRptPurchases">0.00 د.أ</td>
+                        </tr>
+                        <tr>
+                          <td class="lbl"><i class="fa-solid fa-arrow-trend-down text-emerald"></i> (+) إجمالي المقبوضات والإيداعات (Receipts)</td>
+                          <td class="val text-emerald" id="sumRptReceipts">0.00 د.أ</td>
+                        </tr>
+                        <tr>
+                          <td class="lbl"><i class="fa-solid fa-arrow-trend-up text-orange"></i> (-) إجمالي المصروفات وسندات الصرف (Expenses)</td>
+                          <td class="val text-orange" id="sumRptExpenses">0.00 د.أ</td>
+                        </tr>
+                        <tr class="grand-total-row">
+                          <td class="lbl"><i class="fa-solid fa-vault text-teal"></i> (=) رصيد الصندوق الدفتري المفترض بالنقطة</td>
+                          <td class="val text-teal" id="sumRptCashBalance">0.00 د.أ</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <!-- Right: Interactive Shift Settlement & Drawer Cash Calculator -->
+                  <div class="pos-settlement-card">
+                    <div class="pos-settlement-header">
+                      <h4 style="margin: 0; font-weight: 900; color: #fbbf24; display: flex; align-items: center; gap: 8px;">
+                        <i class="fa-solid fa-cash-register"></i> تسوية وردية الصندوق والإغلاق اليومي
+                      </h4>
+                      <span class="pos-tag-pill"><i class="fa-solid fa-clock"></i> إغلاق Z-Report</span>
+                    </div>
+
+                    <div class="pos-settlement-body">
+                      
+                      <!-- Opening Float & Expected -->
+                      <div class="pos-calc-row">
+                        <label>رصيد افتتاح الصندوق (Opening Float):</label>
+                        <input type="number" id="posCalcOpeningFloat" value="0.00" step="0.01" oninput="window.calculatePosShiftSettlement()" class="pos-calc-input">
+                      </div>
+
+                      <div class="pos-calc-row">
+                        <label>صافي المقبوضات النقدية بالوردية:</label>
+                        <span class="pos-calc-static-val text-cyan" id="posCalcNetCashIncome">0.00 د.أ</span>
+                      </div>
+
+                      <div class="pos-calc-row">
+                        <label>الرصيد الدفتري المتوقع بالدرج (Expected Total):</label>
+                        <span class="pos-calc-static-val text-teal" id="posCalcExpectedDrawerCash">0.00 د.أ</span>
+                      </div>
+
+                      <hr style="border-color: #334155; margin: 12px 0;">
+
+                      <!-- Actual Counted Cash Input -->
+                      <div class="pos-calc-row actual-box">
+                        <label style="font-weight: 900; color: #38bdf8; font-size: 0.95rem;">
+                          <i class="fa-solid fa-money-bill-wave"></i> النقدية الفعلية بعد الجرد والعد (Counted Cash):
+                        </label>
+                        <input type="number" id="posCalcActualCountedCash" placeholder="أدخل المبلغ الفعلي بالصندوق..." step="0.01" oninput="window.calculatePosShiftSettlement()" class="pos-calc-input-lg">
+                      </div>
+
+                      <!-- Settlement Difference Result Card -->
+                      <div class="pos-settlement-result-box" id="posSettlementResultBox">
+                        <div class="result-title" id="posSettlementDiffTitle">حالة تسوية الوردية: متطابق</div>
+                        <div class="result-diff-val" id="posSettlementDiffVal">0.00 د.أ</div>
+                        <div class="result-sub" id="posSettlementDiffSub">أدخل النقدية الفعلية لحساب العجز أو الفائض</div>
+                      </div>
+
+                      <!-- Actions -->
+                      <div class="pos-settlement-actions">
+                        <button type="button" class="btn btn-primary" onclick="window.printPosShiftZReport()" style="flex: 1; font-weight: 800;">
+                          <i class="fa-solid fa-print"></i> طباعة إيصال الوردية (Z-Report)
+                        </button>
+                        <button type="button" class="btn btn-success" onclick="window.sendPosShiftWhatsApp()" style="font-weight: 800;">
+                          <i class="fa-brands fa-whatsapp"></i> واتساب
+                        </button>
+                      </div>
+
+                    </div>
+                  </div>
+
+                </div>
+
+              </div>
+
+              <!-- ========================================================= -->
+              <!-- PANE 6: All Points Summary & Comparison Leaderboard -->
+              <!-- ========================================================= -->
+              <div class="pos-subpane" id="posOpsPane-all-summary">
+                
+                <!-- Top Stat Cards for All Points -->
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 16px;">
+                  <div class="pos-glow-card card-sales">
+                    <div class="pos-glow-card-top">
+                      <span class="pos-glow-card-title">إجمالي مبيعات كافة النقاط</span>
+                      <span class="pos-glow-card-icon"><i class="fa-solid fa-cart-shopping"></i></span>
+                    </div>
+                    <div class="pos-glow-card-val" id="allPtsTotalSales">0.00 د.أ</div>
+                    <div class="pos-glow-card-sub" id="allPtsCashSales">نقدي: 0.00 د.أ</div>
+                  </div>
+
+                  <div class="pos-glow-card card-returns">
+                    <div class="pos-glow-card-top">
+                      <span class="pos-glow-card-title">إجمالي مردود المبيعات</span>
+                      <span class="pos-glow-card-icon"><i class="fa-solid fa-rotate-left"></i></span>
+                    </div>
+                    <div class="pos-glow-card-val" id="allPtsTotalReturns">0.00 د.أ</div>
+                    <div class="pos-glow-card-sub">كافة نقاط البيع</div>
+                  </div>
+
+                  <div class="pos-glow-card card-cash">
+                    <div class="pos-glow-card-top">
+                      <span class="pos-glow-card-title">صافي المبيعات الكلي</span>
+                      <span class="pos-glow-card-icon"><i class="fa-solid fa-chart-line"></i></span>
+                    </div>
+                    <div class="pos-glow-card-val" id="allPtsNetSales">0.00 د.أ</div>
+                    <div class="pos-glow-card-sub">صافي حجم التداول</div>
+                  </div>
+
+                  <div class="pos-glow-card card-expenses">
+                    <div class="pos-glow-card-top">
+                      <span class="pos-glow-card-title">إجمالي المصروفات والسندات</span>
+                      <span class="pos-glow-card-icon"><i class="fa-solid fa-hand-holding-dollar"></i></span>
+                    </div>
+                    <div class="pos-glow-card-val" id="allPtsTotalExpenses">0.00 د.أ</div>
+                    <div class="pos-glow-card-sub">مصاريف نقاط البيع</div>
+                  </div>
+
+                  <div class="pos-glow-card card-purchases">
+                    <div class="pos-glow-card-top">
+                      <span class="pos-glow-card-title">إجمالي المشتريات والتوريد</span>
+                      <span class="pos-glow-card-icon"><i class="fa-solid fa-truck-fast"></i></span>
+                    </div>
+                    <div class="pos-glow-card-val" id="allPtsTotalPurchases">0.00 د.أ</div>
+                    <div class="pos-glow-card-sub">توريد المخازن</div>
+                  </div>
+
+                  <div class="pos-glow-card" style="border-top: 3px solid #14b8a6;">
+                    <div class="pos-glow-card-top">
+                      <span class="pos-glow-card-title">صافي حركة الصناديق الفعلي</span>
+                      <span class="pos-glow-card-icon" style="color: #2dd4bf; background: rgba(45, 212, 191, 0.1);"><i class="fa-solid fa-vault"></i></span>
+                    </div>
+                    <div class="pos-glow-card-val" style="color: #2dd4bf;" id="allPtsCashBalance">0.00 د.أ</div>
+                    <div class="pos-glow-card-sub">السيولة المتبقية لكافة النقاط</div>
+                  </div>
+                </div>
+
+                <!-- Comparison Table Box -->
+                <div class="pos-ops-table-box">
+                  <div style="overflow-x: auto; max-height: 480px;">
+                    <table class="pos-ops-table" id="tblAllPointsComparisonTable">
+                      <thead>
+                        <tr>
+                          <th style="width: 70px; text-align: center;">الترتيب</th>
+                          <th style="width: 85px;">رقم النقطة</th>
+                          <th style="text-align: right; min-width: 160px;">اسم نقطة البيع</th>
+                          <th>الفرع</th>
+                          <th>إجمالي المبيعات</th>
+                          <th>المردود والمرتجع</th>
+                          <th>صافي المبيعات</th>
+                          <th>المصروفات</th>
+                          <th>رصيد الصندوق الفعلي</th>
+                          <th>حالة المزامنة</th>
+                          <th style="width: 100px; text-align: center;">عرض التفاصيل</th>
+                        </tr>
+                      </thead>
+                      <tbody id="allPointsTableBody">
+                        <tr><td colspan="11" class="text-center text-muted" style="padding: 30px;"><i class="fa-solid fa-spinner fa-spin"></i> جاري تحميل بيانات المقارنة...</td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+              </div>
+
+              <!-- ========================================================= -->
+              <!-- PANE 7: Audit Log -->
+              <!-- ========================================================= -->
+              <div class="pos-subpane" id="posOpsPane-audit">
+                <div class="pos-ops-table-box">
+                  <div style="overflow-x: auto; max-height: 480px;">
+                    <table class="pos-ops-table">
+                      <thead>
+                        <tr>
+                          <th style="width: 50px;">#</th>
+                          <th>التاريخ والوقت</th>
+                          <th>رقم الحركة</th>
+                          <th>النوع</th>
+                          <th>البيان والتفاصيل</th>
+                          <th>المبلغ الصافي</th>
+                          <th>المستخدم / المشغل</th>
+                          <th>الحالة</th>
+                        </tr>
+                      </thead>
+                      <tbody id="posAuditTableBody">
+                        <tr><td colspan="8" class="text-center text-muted" style="padding: 25px;"><i class="fa-solid fa-spinner fa-spin"></i> جاري تحميل سجل التدقيق والرقابة...</td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ========================================================= -->
+              <!-- PANE 8: POS Points Terminal Setup & Form (tblPointList) -->
+              <!-- ========================================================= -->
+              <div class="pos-subpane" id="posOpsPane-settings">
+                <div class="pos-settings-container">
+                  
+                  <!-- Action Toolbar -->
+                  <div class="pos-subpane-toolbar">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.newPosPointForm()" style="font-weight: bold; display: flex; align-items: center; gap: 6px;">
+                      <i class="fa-solid fa-circle-plus" style="color: #10b981;"></i> جديد
+                    </button>
+                    <button type="button" class="btn btn-primary btn-sm" onclick="window.savePosPointForm()" style="font-weight: bold; display: flex; align-items: center; gap: 6px;">
+                      <i class="fa-solid fa-floppy-disk"></i> حفظ
+                    </button>
+                    <button type="button" class="btn btn-info btn-sm" onclick="window.updatePosPointForm()" style="font-weight: bold; display: flex; align-items: center; gap: 6px; color: #fff; background-color: #0284c7; border-color: #0284c7;">
+                      <i class="fa-solid fa-pen-to-square"></i> تعديل
+                    </button>
+                    <button type="button" class="btn btn-danger btn-sm" onclick="window.deleteSelectedPosPoint()" style="font-weight: bold; display: flex; align-items: center; gap: 6px;">
+                      <i class="fa-solid fa-trash-can"></i> حذف
+                    </button>
+                    <button type="button" class="btn btn-outline-info btn-sm" onclick="window.testCurrentPosFormConnection()" style="font-weight: bold; display: flex; align-items: center; gap: 6px;">
+                      <i class="fa-solid fa-network-wired"></i> فحص الاتصال بالنموذج
+                    </button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.exportPosPointsToExcel()" style="font-weight: bold; display: flex; align-items: center; gap: 6px;">
+                      <i class="fa-solid fa-file-excel"></i> تصدير Excel
+                    </button>
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.loadPosPointsList(true)" style="font-weight: bold; display: flex; align-items: center; gap: 6px; margin-right: auto;">
+                      <i class="fa-solid fa-rotate"></i> تحديث القائمة
+                    </button>
+                  </div>
+
+                  <!-- Form Panel -->
+                  <div class="pos-form-grid-panel">
+                    <div class="pos-form-grid">
+                      <!-- Row 1 -->
+                      <div class="form-group">
+                        <label>رقم النقطة (fldPointNO):</label>
+                        <input type="number" id="posFormPointNo" placeholder="تلقائي أو أدخل الرقم...">
+                      </div>
+                      <div class="form-group">
+                        <label>اسم نقطة البيع (fldName):</label>
+                        <input type="text" id="posFormName" placeholder="مثال: الاميرة سنتر...">
+                      </div>
+                      <div class="form-group">
+                        <label>الفرع (fldBranchNo):</label>
+                        <select id="posFormBranch"></select>
+                      </div>
+                      <div class="form-group">
+                        <label>المخزن (fldstoreID):</label>
+                        <select id="posFormStore"></select>
+                      </div>
+                      <!-- Row 2 -->
+                      <div class="form-group">
+                        <label>سيرفر المصدر (DataSource):</label>
+                        <input type="text" id="posFormDataSource" placeholder="مثال: SENANSERVER\\SQLEXPRESS أو IP" style="direction: ltr; text-align: left;">
+                      </div>
+                      <div class="form-group">
+                        <label>قاعدة البيانات (Catalog):</label>
+                        <input type="text" id="posFormCatalog" placeholder="مثال: sp أو POS_DB" style="direction: ltr; text-align: left;">
+                      </div>
+                      <div class="form-group">
+                        <label>اسم المستخدم (UserID):</label>
+                        <input type="text" id="posFormUserID" value="sa" placeholder="sa" style="direction: ltr; text-align: left;">
+                      </div>
+                      <div class="form-group">
+                        <label>كلمة المرور (Password):</label>
+                        <div style="display: flex; gap: 4px;">
+                          <input type="password" id="posFormPassword" value="as" placeholder="كلمة المرور..." style="direction: ltr; text-align: left; flex: 1;">
+                          <button type="button" class="btn btn-secondary btn-sm" onclick="window.togglePosPasswordVisibility('posFormPassword')" style="padding: 4px 8px;" title="إظهار/إخفاء كلمة المرور">
+                            <i class="fa-solid fa-eye"></i>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Data Grid Container -->
+                  <div class="pos-ops-table-box">
+                    <div class="pos-subpane-toolbar" style="border-radius: 0; border-bottom: 1px solid #334155;">
+                      <div class="pos-search-wrapper" style="max-width: 450px;">
+                        <i class="fa-solid fa-magnifying-glass pos-search-icon"></i>
+                        <input type="text" id="posPointsSearchInput" oninput="window.filterPosPointsTable()" placeholder="ابحث برقم النقطة، اسم النقطة، السيرفر، أو الفرع...">
+                      </div>
+                      <div style="font-size: 0.85rem; font-weight: bold; color: #94a3b8;">
+                        إجمالي نقاط البيع المسجلة: <span id="posPointsTotalCount" style="color: #38bdf8; font-family: monospace; font-size: 1.05rem;">0</span>
+                      </div>
+                    </div>
+
+                    <div style="overflow-x: auto; max-height: 400px;" id="posPointsTableContainer">
+                      <table id="tblPosPointsListTable" class="pos-ops-table">
+                        <thead>
+                          <tr>
+                            <th style="padding: 8px; width: 85px;">رقم النقطة</th>
+                            <th style="padding: 8px; text-align: right; min-width: 160px;">اسم النقطة</th>
+                            <th style="padding: 8px; min-width: 100px;">الفرع</th>
+                            <th style="padding: 8px; min-width: 90px;">المخزن</th>
+                            <th style="padding: 8px; min-width: 160px; direction: ltr;">السيرفر (DataSource)</th>
+                            <th style="padding: 8px; min-width: 90px; direction: ltr;">قاعدة البيانات</th>
+                            <th style="padding: 8px; min-width: 80px; direction: ltr;">المستخدم</th>
+                            <th style="padding: 8px; min-width: 80px; direction: ltr;">كلمة السر</th>
+                            <th style="padding: 8px; width: 110px;">فحص الاتصال</th>
+                            <th style="padding: 8px; width: 90px;">إجراءات</th>
+                          </tr>
+                        </thead>
+                        <tbody id="posPointsTbody">
+                          <tr>
+                            <td colspan="10" style="padding: 30px; color: #94a3b8; text-align: center;">
+                              <div class="spinner" style="margin: 0 auto 10px;"></div>
+                              جاري تحميل قائمة نقاط البيع...
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+
+                    <div class="pos-table-status-bar" id="posPointSelectedStatus">
+                      لم يتم تحديد نقطة بيع بعد (انقر على أي نقطة من الجدول أعلاه لتعديلها)
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Dynamic Tabs Content will be added here -->
+
+
+        </div>
+      </main>
+
+    </div> <!-- Closes app-workspace -->
+  </div> <!-- Closes app-container -->
+
+    <!-- Account Details Modal (عرض الحساب) -->
+    <div class="modal-overlay" id="accountModal">
+      <div class="modal-container modal-lg">
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <i class="fa-solid fa-file-invoice-dollar modal-header-icon"></i>
+            <h2 id="accountModalTitle">عرض الحساب</h2>
+          </div>
+          <button class="modal-close-btn" type="button" onclick="closeAccountModal()">&times;</button>
+        </div>
+        
+        <form id="accountForm" onsubmit="saveAccountDetails(event)">
+          <!-- Modal Toolbar -->
+          <div class="accounts-modal-toolbar">
+            <button type="button" class="modal-toolbar-btn" onclick="showToast('تمت محاكاة نسخ الحساب', 'info')">
+              <i class="fa-solid fa-copy" style="color:#4a5568;"></i><span>نسخه من</span>
+            </button>
+            <button type="submit" class="modal-toolbar-btn">
+              <i class="fa-solid fa-floppy-disk" style="color:#3182ce;"></i><span>حفظ</span>
+            </button>
+            <button type="button" class="modal-toolbar-btn" onclick="saveAndPrintAccount()">
+              <i class="fa-solid fa-print" style="color:#4a5568;"></i><span>حفظ طباعه</span>
+            </button>
+            <button type="button" class="modal-toolbar-btn" id="btnModalQuery" onclick="querySelectedAccount()">
+              <i class="fa-solid fa-magnifying-glass" style="color:#38a169;"></i><span>استعلام</span>
+            </button>
+            <button type="button" class="modal-toolbar-btn" id="btnModalDelete" onclick="deleteSelectedAccount()">
+              <i class="fa-solid fa-trash-can" style="color:#e53e3e;"></i><span>حذف</span>
+            </button>
+            <button type="button" class="modal-toolbar-btn" onclick="showToast('إجراءات الحساب المتقدمة', 'info')">
+              <i class="fa-solid fa-gears" style="color:#4a5568;"></i><span>خيارات</span>
+            </button>
+            <button type="button" class="modal-toolbar-btn" onclick="showToast('تصدير بيانات الحساب', 'info')">
+              <i class="fa-solid fa-file-export" style="color:#2f855a;"></i><span>تصدير</span>
+            </button>
+            <button type="button" class="modal-toolbar-btn" onclick="showToast('استيراد بيانات الحساب', 'info')">
+              <i class="fa-solid fa-file-import" style="color:#b7791f;"></i><span>استيراد</span>
+            </button>
+          </div>
+
+          <div class="modal-body account-modal-body">
+            <div class="account-form-grid">
+              
+              <!-- Row 1 -->
+              <div class="form-group">
+                <label>الحساب الرئيسي</label>
+                <div class="input-with-button">
+                  <select id="accParentSelect" onchange="onParentAccountChange()">
+                    <!-- Populated dynamically -->
+                  </select>
+                  <button type="button" class="inner-add-btn" onclick="showToast('إضافة حساب رئيسي جديد', 'info')"><i class="fa-solid fa-circle-plus"></i></button>
+                </div>
+              </div>
+              
+              <div class="form-group">
+                <label>رقم الحساب</label>
+                <input type="text" id="accNumber" required placeholder="مثال: 11">
+              </div>
+
+              <div class="form-group">
+                <label>طبيعة الحساب</label>
+                <select id="accNatureSelect">
+                  <option value="4">مدين</option>
+                  <option value="5">دائن</option>
+                </select>
+              </div>
+
+              <!-- Row 2 -->
+              <div class="form-group full-width" style="grid-column: span 2;">
+                <label style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+                  <span>الاسم</span>
+                  <label class="label-active-checkbox">
+                    <input type="checkbox" id="accIsActive" checked>
+                    <span>نشط</span>
+                  </label>
+                </label>
+                <input type="text" id="accName" required placeholder="ادخل اسم الحساب (مثال: الاصول الثابتة)">
+              </div>
+
+              <div class="form-group">
+                <label>نوع الحساب</label>
+                <select id="accTypeSelect" onchange="onAccountTypeChange()">
+                  <option value="0">فرعي</option>
+                  <option value="1">رئيسي</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label>المستوى</label>
+                <input type="number" id="accLevel" readonly value="1" style="background:#edf2f7; color:#4a5568; font-weight:bold;">
+              </div>
+
+              <!-- Row 3 -->
+              <div class="form-group full-width" style="grid-column: span 2;">
+                <label>الحساب الختامي</label>
+                <select id="accFinalSelect">
+                  <option value="1">1-ميزانيه</option>
+                  <option value="2">2-أرباح وخسائر</option>
+                  <option value="3">3-متاجرة</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label>الرقم الضريبي</label>
+                <input type="text" id="accTax" value="0">
+              </div>
+
+              <!-- Row 4 -->
+              <div class="form-group full-width" style="grid-column: span 2;">
+                <label>منطقة الحساب</label>
+                <div class="input-with-button">
+                  <select id="accAreaSelect">
+                    <option value="0">-</option>
+                  </select>
+                  <button type="button" class="inner-add-btn" onclick="showToast('إضافة منطقة حساب جديدة', 'info')"><i class="fa-solid fa-circle-plus"></i></button>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label>ربط الحساب</label>
+                <div class="input-with-button">
+                  <select id="accLinkSelect">
+                    <option value="0">-</option>
+                  </select>
+                  <button type="button" class="inner-add-btn" onclick="showToast('إضافة ربط حساب جديد', 'info')"><i class="fa-solid fa-circle-plus"></i></button>
+                </div>
+              </div>
+
+              <!-- Row 5 (Opening Balance Section) -->
+              <div class="form-group">
+                <label>المبلغ (الرصيد الافتتاحي)</label>
+                <input type="number" id="accAmount" value="0" step="0.01">
+              </div>
+
+              <div class="form-group">
+                <label>المجموعة</label>
+                <div class="input-with-button">
+                  <select id="accGroupSelect">
+                    <option value="0">حساب عام</option>
+                    <option value="1">حساب عملاء</option>
+                    <option value="2">حساب موردين</option>
+                  </select>
+                  <button type="button" class="inner-add-btn" onclick="showToast('إضافة مجموعة جديدة', 'info')"><i class="fa-solid fa-circle-plus"></i></button>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label>مركز الكلفة</label>
+                <div class="input-with-button">
+                  <select id="accCostCenterSelect">
+                    <option value="0">-</option>
+                  </select>
+                  <button type="button" class="inner-add-btn" onclick="showToast('إضافة مركز كلفة جديد', 'info')"><i class="fa-solid fa-circle-plus"></i></button>
+                </div>
+              </div>
+
+              <div class="form-group" style="display:flex; flex-direction:row; align-items:center; gap:8px; margin-top:28px;">
+                <input type="checkbox" id="accForceCostCenter" style="width:18px; height:18px; cursor:pointer; accent-color:var(--primary);">
+                <label for="accForceCostCenter" style="cursor:pointer; font-weight:700; font-size:0.8rem; margin-bottom: 0;">اجبار مركز الكلفه</label>
+              </div>
+
+            </div>
+
+            <!-- Bottom Panel: Grid and Utility Buttons -->
+            <div class="account-bottom-panel">
+              <div class="balance-grid-wrapper">
+                <table class="balance-grid">
+                  <thead>
+                    <tr>
+                      <th>العمله</th>
+                      <th>التحويل</th>
+                      <th>مدين</th>
+                      <th>دائن</th>
+                      <th>مدين محلي</th>
+                      <th>دائن محلي</th>
+                      <th>fldRID</th>
+                    </tr>
+                  </thead>
+                  <tbody id="accountOpeningBalancesBody">
+                    <tr>
+                      <td colspan="7" style="text-align: center; color: #a0aec0; padding: 12px;">لا توجد أرصدة افتتاحية للعملات</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="utility-buttons-wrapper">
+                <button type="button" class="btn btn-secondary btn-sm" style="width:100%; margin-bottom:8px; font-weight:700;" onclick="showToast('تمت إعادة ترقيم الحسابات بنجاح', 'success')">
+                  إعادة ترقيم الحسابات
+                </button>
+                <button type="button" class="btn btn-secondary btn-sm" style="width:100%; font-weight:700;" onclick="showToast('أرقام التواصل: 0500000000', 'info')">
+                  أرقام التواصل
+                </button>
+              </div>
+            </div>
+
+          </div> <!-- Closes modal-body -->
+
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" onclick="closeAccountModal()">إلغاء</button>
+            <button type="submit" class="btn btn-primary" id="btnSaveAccount">
+              <i class="fa-solid fa-circle-check"></i> حفظ البيانات
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Currency Details Modal (عرض العملة) -->
+    <div class="modal-overlay" id="currencyModal">
+      <div class="modal-container modal-lg">
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <i class="fa-solid fa-coins modal-header-icon"></i>
+            <h2 id="currencyModalTitle">عرض العملة</h2>
+          </div>
+          <button class="modal-close-btn" type="button" onclick="closeCurrencyModal()">&times;</button>
+        </div>
+        
+        <form id="currencyForm" onsubmit="saveCurrencyDetails(event)">
+          <!-- Modal Toolbar -->
+          <div class="accounts-modal-toolbar">
+            <button type="submit" class="modal-toolbar-btn">
+              <i class="fa-solid fa-floppy-disk" style="color:#3182ce;"></i><span>حفظ</span>
+            </button>
+            <button type="button" class="modal-toolbar-btn" id="btnCurrencyModalDelete" onclick="deleteSelectedCurrency()">
+              <i class="fa-solid fa-trash-can" style="color:#e53e3e;"></i><span>حذف</span>
+            </button>
+          </div>
+
+          <div class="modal-body account-modal-body">
+            <div class="account-form-grid">
+              
+              <!-- Row 1 -->
+              <div class="form-group full-width" style="grid-column: span 2;">
+                <label>اسم العملة</label>
+                <input type="text" id="curName" required placeholder="ادخل اسم العملة (مثال: ريال سعودي)">
+              </div>
+
+              <div class="form-group">
+                <label>الرمز</label>
+                <input type="text" id="curSymbol" placeholder="مثال: ر.س" maxlength="3">
+              </div>
+
+              <!-- Row 2 -->
+              <div class="form-group">
+                <label>قيمة الصرف / التحويل</label>
+                <input type="number" id="curValue" required step="0.000001" value="1.0">
+              </div>
+
+              <div class="form-group">
+                <label>سعر الشراء</label>
+                <input type="number" id="curPurchases" step="0.000001" value="1.0">
+              </div>
+
+              <div class="form-group">
+                <label>سعر البيع</label>
+                <input type="number" id="curSales" step="0.000001" value="1.0">
+              </div>
+
+              <!-- Row 3 -->
+              <div class="form-group">
+                <label>سعر نقاط البيع</label>
+                <input type="number" id="curSellingPoints" step="0.000001" value="1.0">
+              </div>
+
+              <div class="form-group">
+                <label>الحد الأدنى للقيمة</label>
+                <input type="number" id="curMinValue" step="0.000001" value="0.0">
+              </div>
+
+              <div class="form-group">
+                <label>الحد الأقصى للقيمة</label>
+                <input type="number" id="curMaxValue" step="0.000001" value="0.0">
+              </div>
+
+              <!-- Row 4 -->
+              <div class="form-group">
+                <label>نوع العملية</label>
+                <select id="curTypeOperation">
+                  <option value="1">1 - معامل ضرب</option>
+                  <option value="2">2 - معامل قسمه</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label>جزء العملة</label>
+                <input type="text" id="curFractionalCurrency" placeholder="مثال: هلله">
+              </div>
+
+              <div class="form-group">
+                <label>جزء العملة 2</label>
+                <input type="text" id="curFractionalCurrency2" value="فلس" placeholder="مثال: فلس">
+              </div>
+
+            </div>
+          </div> <!-- Closes modal-body -->
+
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" onclick="closeCurrencyModal()">إلغاء</button>
+            <button type="submit" class="btn btn-primary" id="btnSaveCurrency">
+              <i class="fa-solid fa-circle-check"></i> حفظ البيانات
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+  <!-- SQL Server Connection Modal -->
+    <div class="modal-overlay" id="dbSettingsModal">
+      <div class="modal-container">
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <i class="fa-solid fa-database modal-header-icon"></i>
+            <h2>إعدادات الاتصال بقاعدة بيانات SQL Server</h2>
+          </div>
+          <button class="modal-close-btn" onclick="closeDbModal()">&times;</button>
+        </div>
+        
+        <form id="dbSettingsForm" onsubmit="saveConnectionSettings(event)">
+          <div class="modal-body">
+            <p class="modal-description">أدخل تفاصيل الاتصال بخادم SQL Server الخاص بك. سيقوم النظام بحفظ هذه الإعدادات محلياً وإجراء استعلام ديناميكي للقوائم.</p>
+            
+            <div class="form-grid">
+              <div class="form-group full-width">
+                <label for="dbServer"><i class="fa-solid fa-server"></i> اسم السيرفر / العنوان (Server Name/Host)</label>
+                <input type="text" id="dbServer" placeholder="مثال: localhost أو 192.168.1.100\SQLEXPRESS" required>
+              </div>
+
+              <div class="form-group">
+                <label for="dbPort"><i class="fa-solid fa-door-open"></i> رقم المنفذ (Port)</label>
+                <input type="number" id="dbPort" value="1433" placeholder="افتراضي: 1433">
+              </div>
+
+              <div class="form-group">
+                <label for="dbDatabase"><i class="fa-solid fa-folder-closed"></i> اسم قاعدة البيانات (Database Name)</label>
+                <input type="text" id="dbDatabase" placeholder="مثال: AccountsExplorerDB" required>
+              </div>
+
+              <div class="form-group">
+                <label for="dbUsername"><i class="fa-solid fa-user"></i> اسم المستخدم (Username)</label>
+                <input type="text" id="dbUsername" placeholder="مثال: sa" required>
+              </div>
+
+              <div class="form-group">
+                <label for="dbPassword"><i class="fa-solid fa-key"></i> كلمة المرور (Password)</label>
+                <input type="password" id="dbPassword" placeholder="كلمة مرور قاعدة البيانات">
+              </div>
+            </div>
+
+            <div class="modal-alert-container" id="modalAlert">
+              <!-- Success or Error messages go here -->
+            </div>
+          </div>
+          
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" onclick="closeDbModal()">إلغاء</button>
+            <button type="button" class="btn btn-info" id="btnTestConnection" onclick="testDbConnection()">
+              <i class="fa-solid fa-rotate"></i> اختبار الاتصال
+            </button>
+            <button type="submit" class="btn btn-primary" id="btnSaveConnection">
+              <i class="fa-solid fa-circle-check"></i> حفظ الاتصال والتشغيل
+            </button>
+            <button type="button" class="btn btn-danger hidden" id="btnDisconnect" onclick="disconnectDb()">
+              <i class="fa-solid fa-unlink"></i> حذف الاتصال
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+    <!-- IP Display Modal -->
+    <div class="modal-overlay" id="ipModal">
+      <div class="modal-container modal-sm">
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <i class="fa-solid fa-network-wired modal-header-icon"></i>
+            <h2>رابط الوصول الخارجي للتطبيق</h2>
+          </div>
+          <button class="modal-close-btn" onclick="closeIpModal()">&times;</button>
+        </div>
+        <div class="modal-body text-center">
+          <div class="info-logo" style="color: var(--primary); font-size: 3rem; margin-bottom: 10px;"><i class="fa-solid fa-globe"></i></div>
+          <h3>عنوان IP الخارجي ورابط التشغيل</h3>
+          <p class="text-muted" style="font-size: 0.85rem; line-height: 1.5; margin-bottom: 15px;">يمكنك استخدام هذا الرابط لفتح التطبيق من أي مكان على الإنترنت:</p>
+          <div style="font-size: 1.1rem; padding: 15px; background: #edf2f7; color: #2d3748; border: 1px solid #cbd5e1; border-radius: 4px; word-break: break-all;">
+            <a href="#" id="ipModalLink" target="_blank" style="color: var(--primary); font-weight: 700; text-decoration: underline;">جاري التحميل...</a>
+          </div>
+          <p class="text-muted text-sm" style="margin-top: 15px; font-size: 0.75rem; line-height: 1.5;">ملاحظة: يتطلب هذا الاتصال تفعيل توجيه المنافذ (Port Forwarding) للمنفذ 3000 في راوتر السيرفر.</p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" onclick="closeIpModal()">إغلاق</button>
+          <button class="btn btn-primary" onclick="copyIpLinkFromModal()">
+            <i class="fa-solid fa-copy"></i> نسخ الرابط
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Info Modal -->
+    <div class="modal-overlay" id="infoModal">
+      <div class="modal-container modal-sm">
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <i class="fa-solid fa-circle-info modal-header-icon"></i>
+            <h2>حول مستكشف الحسابات</h2>
+          </div>
+          <button class="modal-close-btn" onclick="closeInfoModal()">&times;</button>
+        </div>
+        <div class="modal-body text-center">
+          <div class="info-logo"><i class="fa-solid fa-network-wired"></i></div>
+          <h3>تطبيق ويب مستكشف القوائم</h3>
+          <p>الإصدار 1.0.0</p>
+          <div class="info-query-box">
+            <p>الاستعلام المطبق لقاعدة البيانات:</p>
+            <pre><code>SELECT dbo.tblMenus.fldID, 
+       dbo.tblMenus.fldtblMainMenuID, 
+       dbo.tblMenus.fldDescription AS fldMenu, 
+       dbo.tblMainMenu.fldDescription AS fldMainMenu
+FROM dbo.tblMenus LEFT OUTER JOIN
+     dbo.tblMainMenu ON dbo.tblMenus.fldtblMainMenuID = dbo.tblMainMenu.fldID</code></pre>
+          </div>
+          <p class="text-muted text-sm">تم تطويره كلوحة تحكم ذكية متجاوبة ومتحركة.</p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-primary btn-block" onclick="closeInfoModal()">إغلاق</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SQL Server Backup Modal -->
+    <div class="modal-overlay" id="backupModal">
+      <div class="modal-container modal-sm">
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <i class="fa-solid fa-copy modal-header-icon"></i>
+            <h2>نسخ احتياطي لقاعدة البيانات</h2>
+          </div>
+          <button class="modal-close-btn" onclick="closeBackupModal()">&times;</button>
+        </div>
+        
+        <form id="backupForm" onsubmit="executeBackup(event)">
+          <div class="modal-body">
+            <p class="modal-description">حدد مسار مجلد وحفظ ملف النسخة الاحتياطية على الخادم (مثال: D:\Backups\db_backup.bak). يجب أن يمتلك خادم SQL صلاحيات الكتابة في المجلد المحدد.</p>
+            
+            <div class="form-group">
+              <label for="backupPath"><i class="fa-solid fa-folder-open"></i> مسار حفظ ملف النسخ الاحتياطي (Backup Path)</label>
+              <input type="text" id="backupPath" placeholder="مثال: D:\Backups\bw_backup.bak" required>
+            </div>
+            
+            <div class="modal-alert-container" id="backupAlert"></div>
+          </div>
+          
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" onclick="closeBackupModal()">إلغاء</button>
+            <button type="submit" class="btn btn-primary" id="btnExecuteBackup">
+              <i class="fa-solid fa-circle-check"></i> بدء النسخ الاحتياطي
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- WhatsApp Settings Modal -->
+    <div class="modal-overlay" id="whatsappModal">
+      <div class="modal-container modal-sm" id="whatsappModalContainer" style="max-width: 450px; width: 90%; transition: max-width 0.3s ease-in-out;">
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <i class="fa-brands fa-whatsapp modal-header-icon" style="color: #25D366;"></i>
+            <h2>إعدادات الواتساب التلقائي</h2>
+          </div>
+          <button class="modal-close-btn" type="button" onclick="closeWhatsappModal()">&times;</button>
+        </div>
+        
+        <!-- Tab Switches -->
+        <div class="whatsapp-tabs" style="display: flex; border-bottom: 1px solid #cbd5e1; background-color: #f8fafc;">
+          <button type="button" class="whatsapp-tab-btn active" id="btnTabWhatsappStatus" onclick="switchWhatsappTab('status')" style="flex: 1; padding: 12px; border: none; background: none; font-weight: bold; cursor: pointer; border-bottom: 3px solid #25D366; color: #25D366; transition: all 0.2s;">
+            <i class="fa-solid fa-signal" style="margin-left: 6px;"></i>حالة الاتصال
+          </button>
+          <button type="button" class="whatsapp-tab-btn" id="btnTabWhatsappQueue" onclick="switchWhatsappTab('queue')" style="flex: 1; padding: 12px; border: none; background: none; font-weight: bold; cursor: pointer; border-bottom: 3px solid transparent; color: var(--text-muted); transition: all 0.2s;">
+            <i class="fa-solid fa-list-check" style="margin-left: 6px;"></i>سجل الرسائل
+          </button>
+        </div>
+
+        <div class="modal-body" style="padding: 20px;">
+          <!-- Tab 1: Status Details -->
+          <div id="whatsappTabStatusContent">
+            <!-- Status Banner -->
+            <div id="whatsappStatusBanner" class="whatsapp-status-banner disconnected" style="margin-top: 0;">
+              <i class="fa-solid fa-circle-info"></i> <span id="whatsappStatusText">غير متصل</span>
+            </div>
+
+            <!-- QR Code Container -->
+            <div id="whatsappQrContainer" class="whatsapp-qr-container hidden" style="margin: 20px 0; text-align: center;">
+              <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 10px;">يرجى مسح رمز الـ QR لتفعيل الإرسال التلقائي في الخلفية:</p>
+              <img id="whatsappQrImg" src="" alt="QR Code" style="width: 200px; height: 200px; border: 1px solid #cbd5e1; border-radius: 4px; padding: 5px; background: white; margin: 0 auto; display: block;">
+            </div>
+
+            <!-- Success Connection Info -->
+            <div id="whatsappSuccessContainer" class="whatsapp-success-container hidden" style="margin: 20px 0; text-align: center;">
+              <i class="fa-solid fa-circle-check" style="font-size: 3rem; color: var(--success); margin-bottom: 10px;"></i>
+              <p style="font-weight: bold; color: var(--text-title);">خادم الواتساب متصل بنجاح وجاهز للإرسال!</p>
+              <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 5px;">سيتم إرسال الرسائل تلقائياً في الخلفية بشكل صامت.</p>
+            </div>
+            
+            <div id="whatsappLoadingContainer" class="whatsapp-loading-container hidden" style="margin: 20px 0; display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center;">
+              <div class="spinner"></div>
+              <p style="font-size: 0.8rem; color: var(--text-muted);">جاري الاتصال بخادم الواتساب...</p>
+            </div>
+          </div>
+
+          <!-- Tab 2: Queue Messages -->
+          <div id="whatsappTabQueueContent" class="hidden">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; direction: rtl;">
+              <h3 style="font-size: 0.95rem; margin: 0; color: var(--text-title); font-weight: bold;">سجل الرسائل المرسلة تلقائياً</h3>
+              <button type="button" class="btn btn-danger btn-sm" onclick="clearAllWhatsappMessages()" id="btnClearAllMessages" style="padding: 5px 10px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-arabic);">
+                <i class="fa-solid fa-trash-can"></i> مسح جميع السجلات
+              </button>
+            </div>
+
+            <!-- Messages Table Container -->
+            <div style="max-height: 300px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 6px; background: white; direction: rtl;">
+              <table style="width: 100%; border-collapse: collapse; text-align: right; font-size: 0.75rem;">
+                <thead>
+                  <tr style="background-color: #f8fafc; border-bottom: 2px solid #e2e8f0; position: sticky; top: 0; z-index: 5;">
+                    <th style="padding: 10px 8px; font-weight: bold; color: var(--text-title); width: 15%;">الهاتف</th>
+                    <th style="padding: 10px 8px; font-weight: bold; color: var(--text-title); width: 50%;">الرسالة</th>
+                    <th style="padding: 10px 8px; font-weight: bold; color: var(--text-title); width: 15%; text-align: center;">الحالة</th>
+                    <th style="padding: 10px 8px; font-weight: bold; color: var(--text-title); width: 20%; text-align: center;">خيارات</th>
+                  </tr>
+                </thead>
+                <tbody id="whatsappQueueTableBody">
+                  <tr>
+                    <td colspan="4" style="padding: 20px; text-align: center; color: var(--text-muted);">جاري تحميل الرسائل...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer" style="background-color: #f8fafc; display: flex; gap: 8px; justify-content: flex-end; padding: 15px 20px; border-top: 1px solid #cbd5e1;">
+          <button type="button" class="btn btn-secondary btn-sm" onclick="closeWhatsappModal()">إغلاق</button>
+          <button type="button" class="btn btn-danger btn-sm" onclick="disconnectWhatsApp()" id="btnWhatsappDisconnect">قطع الاتصال</button>
+          <button type="button" class="btn btn-primary btn-sm" onclick="reconnectWhatsApp()" id="btnWhatsappReconnect">إعادة الاتصال</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Voucher Editor Modal -->
+    <div class="modal-overlay" id="voucherModal">
+      <div class="modal-container modal-xl" style="max-width: 95%; width: 1100px;">
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <i class="fa-solid fa-file-invoice modal-header-icon"></i>
+            <h2 id="voucherModalTitle">سند صرف</h2>
+          </div>
+          <button class="modal-close-btn" type="button" onclick="closeVoucherModal()">&times;</button>
+        </div>
+        
+        <form id="voucherForm" onsubmit="saveVoucherDetails(event)">
+          <!-- Modal Toolbar -->
+          <div class="accounts-toolbar" style="background-color: #f8fafc; border-bottom: 1px solid #cbd5e1; padding: 6px 12px; display: flex; gap: 4px;">
+            <button type="button" class="modal-toolbar-btn" onclick="showToast('تم نسخ السند', 'info')">
+              <i class="fa-solid fa-copy" style="color: #4a5568;"></i><span>نسخه من</span>
+            </button>
+            <button type="submit" class="modal-toolbar-btn">
+              <i class="fa-solid fa-floppy-disk" style="color: #3182ce;"></i><span>حفظ</span>
+            </button>
+            <button type="button" class="modal-toolbar-btn" onclick="printVoucher()">
+              <i class="fa-solid fa-print" style="color: #4a5568;"></i><span>طباعه</span>
+            </button>
+            <button type="button" class="modal-toolbar-btn" id="btnVoucherDelete" onclick="deleteVoucherFromEditor()">
+              <i class="fa-solid fa-trash-can" style="color: #e53e3e;"></i><span>حذف</span>
+            </button>
+            <button type="button" class="modal-toolbar-btn" onclick="shareVoucherWhatsApp()">
+              <i class="fa-brands fa-whatsapp" style="color: #25D366;"></i><span>واتس اب</span>
+            </button>
+            <button type="button" class="modal-toolbar-btn" onclick="if (state.editingVoucherID) { showJournalEntries(state.editingVoucherID); } else { showToast('يجب حفظ السند أولاً لعرض القيد المحاسبي.', 'warning'); }">
+              <i class="fa-solid fa-file-invoice" style="color: #805ad5;"></i><span>القيد</span>
+            </button>
+            <button type="button" class="modal-toolbar-btn" onclick="showToast('تصدير البيانات', 'info')">
+              <i class="fa-solid fa-file-export" style="color: #2f855a;"></i><span>تصدير</span>
+            </button>
+            <button type="button" class="modal-toolbar-btn" onclick="showToast('إعدادات إضافية', 'info')">
+              <i class="fa-solid fa-gears" style="color: #4a5568;"></i><span>اعدادات</span>
+            </button>
+          </div>
+
+          <div class="modal-body account-modal-body" style="padding: 15px 20px; background-color: #eaeef3;">
+            <!-- Voucher Editor Container -->
+            <div class="voucher-form-container">
+              <!-- Row 1 -->
+              <div class="voucher-row">
+                <div class="voucher-field">
+                  <label>الفرع</label>
+                  <select id="vModalBranch" required onchange="onVoucherModalParamsChange()">
+                    <!-- Dynamically populated -->
+                  </select>
+                </div>
+
+                <div class="voucher-field" id="vModalPaymentTypeContainer">
+                  <label>طريقة الدفع</label>
+                  <select id="vModalPaymentType" required onchange="onVoucherModalParamsChange()">
+                    <option value="1">نقد</option>
+                    <option value="2">شيك</option>
+                    <option value="3">تحويل</option>
+                  </select>
+                </div>
+
+                <div class="voucher-field">
+                  <label id="vModalBoxLabel">صندوق</label>
+                  <select id="vModalBox" required onchange="onVoucherModalParamsChange()">
+                    <!-- Dynamically populated -->
+                  </select>
+                </div>
+
+                <div class="voucher-field">
+                  <label>العمله</label>
+                  <select id="vModalCurrency" required onchange="onVoucherModalCurrencyChange()">
+                    <!-- Dynamically populated -->
+                  </select>
+                </div>
+
+                <div class="voucher-field">
+                  <label>سعر الصرف</label>
+                  <input type="number" id="vModalExchangeRate" value="1.00" step="0.01" oninput="onVoucherExchangeRateInput()" style="text-align: center; width: 80px;" placeholder="الصرف">
+                </div>
+
+                <div class="voucher-field">
+                  <label style="display: inline-flex; align-items: center; gap: 4px; cursor: pointer;">
+                    <input type="checkbox" id="vModalDirectPrint">
+                    <span>الطباعة مباشرة</span>
+                  </label>
+                </div>
+
+                <div class="voucher-field">
+                  <label style="display: inline-flex; align-items: center; gap: 4px; cursor: pointer;">
+                    <input type="checkbox" id="vModalExchangeCalc">
+                    <span>مصارفة المبلغ</span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Row 2 -->
+              <div class="voucher-row">
+                <div class="voucher-field">
+                  <label>التاريخ</label>
+                  <input type="text" id="vModalDate" placeholder="yyyy-mm-dd" maxlength="10" required>
+                </div>
+
+                <div class="voucher-field">
+                  <label style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+                    <span>الرقم</span>
+                    <label style="display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: normal; margin-bottom: 0; cursor: pointer;">
+                      <input type="checkbox" id="vModalAutoNo" checked> تلقائي
+                    </label>
+                  </label>
+                  <input type="number" id="vModalTransNo" readonly style="background: #edf2f7; font-weight: bold; color: #2d3748; width: 90px; text-align: center;">
+                </div>
+
+                <div class="voucher-field">
+                  <label>رقم المرجع</label>
+                  <input type="number" id="vModalRefNo" value="0" style="width: 80px; text-align: center;">
+                </div>
+
+                <div class="voucher-field">
+                  <label>تاريخ المرجع</label>
+                  <input type="text" id="vModalRefDate" placeholder="yyyy-mm-dd" maxlength="10">
+                </div>
+              </div>
+
+              <!-- Row 3 -->
+              <div class="voucher-row">
+                <div class="voucher-field" style="flex: 2;">
+                  <label id="vModalPayeeLabel">يصرف للاخ</label>
+                  <input type="text" id="vModalPayee" placeholder="ادخل اسم المستلم / المستفيد" style="width: 100%;">
+                </div>
+
+                <div class="voucher-field" style="flex: 1;">
+                  <label>المبلغ</label>
+                  <input type="number" id="vModalAmount" value="0.00" step="0.01" oninput="onVoucherAmountInput()" required style="font-weight: 800; font-size: 13px; color: var(--primary); width: 100%;">
+                </div>
+
+                <div class="voucher-field" style="flex: 1;" id="vModalDiscountContainer">
+                  <label>الخصم</label>
+                  <input type="number" id="vModalDiscount" value="0.00" step="0.01" oninput="onVoucherAmountInput()" style="width: 100%;">
+                </div>
+              </div>
+
+              <!-- Row 4 (Tafqeet & Description) -->
+              <div class="voucher-tafqeet" id="vModalWordsAmount">
+                صفر ريال
+              </div>
+
+              <div class="voucher-row">
+                <div class="voucher-field" style="width: 100%;">
+                  <label>البيان / الشرح العام</label>
+                  <input type="text" id="vModalDescription" placeholder="ادخل شرحاً تفصيلياً للسند..." style="width: 100%;">
+                </div>
+              </div>
+            </div>
+
+
+            <!-- Detail Lines Grid -->
+            <div style="background-color: #fff; border: 1px solid #cbd5e1; border-radius: 4px; padding: 15px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <h3 style="font-size: 0.9rem; font-weight: 700; color: #4a5568;"><i class="fa-solid fa-list-ol"></i> تفاصيل الحسابات المقابلة (المدين / الدائن)</h3>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="addVoucherDetailRow()" style="font-weight: 700;">
+                  <i class="fa-solid fa-plus-circle"></i> إضافة سطر جديد
+                </button>
+              </div>
+
+              <div style="overflow-x: auto; max-height: 250px;">
+                <table class="balance-grid" style="width: 100%; min-width: 1300px;" id="vDetailsTable">
+                  <thead>
+                    <tr>
+                      <th style="width: 50px; text-align: center;">م</th>
+                      <th style="width: 110px;">رقم الحساب</th>
+                      <th style="width: 280px;">اسم الحساب</th>
+                      <th style="width: 100px;">التحويل</th>
+                      <th style="width: 120px;">العمله</th>
+                      <th style="width: 120px;">المبلغ (مدين)</th>
+                      <th style="width: 120px;">مدين محلي</th>
+                      <th style="width: 280px;">البيان</th>
+                      <th style="width: 90px;">رقم المرجع</th>
+                      <th style="width: 100px;">ت.المرجع</th>
+                      <th style="width: 50px; text-align: center;">إجراء</th>
+                    </tr>
+                  </thead>
+                  <tbody id="vDetailsBody">
+                    <!-- Dynamic Rows -->
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Local Totals Summary -->
+              <div class="voucher-footer-totals">
+                <div class="voucher-field">
+                  <label>اجمالي مدين محلي:</label>
+                  <input type="text" id="vLocalDebitTotal" readonly value="0.00" style="color: var(--primary);">
+                </div>
+                <div class="voucher-field">
+                  <label>اجمالي دائن محلي:</label>
+                  <input type="text" id="vLocalCreditTotal" readonly value="0.00" style="color: var(--success);">
+                </div>
+                <div class="voucher-field">
+                  <label>الفرق:</label>
+                  <input type="text" id="vLocalDiff" readonly value="0.00" style="color: #e53e3e;">
+                </div>
+              </div>
+
+            </div>
+
+          </div> <!-- Closes modal-body -->
+
+          <div class="modal-footer" style="padding: 10px 15px; background: #edf2f7; border-top: 1px solid #cbd5e1;">
+            <button type="button" class="btn btn-secondary" onclick="closeVoucherModal()">إلغاء</button>
+            <button type="submit" class="btn btn-primary">
+              <i class="fa-solid fa-circle-check"></i> حفظ المستند
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Journal Entry Modal (القيود الحسابية) -->
+    <div class="modal-overlay" id="journalEntryModal">
+      <div class="modal-container modal-xl" style="max-width: 95%; width: 1100px;">
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <i class="fa-solid fa-calculator modal-header-icon"></i>
+            <h2 id="journalModalTitle">قيد يومية محاسبي</h2>
+          </div>
+          <button class="modal-close-btn" type="button" onclick="closeJournalEntryModal()">&times;</button>
+        </div>
+        
+        <datalist id="journalAccountsDatalist"></datalist>
+          <form id="journalEntryForm" onsubmit="saveJournalEntryDetails(event)">
+          <!-- Modal Toolbar -->
+          <div class="accounts-toolbar" style="background-color: #f8fafc; border-bottom: 1px solid #cbd5e1; padding: 6px 12px; display: flex; gap: 4px; flex-wrap: wrap;">
+            <button type="submit" class="modal-toolbar-btn">
+              <i class="fa-solid fa-floppy-disk" style="color: #3182ce;"></i><span>حفظ</span>
+            </button>
+            <button type="button" class="modal-toolbar-btn" onclick="generateClosingEntries()" style="background-color: #fefcbf; border-color: #ecc94b;" title="إقفال حسابات المتاجرة والأرباح والخسائر وفوارق العملات">
+              <i class="fa-solid fa-scale-balanced" style="color: #d69e2e;"></i><span style="font-weight: 700; color: #744210;">إقفال الحسابات وفوارق العملة</span>
+            </button>
+            <button type="button" class="modal-toolbar-btn" onclick="printJournalEntry()">
+              <i class="fa-solid fa-print" style="color: #4a5568;"></i><span>طباعه</span>
+            </button>
+            <button type="button" class="modal-toolbar-btn" id="btnJournalDelete" onclick="deleteJournalEntryFromEditor()">
+              <i class="fa-solid fa-trash-can" style="color: #e53e3e;"></i><span>حذف</span>
+            </button>
+            <button type="button" class="modal-toolbar-btn" onclick="closeJournalEntryModal()">
+              <i class="fa-solid fa-circle-xmark" style="color: #a0aec0;"></i><span>إغلاق</span>
+            </button>
+          </div>
+
+          <div class="modal-body account-modal-body" style="padding: 15px 20px; background-color: #eaeef3;">
+            <div class="voucher-form-container">
+              <!-- Row 1 -->
+              <div class="voucher-row">
+                <div class="voucher-field">
+                  <label>الفرع</label>
+                  <select id="jModalBranch" required onchange="onJournalModalParamsChange()">
+                    <!-- Populated dynamically -->
+                  </select>
+                </div>
+
+                <div class="voucher-field">
+                  <label style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+                    <span>الرقم</span>
+                    <label style="display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: normal; margin-bottom: 0; cursor: pointer;">
+                      <input type="checkbox" id="jModalAutoNo" checked> تلقائي
+                    </label>
+                  </label>
+                  <input type="number" id="jModalTransNo" readonly style="background: #edf2f7; font-weight: bold; color: #2d3748; width: 75px; text-align: center;">
+                </div>
+
+                <div class="voucher-field">
+                  <label>التاريخ</label>
+                  <input type="text" id="jModalDate" placeholder="yyyy-mm-dd" maxlength="10" required style="width: 105px; text-align: center;">
+                </div>
+
+                <div class="voucher-field">
+                  <label>العملة</label>
+                  <select id="jModalHeaderCurrency" required style="width: 120px;">
+                    <!-- Populated dynamically from state.currencies -->
+                  </select>
+                </div>
+
+                <div class="voucher-field">
+                  <label>نوع القيد</label>
+                  <select id="jModalType" required style="width: 100px;">
+                    <option value="6">6 - يومي</option>
+                    <option value="7">7 - تسوية</option>
+                    <option value="8">8 - اقفال</option>
+                  </select>
+                </div>
+
+                <div class="voucher-field" id="jModalClosingTypeWrapper" style="display: none;">
+                  <label>نوع التسوية/الإقفال</label>
+                  <select id="jModalClosingType" style="min-width: 180px;">
+                    <option value="1">1 - قيد اقفال فروق العملات</option>
+                    <option value="2">2 - قيد اقفال رواتب الشهر</option>
+                    <option value="3">3 - قيود الاهلاكات</option>
+                    <option value="4">4 - الحسابات الختاميه</option>
+                  </select>
+                </div>
+
+                <div class="voucher-field" style="flex: 2;">
+                  <label>البيان / الشرح العام للقيد</label>
+                  <input type="text" id="jModalDescription" placeholder="ادخل بياناً عاماً تفصيلياً للقيد..." style="width: 100%;">
+                </div>
+              </div>
+            </div>
+
+            <!-- Detail Lines Grid -->
+            <div style="background-color: #fff; border: 1px solid #cbd5e1; border-radius: 4px; padding: 15px; margin-top: 10px;">
+              <div style="display: flex; justify-content: flex-end; align-items: center; margin-bottom: 10px;">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="addJournalDetailRow()" style="font-weight: 700;">
+                  <i class="fa-solid fa-plus-circle"></i> إضافة سطر جديد
+                </button>
+              </div>
+
+              <div style="overflow-x: auto; max-height: 280px;">
+                <table class="balance-grid" style="width: 100%; min-width: 1400px;" id="jDetailsTable">
+                  <thead>
+                    <tr>
+                      <th style="width: 40px; text-align: center;">م</th>
+                      <th style="width: 110px;">رقم الحساب</th>
+                      <th style="width: 240px;">اسم الحساب</th>
+                      <th style="width: 90px;">التحويل</th>
+                      <th style="width: 110px;">العمله</th>
+                      <th style="width: 110px;">مدين</th>
+                      <th style="width: 110px;">دائن</th>
+                      <th style="width: 110px;">مدين محلي</th>
+                      <th style="width: 110px;">دائن محلي</th>
+                      <th style="width: 150px;">مركز الكلفة</th>
+                      <th style="width: 240px;">البيان</th>
+                      <th style="width: 90px;">رقم المرجع</th>
+                      <th style="width: 100px;">ت.المرجع</th>
+                      <th style="width: 50px; text-align: center;">إجراء</th>
+                    </tr>
+                  </thead>
+                  <tbody id="jDetailsBody">
+                    <!-- Dynamic Rows -->
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Local Totals Summary -->
+              <div class="voucher-footer-totals">
+                <div class="voucher-field">
+                  <label>اجمالي مدين محلي:</label>
+                  <input type="text" id="jLocalDebitTotal" readonly value="0.00" style="color: var(--primary);">
+                </div>
+                <div class="voucher-field">
+                  <label>اجمالي دائن محلي:</label>
+                  <input type="text" id="jLocalCreditTotal" readonly value="0.00" style="color: var(--success);">
+                </div>
+                <div class="voucher-field">
+                  <label>الفرق:</label>
+                  <input type="text" id="jLocalDiff" readonly value="0.00" style="color: #e53e3e;">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-footer" style="padding: 10px 15px; background: #edf2f7; border-top: 1px solid #cbd5e1;">
+            <button type="button" class="btn btn-secondary" onclick="closeJournalEntryModal()">إلغاء</button>
+            <button type="submit" class="btn btn-primary">
+              <i class="fa-solid fa-circle-check"></i> حفظ القيد
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Opening Entry Settings Modal -->
+    <div class="modal-overlay" id="openingEntrySettingsModal">
+      <div class="modal-container modal-md">
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <i class="fa-solid fa-gears modal-header-icon"></i>
+            <h2 id="openingEntrySettingsTitle">إعدادات ترويسة التقارير</h2>
+          </div>
+          <button class="modal-close-btn" onclick="closeOpeningEntrySettingsModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p class="modal-description">يمكنك رفع صورة ترويسة التقارير ليتم استخدامها كعنوان لطباعة القيود والأرصدة الافتتاحية. سيتم عرضها بعرض الورقة الكامل.</p>
+          
+          <div style="margin: 15px 0; display: flex; flex-direction: column; gap: 10px; text-align: right; direction: rtl;">
+            <label style="font-weight: 700; color: #4a5568;">اختر صورة الترويسة:</label>
+            <input type="file" id="opHeaderImageFile" accept="image/*" onchange="handleHeaderImageUpload(event)" style="padding: 8px; border: 1px dashed #cbd5e1; border-radius: 4px; background: #fafbfc; cursor: pointer; font-family: var(--font-arabic); width: 100%;">
+          </div>
+          
+          <div id="opHeaderImagePreviewContainer" style="margin-top: 15px; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px; text-align: center; background: #f8fafc; min-height: 100px; display: flex; align-items: center; justify-content: center;">
+            <span id="opHeaderImagePlaceholder" style="color: #a0aec0; font-size: 0.85rem; font-family: var(--font-arabic);">لا توجد ترويسة مضافة حالياً. سيتم إظهار صندوق فارغ في الطباعة.</span>
+            <img id="opHeaderImagePreview" src="" style="max-width: 100%; max-height: 180px; object-fit: contain; border-radius: 4px; display: none;">
+          </div>
+        </div>
+        <div class="modal-footer" style="padding: 10px 15px; background: #edf2f7; border-top: 1px solid #cbd5e1; display: flex; justify-content: space-between; direction: rtl;">
+          <button type="button" class="btn btn-danger" onclick="removeReportHeaderImage()"><i class="fa-solid fa-trash-can"></i> حذف الترويسة</button>
+          <button type="button" class="btn btn-secondary" onclick="closeOpeningEntrySettingsModal()">إغلاق</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Journal Entries Modal (تفاصيل قيد) -->
+    <div class="modal-overlay" id="journalEntriesModal">
+      <div class="modal-container modal-xl journal-modal-container" style="max-width: 95%; width: 1200px; display: flex; flex-direction: column;">
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <i class="fa-solid fa-file-invoice modal-header-icon" style="color: #805ad5;"></i>
+            <h2 id="journalEntriesModalTitle">تفاصيل قيد</h2>
+          </div>
+          <button class="modal-close-btn" type="button" onclick="closeJournalEntriesModal()">&times;</button>
+        </div>
+        
+        <div class="modal-body" style="overflow-y: auto; flex: 1; padding: 15px; background: #fff; direction: rtl;">
+          <div class="mock-table-wrapper" style="max-height: 450px; border: 1px solid #cbd5e1; border-radius: 4px;">
+            <table class="mock-table" style="width: 100%; border-collapse: collapse; text-align: right; font-family: var(--font-arabic); font-size: 0.85rem;">
+              <thead style="background-color: #f1f5f9; position: sticky; top: 0; z-index: 10; border-bottom: 2px solid #cbd5e1;">
+                <tr>
+                  <th style="padding: 8px; border: 1px solid #cbd5e1; font-weight: 700; width: 120px; text-align: left;">رقم الحساب</th>
+                  <th style="padding: 8px; border: 1px solid #cbd5e1; font-weight: 700; width: 220px;">اسم الحساب</th>
+                  <th style="padding: 8px; border: 1px solid #cbd5e1; font-weight: 700; width: 100px;">العمله</th>
+                  <th style="padding: 8px; border: 1px solid #cbd5e1; font-weight: 700; width: 100px; text-align: left;">التحويل</th>
+                  <th style="padding: 8px; border: 1px solid #cbd5e1; font-weight: 700; width: 110px; text-align: left;">مدين</th>
+                  <th style="padding: 8px; border: 1px solid #cbd5e1; font-weight: 700; width: 110px; text-align: left;">دائن</th>
+                  <th style="padding: 8px; border: 1px solid #cbd5e1; font-weight: 700; width: 110px; text-align: left;">مدين محلي</th>
+                  <th style="padding: 8px; border: 1px solid #cbd5e1; font-weight: 700; width: 110px; text-align: left;">دائن محلي</th>
+                  <th style="padding: 8px; border: 1px solid #cbd5e1; font-weight: 700; min-width: 200px;">البيان</th>
+                  <th style="padding: 8px; border: 1px solid #cbd5e1; font-weight: 700; width: 150px;">الحساب 2</th>
+                </tr>
+              </thead>
+              <tbody id="journalEntriesTableBody">
+                <!-- Will be dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+        
+        <!-- Entry Footer Status Bar -->
+        <div class="journal-modal-footer" style="background-color: #f1f5f9; border-top: 1px solid #cbd5e1; padding: 12px 15px; direction: rtl;">
+          <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center;">
+            
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <label style="font-weight: 700; font-size: 0.8rem; color: #4a5568; white-space: nowrap;">مدين</label>
+              <input type="text" id="journalFooterDebit" readonly style="width: 90px; padding: 4px 8px; border: 1px solid #cbd5e1; border-radius: 4px; background-color: #fff; text-align: left; font-weight: 700; font-size: 0.8rem; color: #2d3748;">
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <label style="font-weight: 700; font-size: 0.8rem; color: #4a5568; white-space: nowrap;">دائن</label>
+              <input type="text" id="journalFooterCredit" readonly style="width: 90px; padding: 4px 8px; border: 1px solid #cbd5e1; border-radius: 4px; background-color: #fff; text-align: left; font-weight: 700; font-size: 0.8rem; color: #2d3748;">
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <label style="font-weight: 700; font-size: 0.8rem; color: #4a5568; white-space: nowrap;">المدخل</label>
+              <input type="text" id="journalFooterCreatedBy" readonly style="width: 130px; padding: 4px 8px; border: 1px solid #cbd5e1; border-radius: 4px; background-color: #fff; font-size: 0.8rem; color: #2d3748;">
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <label style="font-weight: 700; font-size: 0.8rem; color: #4a5568; white-space: nowrap;">المعدل</label>
+              <input type="text" id="journalFooterUpdatedBy" readonly style="width: 130px; padding: 4px 8px; border: 1px solid #cbd5e1; border-radius: 4px; background-color: #fff; font-size: 0.8rem; color: #2d3748;">
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <label style="font-weight: 700; font-size: 0.8rem; color: #4a5568; white-space: nowrap;">تاريخ الادخال</label>
+              <input type="text" id="journalFooterCreatedDate" readonly style="width: 170px; padding: 4px 8px; border: 1px solid #cbd5e1; border-radius: 4px; background-color: #fff; font-size: 0.8rem; color: #2d3748; direction: ltr; text-align: right;">
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <label style="font-weight: 700; font-size: 0.8rem; color: #4a5568; white-space: nowrap;">تاريخ التعديل</label>
+              <input type="text" id="journalFooterUpdatedDate" readonly style="width: 170px; padding: 4px 8px; border: 1px solid #cbd5e1; border-radius: 4px; background-color: #fff; font-size: 0.8rem; color: #2d3748; direction: ltr; text-align: right;">
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <label style="font-weight: 700; font-size: 0.8rem; color: #4a5568; white-space: nowrap;">مرات الطباعه</label>
+              <input type="text" id="journalFooterPrintCount" readonly style="width: 50px; padding: 4px 8px; border: 1px solid #cbd5e1; border-radius: 4px; background-color: #fff; text-align: center; font-size: 0.8rem; color: #2d3748;">
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <label style="font-weight: 700; font-size: 0.8rem; color: #4a5568; white-space: nowrap;">مرات التعديل</label>
+              <input type="text" id="journalFooterUpdateCount" readonly style="width: 50px; padding: 4px 8px; border: 1px solid #cbd5e1; border-radius: 4px; background-color: #fff; text-align: center; font-size: 0.8rem; color: #2d3748;">
+            </div>
+            
+          </div>
+      </div>
+    </div>
+  </div>
+
+    <!-- Consolidated Login Summary Modal (Balances & Pending Transactions) -->
+    <div class="modal-overlay" id="loginSummaryModal">
+      <div class="modal-container modal-md" style="max-width: 750px; width: 95%; max-height: 88vh; display: flex; flex-direction: column; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.05); border-radius: 12px; border: 1px solid #cbd5e1; overflow: hidden; animation: modalFadeIn 0.3s ease-out;">
+        
+        <!-- Header -->
+        <div class="modal-header" style="background: linear-gradient(135deg, #1e3a8a, #3b82f6); color: white; border-bottom: none; display: flex; justify-content: space-between; align-items: center; padding: 14px 20px;">
+          <div class="modal-title-group" style="display: flex; align-items: center; gap: 10px;">
+            <i class="fa-solid fa-desktop modal-header-icon" style="color: #ffffff; font-size: 1.25rem;"></i>
+            <h3 style="margin: 0; font-family: var(--font-arabic); font-size: 1.1rem; font-weight: 700; color: #ffffff;">موجز النظام عند الدخول</h3>
+          </div>
+          <button class="modal-close-btn" style="color: white; opacity: 0.8; font-size: 1.5rem; background: none; border: none; cursor: pointer; line-height: 1;" onclick="closeLoginSummaryModal()">&times;</button>
+        </div>
+
+        <!-- Tab Nav Bar inside Modal -->
+        <div class="modal-tab-nav" style="display: flex; background-color: #f1f5f9; border-bottom: 1px solid #e2e8f0; direction: rtl; padding: 0 10px;">
+          <div class="modal-tab-item active" id="modal-tab-balances" onclick="switchSummaryTab('balances')" style="padding: 12px 20px; font-family: var(--font-arabic); font-size: 0.9rem; font-weight: 700; color: #1e3a8a; border-bottom: 3px solid #3b82f6; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; gap: 6px;">
+            <i class="fa-solid fa-scale-balanced"></i>
+            <span>أرصدة الحسابات والأرباح</span>
+          </div>
+          <div class="modal-tab-item" id="modal-tab-pending" onclick="switchSummaryTab('pending')" style="padding: 12px 20px; font-family: var(--font-arabic); font-size: 0.9rem; font-weight: 700; color: #64748b; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; gap: 6px; position: relative;">
+            <i class="fa-solid fa-clock-rotate-left"></i>
+            <span>العمليات غير المرحلة</span>
+            <span id="modal-pending-badge" style="background-color: #ef4444; color: white; font-size: 0.7rem; font-weight: 700; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 50%; display: none; align-items: center; justify-content: center; box-shadow: 0 1px 2px rgba(0,0,0,0.1); margin-right: 4px;">0</span>
+          </div>
+        </div>
+
+        <!-- Modal Body Container -->
+        <div class="modal-body" style="padding: 15px 20px; direction: rtl; text-align: right; flex: 1; overflow-y: auto; background-color: #f8fafc; display: flex; flex-direction: column; gap: 12px;">
+          
+          <!-- Pane 1: Account Balances & Profits -->
+          <div class="modal-tab-pane active" id="modal-pane-balances" style="display: flex; flex-direction: column; gap: 12px; height: 100%;">
+            <!-- Search box -->
+            <div style="position: relative; width: 100%;">
+              <input type="text" id="loginBalancesSearch" placeholder="ابحث باسم الحساب..." oninput="filterLoginBalances()" style="width: 100%; padding: 10px 12px 10px 38px; border: 1px solid #cbd5e1; border-radius: 8px; font-family: var(--font-arabic); font-size: 0.9rem; box-sizing: border-box; transition: all 0.2s ease; outline: none; background-color: white;">
+              <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 0.9rem;"></i>
+            </div>
+
+            <!-- Table wrapper -->
+            <div style="flex: 1; border: 1px solid #e2e8f0; border-radius: 8px; overflow-y: auto; background-color: white; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); min-height: 280px; max-height: 380px;">
+              <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem; font-family: var(--font-arabic);">
+                <thead>
+                  <tr style="background-color: #f1f5f9; border-bottom: 2px solid #e2e8f0; position: sticky; top: 0; z-index: 5;">
+                    <th style="padding: 10px 12px; text-align: right; font-weight: 700; color: #334155;">اسم الحساب</th>
+                    <th style="padding: 10px 12px; text-align: center; font-weight: 700; color: #334155; width: 120px;">العملة</th>
+                    <th style="padding: 10px 12px; text-align: left; font-weight: 700; color: #334155; width: 180px; padding-left: 15px;">الرصيد</th>
+                  </tr>
+                </thead>
+                <tbody id="loginBalancesTableBody">
+                  <!-- Dynamic rows -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Pane 2: Pending Transactions -->
+          <div class="modal-tab-pane" id="modal-pane-pending" style="display: none; flex-direction: column; gap: 12px; height: 100%;">
+            <div style="font-family: var(--font-arabic); font-size: 0.85rem; color: #475569; line-height: 1.5; border-right: 4px solid #ef4444; padding-right: 10px; margin-bottom: 4px;">
+              تنبيه: هناك معاملات لم يتم ترحيلها بعد. انقر على السجل لفتح الشاشة المعنية فوراً لمراجعتها وتعديلها.
+            </div>
+
+            <!-- Search box -->
+            <div style="position: relative; width: 100%;">
+              <input type="text" id="pendingTransactionsSearch" placeholder="ابحث برقم الحركة، الفرع، أو نوع الحركة..." oninput="filterPendingTransactions()" style="width: 100%; padding: 10px 12px 10px 38px; border: 1px solid #cbd5e1; border-radius: 8px; font-family: var(--font-arabic); font-size: 0.9rem; box-sizing: border-box; transition: all 0.2s ease; outline: none; background-color: white;">
+              <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 0.9rem;"></i>
+            </div>
+
+            <!-- Table wrapper -->
+            <div style="flex: 1; border: 1px solid #e2e8f0; border-radius: 8px; overflow-y: auto; background-color: white; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); min-height: 280px; max-height: 380px;">
+              <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem; font-family: var(--font-arabic);">
+                <thead>
+                  <tr style="background-color: #f1f5f9; border-bottom: 2px solid #e2e8f0; position: sticky; top: 0; z-index: 5;">
+                    <th style="padding: 10px 12px; text-align: right; font-weight: 700; color: #334155; width: 140px;">الفرع</th>
+                    <th style="padding: 10px 12px; text-align: right; font-weight: 700; color: #334155; width: 160px;">نوع الحركة</th>
+                    <th style="padding: 10px 12px; text-align: center; font-weight: 700; color: #334155; width: 120px;">رقم الحركة</th>
+                    <th style="padding: 10px 12px; text-align: center; font-weight: 700; color: #334155; width: 130px;">التاريخ</th>
+                    <th style="padding: 10px 12px; text-align: center; font-weight: 700; color: #334155; width: 100px;">الإجراء</th>
+                  </tr>
+                </thead>
+                <tbody id="pendingTransactionsTableBody">
+                  <!-- Dynamic rows -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Footer -->
+        <div class="modal-footer" style="padding: 12px 20px; background-color: #f1f5f9; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; direction: rtl;">
+          <div style="font-family: var(--font-arabic); font-size: 0.85rem; font-weight: bold; color: #475569;" id="modalSummaryCountLabel">
+            عدد الحسابات: 0
+          </div>
+          <button class="btn btn-primary" onclick="closeLoginSummaryModal()" style="font-family: var(--font-arabic); padding: 8px 20px; font-size: 0.85rem; border-radius: 6px; cursor: pointer; font-weight: 700; box-shadow: var(--shadow-sm);">
+            إغلاق
+          </button>
+        </div>
+
+    </div>
+    </div>
+
+    <!-- All Points Summary & Comparison Modal Dialog -->
+    <div class="modal-overlay" id="allPointsSummaryModal" style="display: none;">
+      <div class="modal-container" style="max-width: 1200px; width: 95%; max-height: 90vh; display: flex; flex-direction: column; background: #0f172a; color: #f8fafc; border-radius: 12px; border: 1px solid #334155; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7); overflow: hidden; animation: modalFadeIn 0.25s ease-out;">
+        
+        <!-- Modal Header -->
+        <div style="background: linear-gradient(135deg, #1e3a8a, #0284c7); padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #38bdf8;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <i class="fa-solid fa-layer-group" style="color: #fbbf24; font-size: 1.3rem;"></i>
+            <div>
+              <h3 style="margin: 0; font-weight: 900; font-size: 1.1rem; color: #ffffff;">التقرير المالي والإحصائي الشامل لكافة نقاط البيع</h3>
+              <p style="margin: 2px 0 0 0; font-size: 0.78rem; color: #bae6fd;">مقارنة شاملة لحجم المبيعات، المردودات، المصاريف، المشتريات، ورصيد الصناديق</p>
+            </div>
+          </div>
+          <button type="button" onclick="window.closeAllPointsSummaryModal()" style="background: transparent; border: none; color: #ffffff; font-size: 1.5rem; cursor: pointer; line-height: 1; opacity: 0.8;" title="إغلاق">&times;</button>
+        </div>
+
+        <!-- Modal Filter Bar -->
+        <div style="background: #1e293b; padding: 10px 16px; border-bottom: 1px solid #334155; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+          <div style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: bold;">
+            <i class="fa-regular fa-calendar-days text-info"></i>
+            <span>الفترة:</span>
+            <input type="date" id="modalAllPtsStartDate" value="2026-08-01" style="background: #0f172a; color: #fff; border: 1px solid #475569; border-radius: 6px; padding: 4px 8px; font-size: 0.82rem;">
+            <span>-</span>
+            <input type="date" id="modalAllPtsEndDate" value="2026-08-10" style="background: #0f172a; color: #fff; border: 1px solid #475569; border-radius: 6px; padding: 4px 8px; font-size: 0.82rem;">
+            <button type="button" class="btn btn-sm btn-primary" onclick="window.loadAllPointsSummary()" style="font-weight: bold; padding: 4px 12px;">
+              <i class="fa-solid fa-filter"></i> تطبيق
+            </button>
+          </div>
+
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <button type="button" class="btn btn-sm btn-danger text-white" onclick="window.downloadAllPointsSummaryPdf()" style="font-weight: bold; display: flex; align-items: center; gap: 5px;">
+              <i class="fa-solid fa-file-pdf"></i> تحميل PDF
+            </button>
+            <button type="button" class="btn btn-sm btn-info" onclick="window.printAllPointsSummaryReport()" style="font-weight: bold; color: #fff; display: flex; align-items: center; gap: 5px;">
+              <i class="fa-solid fa-print"></i> طباعة التقرير الشامل
+            </button>
+            <button type="button" class="btn btn-sm btn-success" onclick="window.exportAllPointsSummaryToExcel()" style="font-weight: bold; display: flex; align-items: center; gap: 5px;">
+              <i class="fa-solid fa-file-excel"></i> تصدير إكسل
+            </button>
+            <button type="button" class="btn btn-sm btn-warning text-dark" onclick="window.sendAllPointsSummaryWhatsApp()" style="font-weight: bold; display: flex; align-items: center; gap: 5px;">
+              <i class="fa-brands fa-whatsapp"></i> واتساب (PDF)
+            </button>
+          </div>
+        </div>
+
+        <!-- Modal Body -->
+        <div style="padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; flex: 1;">
+          
+          <!-- Summary Cards Grid inside Modal -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px;">
+            <div class="pos-glow-card card-sales" style="padding: 10px;">
+              <span class="pos-glow-card-title">إجمالي المبيعات</span>
+              <div class="pos-glow-card-val" id="modalPtsTotalSales">0.00 د.أ</div>
+              <div class="pos-glow-card-sub" id="modalPtsCashSales">نقدي: 0.00 د.أ</div>
+            </div>
+
+            <div class="pos-glow-card card-returns" style="padding: 10px;">
+              <span class="pos-glow-card-title">مردود المبيعات</span>
+              <div class="pos-glow-card-val" id="modalPtsTotalReturns">0.00 د.أ</div>
+              <div class="pos-glow-card-sub">المرتجعات</div>
+            </div>
+
+            <div class="pos-glow-card card-cash" style="padding: 10px;">
+              <span class="pos-glow-card-title">صافي المبيعات</span>
+              <div class="pos-glow-card-val" id="modalPtsNetSales">0.00 د.أ</div>
+              <div class="pos-glow-card-sub">صافي الإيراد</div>
+            </div>
+
+            <div class="pos-glow-card card-expenses" style="padding: 10px;">
+              <span class="pos-glow-card-title">المصروفات والسندات</span>
+              <div class="pos-glow-card-val" id="modalPtsTotalExpenses">0.00 د.أ</div>
+              <div class="pos-glow-card-sub">المصاريف</div>
+            </div>
+
+            <div class="pos-glow-card card-purchases" style="padding: 10px;">
+              <span class="pos-glow-card-title">المشتريات / التوريد</span>
+              <div class="pos-glow-card-val" id="modalPtsTotalPurchases">0.00 د.أ</div>
+              <div class="pos-glow-card-sub">المخازن</div>
+            </div>
+
+            <div class="pos-glow-card" style="border-top: 3px solid #14b8a6; padding: 10px;">
+              <span class="pos-glow-card-title">رصيد الصناديق الفعلي</span>
+              <div class="pos-glow-card-val" style="color: #2dd4bf;" id="modalPtsCashBalance">0.00 د.أ</div>
+              <div class="pos-glow-card-sub">السيولة المتبقية</div>
+            </div>
+          </div>
+
+          <!-- Modal Sub-toolbar with View Mode Switcher -->
+          <div style="display: flex; justify-content: space-between; align-items: center; background: #0f172a; padding: 6px 12px; border-radius: 8px; border: 1px solid #334155;">
+            <span style="font-size: 0.85rem; font-weight: bold; color: #cbd5e1;">طريقة عرض التقرير:</span>
+            <div class="btn-group" style="display: flex; background: #1e293b; border-radius: 6px; padding: 2px; border: 1px solid #334155;">
+              <button type="button" id="btnModalViewModeSummary" onclick="window.switchModalAllPtsViewMode('summary')" style="background: #0284c7; color: #fff; border: none; padding: 4px 12px; font-size: 0.8rem; font-weight: bold; border-radius: 4px; cursor: pointer;">
+                <i class="fa-solid fa-table-list"></i> جدول المقارنة المالي
+              </button>
+              <button type="button" id="btnModalViewModeDetailed" onclick="window.switchModalAllPtsViewMode('detailed')" style="background: transparent; color: #94a3b8; border: none; padding: 4px 12px; font-size: 0.8rem; font-weight: bold; border-radius: 4px; cursor: pointer;">
+                <i class="fa-solid fa-layer-group"></i> تقرير مفصل (نقطة تلو الأخرى)
+              </button>
+            </div>
+          </div>
+
+          <!-- View 1: Comparison Table inside Modal -->
+          <div class="pos-ops-table-box" id="modalAllPtsTableViewContainer">
+            <div style="overflow-x: auto; max-height: 420px;">
+              <table class="pos-ops-table" id="tblModalAllPointsTable">
+                <thead>
+                  <tr>
+                    <th style="width: 45px; text-align: center;">#</th>
+                    <th style="width: 80px; text-align: center;">رقم النقطة</th>
+                    <th style="min-width: 150px;">اسم نقطة البيع</th>
+                    <th>إجمالي المبيعات</th>
+                    <th>مردود المبيعات</th>
+                    <th>صافي المبيعات</th>
+                    <th>المصروفات والسندات</th>
+                    <th>المشتريات / التوريد</th>
+                    <th>رصيد الصندوق</th>
+                    <th style="text-align: center;">العمليات</th>
+                    <th style="width: 110px; text-align: center;">إجراء</th>
+                  </tr>
+                </thead>
+                <tbody id="modalAllPointsTableBody">
+                  <tr><td colspan="11" class="text-center text-muted" style="padding: 25px;"><i class="fa-solid fa-spinner fa-spin"></i> جاري تحميل بيانات النقاط...</td></tr>
+                </tbody>
+                <tfoot id="modalAllPointsTableFoot">
+                  <!-- Grand totals inserted dynamically -->
+                </tfoot>
+              </table>
+            </div>
+          </div>
+
+          <!-- View 2: Detailed Point-by-Point Container inside Modal -->
+          <div id="modalAllPtsDetailedViewContainer" style="display: none; padding: 8px 0; max-height: 480px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px;">
+            <!-- Dynamic Point Breakdown Cards generated by JS -->
+          </div>
+
+        </div>
+
+        <!-- Modal Footer -->
+        <div style="padding: 10px 20px; background: #1e293b; border-top: 1px solid #334155; display: flex; justify-content: space-between; align-items: center;">
+          <span style="font-size: 0.85rem; color: #94a3b8;" id="modalPointsSummaryCountLbl">إجمالي نقاط البيع: 0</span>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="window.closeAllPointsSummaryModal()" style="font-weight: bold; padding: 6px 20px;">
+            إغلاق
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+
+    <!-- POS Points (tblPointList) Management Modal (نافذة إدارة وبيانات نقاط البيع) -->
+    <div class="modal-overlay" id="posPointsSettingsModal" style="display: none; z-index: 1055; background: rgba(0, 0, 0, 0.75);">
+      <div class="modal-container" style="max-width: 1200px; width: 95%; max-height: 92vh; display: flex; flex-direction: column; background: #0f172a; border: 1px solid #334155; border-radius: 12px; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);">
+        
+        <!-- Modal Header -->
+        <div style="padding: 14px 20px; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border-bottom: 1px solid #334155; display: flex; justify-content: space-between; align-items: center;">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="width: 38px; height: 38px; border-radius: 8px; background: rgba(14, 165, 233, 0.15); display: flex; align-items: center; justify-content: center; color: #38bdf8; font-size: 1.2rem; border: 1px solid rgba(14, 165, 233, 0.3);">
+              <i class="fa-solid fa-gears"></i>
+            </div>
+            <div>
+              <h3 style="margin: 0; color: #f8fafc; font-size: 1.15rem; font-weight: 800;">إدارة وبيانات نقاط البيع (tblPointList)</h3>
+              <div style="font-size: 0.78rem; color: #94a3b8;">إضافة، تعديل، حذف، واختبار الاتصال المباشر بقواعد بيانات نقاط البيع</div>
+            </div>
+          </div>
+          <button type="button" class="modal-close-btn" onclick="window.closePosPointsSettingsModal()" style="background: transparent; border: none; color: #94a3b8; font-size: 1.5rem; cursor: pointer; line-height: 1;">&times;</button>
+        </div>
+
+        <!-- Modal Body Content -->
+        <div style="padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; background: #0b1329;">
+          
+          <!-- Action Toolbar -->
+          <div style="background-color: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 8px 14px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+            <button type="button" class="btn btn-secondary btn-sm" onclick="newPosPointForm()" style="font-weight: bold; display: flex; align-items: center; gap: 6px;">
+              <i class="fa-solid fa-circle-plus" style="color: #10b981;"></i> جديد
+            </button>
+            <button type="button" class="btn btn-primary btn-sm" onclick="savePosPointForm()" style="font-weight: bold; display: flex; align-items: center; gap: 6px;">
+              <i class="fa-solid fa-floppy-disk"></i> حفظ / إضافة
+            </button>
+            <button type="button" class="btn btn-info btn-sm" onclick="updatePosPointForm()" style="font-weight: bold; display: flex; align-items: center; gap: 6px; color: #fff; background-color: #0284c7; border-color: #0284c7;">
+              <i class="fa-solid fa-pen-to-square"></i> تعديل
+            </button>
+            <button type="button" class="btn btn-danger btn-sm" onclick="deleteSelectedPosPoint()" style="font-weight: bold; display: flex; align-items: center; gap: 6px;">
+              <i class="fa-solid fa-trash-can"></i> حذف
+            </button>
+            <div style="height: 24px; width: 1px; background-color: #475569; margin: 0 4px;"></div>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="testCurrentFormConnection()" style="font-weight: bold; display: flex; align-items: center; gap: 6px;">
+              <i class="fa-solid fa-network-wired" style="color: #3b82f6;"></i> اختبار الاتصال
+            </button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="exportPosPointsToExcel()" style="font-weight: bold; display: flex; align-items: center; gap: 6px;">
+              <i class="fa-solid fa-file-excel" style="color: #16a34a;"></i> تصدير إكسل
+            </button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="loadPosPointsList(true)" style="font-weight: bold; display: flex; align-items: center; gap: 6px; margin-right: auto;">
+              <i class="fa-solid fa-rotate" style="color: #94a3b8;"></i> تحديث
+            </button>
+          </div>
+
+          <!-- Form Fields Card -->
+          <div style="background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 14px;">
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; font-size: 0.82rem;">
+              
+              <!-- Row 1 -->
+              <div>
+                <label style="display: block; font-weight: 700; color: #cbd5e1; margin-bottom: 4px;">رقم النقطة (fldPointNO):</label>
+                <input type="number" id="posModalFormPointNo" placeholder="تلقائي أو أدخل الرقم..." style="width: 100%; padding: 6px 10px; border: 1px solid #334155; border-radius: 6px; font-family: monospace; font-weight: bold; color: #38bdf8; background: #1e293b;">
+              </div>
+
+              <div>
+                <label style="display: block; font-weight: 700; color: #cbd5e1; margin-bottom: 4px;">اسم النقطة (fldName): <span style="color: #ef4444;">*</span></label>
+                <input type="text" id="posModalFormName" placeholder="مثال: الاميرة سنتر..." style="width: 100%; padding: 6px 10px; border: 1px solid #334155; border-radius: 6px; font-family: var(--font-arabic); font-weight: bold; color: #fff; background: #1e293b;">
+              </div>
+
+              <div>
+                <label style="display: block; font-weight: 700; color: #cbd5e1; margin-bottom: 4px;">الفرع (fldBranchNo):</label>
+                <select id="posModalFormBranch" style="width: 100%; padding: 6px 10px; border: 1px solid #334155; border-radius: 6px; font-family: var(--font-arabic); color: #fff; background: #1e293b;">
+                </select>
+              </div>
+
+              <div>
+                <label style="display: block; font-weight: 700; color: #cbd5e1; margin-bottom: 4px;">المخزن (fldstoreID):</label>
+                <select id="posModalFormStore" style="width: 100%; padding: 6px 10px; border: 1px solid #334155; border-radius: 6px; font-family: var(--font-arabic); color: #fff; background: #1e293b;">
+                </select>
+              </div>
+
+              <!-- Row 2 -->
+              <div>
+                <label style="display: block; font-weight: 700; color: #cbd5e1; margin-bottom: 4px;">سيرفر المصدر (DataSource):</label>
+                <input type="text" id="posModalFormDataSource" placeholder="مثال: SENANSERVER\\SQLEXPRESS أو IP" style="width: 100%; padding: 6px 10px; border: 1px solid #334155; border-radius: 6px; font-family: monospace; direction: ltr; text-align: left; color: #fff; background: #1e293b;">
+              </div>
+
+              <div>
+                <label style="display: block; font-weight: 700; color: #cbd5e1; margin-bottom: 4px;">قاعدة البيانات (Catalog):</label>
+                <input type="text" id="posModalFormCatalog" placeholder="مثال: sp أو POS_DB" style="width: 100%; padding: 6px 10px; border: 1px solid #334155; border-radius: 6px; font-family: monospace; direction: ltr; text-align: left; color: #fff; background: #1e293b;">
+              </div>
+
+              <div>
+                <label style="display: block; font-weight: 700; color: #cbd5e1; margin-bottom: 4px;">اسم المستخدم (UserID):</label>
+                <input type="text" id="posModalFormUserID" value="sa" placeholder="sa" style="width: 100%; padding: 6px 10px; border: 1px solid #334155; border-radius: 6px; font-family: monospace; direction: ltr; text-align: left; color: #fff; background: #1e293b;">
+              </div>
+
+              <div>
+                <label style="display: block; font-weight: 700; color: #cbd5e1; margin-bottom: 4px;">كلمة المرور (Password):</label>
+                <div style="display: flex; gap: 4px;">
+                  <input type="password" id="posModalFormPassword" value="as" placeholder="كلمة المرور..." style="flex: 1; padding: 6px 10px; border: 1px solid #334155; border-radius: 6px; font-family: monospace; direction: ltr; text-align: left; color: #fff; background: #1e293b;">
+                  <button type="button" class="btn btn-secondary btn-sm" onclick="togglePosPasswordVisibility('posModalFormPassword')" style="padding: 4px 8px;" title="إظهار/إخفاء كلمة المرور">
+                    <i class="fa-solid fa-eye"></i>
+                  </button>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Search & Data Grid Container -->
+          <div style="display: flex; flex-direction: column; background: #0f172a; border: 1px solid #334155; border-radius: 8px; overflow: hidden;">
+            
+            <!-- Search Header -->
+            <div style="padding: 8px 14px; background-color: #1e293b; border-bottom: 1px solid #334155; display: flex; justify-content: space-between; align-items: center; gap: 15px;">
+              <div style="flex: 1; max-width: 450px;">
+                <input type="text" id="modalPosPointsSearchInput" oninput="filterPosPointsTable()" placeholder="🔍 ابحث برقم النقطة، اسم النقطة، السيرفر، أو الفرع..." style="width: 100%; padding: 6px 12px; border: 1px solid #334155; border-radius: 6px; font-family: var(--font-arabic); font-size: 0.85rem; background: #0f172a; color: #fff;">
+              </div>
+              <div style="font-size: 0.85rem; font-weight: bold; color: #94a3b8;">
+                إجمالي نقاط البيع: <span id="modalPosPointsTotalCount" style="color: #38bdf8; font-family: monospace; font-size: 1rem;">0</span>
+              </div>
+            </div>
+
+            <!-- Table -->
+            <div style="overflow-x: auto; max-height: 380px;">
+              <table id="tblModalPosPointsListTable" style="width: 100%; border-collapse: collapse; font-size: 0.82rem; text-align: center; direction: rtl;" class="pos-ops-table">
+                <thead style="background-color: #0b1329; color: #ffffff; position: sticky; top: 0; z-index: 10;">
+                  <tr>
+                    <th style="padding: 8px; border: 1px solid #334155; width: 85px;">رقم النقطة</th>
+                    <th style="padding: 8px; border: 1px solid #334155; text-align: right; min-width: 160px;">اسم النقطة</th>
+                    <th style="padding: 8px; border: 1px solid #334155; min-width: 100px;">الفرع</th>
+                    <th style="padding: 8px; border: 1px solid #334155; min-width: 90px;">المخزن</th>
+                    <th style="padding: 8px; border: 1px solid #334155; min-width: 160px; direction: ltr;">السيرفر (DataSource)</th>
+                    <th style="padding: 8px; border: 1px solid #334155; min-width: 90px; direction: ltr;">قاعدة البيانات</th>
+                    <th style="padding: 8px; border: 1px solid #334155; min-width: 80px; direction: ltr;">المستخدم</th>
+                    <th style="padding: 8px; border: 1px solid #334155; min-width: 80px; direction: ltr;">كلمة السر</th>
+                    <th style="padding: 8px; border: 1px solid #334155; width: 110px;">فحص الاتصال</th>
+                    <th style="padding: 8px; border: 1px solid #334155; width: 90px;">إجراءات</th>
+                  </tr>
+                </thead>
+                <tbody id="modalPosPointsTbody">
+                  <tr>
+                    <td colspan="10" style="padding: 25px; color: #94a3b8; text-align: center;">
+                      جاري تحميل قائمة نقاط البيع...
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Footer Status Bar -->
+            <div style="background-color: #1e293b; border-top: 1px solid #334155; padding: 8px 14px; font-size: 0.85rem; font-weight: bold; color: #94a3b8;" id="modalPosPointSelectedStatus">
+              لم يتم تحديد نقطة بيع بعد (انقر على أي نقطة من الجدول أعلاه لتعديلها)
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- Modal Footer -->
+        <div style="padding: 10px 20px; background: #1e293b; border-top: 1px solid #334155; display: flex; justify-content: flex-end;">
+          <button type="button" class="btn btn-secondary btn-sm" onclick="window.closePosPointsSettingsModal()" style="font-weight: bold; padding: 6px 20px;">
+            إغلاق
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+
+
+  <!-- Hidden Opening Entry Print Container -->
+  <div id="opening-entry-print-container" class="print-only"></div>
+
+  <!-- Hidden Account Statement Print Container -->
+  <div id="account-statement-print-container" class="print-only"></div>
+
+  <!-- Hidden Daily Movement Print Container -->
+  <div id="daily-movement-print-container" class="print-only"></div>
+
+  <!-- Hidden Cost Center Print Container -->
+  <div id="cost-center-print-container" class="print-only"></div>
+
+  <!-- Hidden Account Group Print Container -->
+  <div id="account-group-print-container" class="print-only"></div>
+
+  <!-- Hidden General Ledger Print Container -->
+  <div id="general-ledger-print-container" class="print-only"></div>
+  
+  <!-- Hidden Trial Balance Print Container -->
+  <div id="trial-balance-print-container" class="print-only"></div>
+
+  <!-- Hidden Account Reports Print Container -->
+  <div id="account-reports-print-container" class="print-only"></div>
+
+  <!-- Hidden Final Accounts Print Container -->
+  <div id="final-accounts-print-container" class="print-only"></div>
+
+  <!-- Hidden Item Card Print Container -->
+  <div id="item-card-print-container" class="print-only"></div>
+
+
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- App Logic script -->
+  <script src="app.js?v=20260811_05"></script>
+
+  <!-- POS Thermal Receipt Preview Modal (80mm) -->
+  <div class="modal-overlay" id="posReceiptModal" style="display: none; z-index: 1060; background: rgba(0, 0, 0, 0.8);">
+    <div class="pos-receipt-modal-card">
+      <div class="pos-receipt-modal-header">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <i class="fa-solid fa-receipt" style="color: #38bdf8; font-size: 1.2rem;"></i>
+          <h3 style="margin: 0; color: #f8fafc; font-size: 1.1rem; font-weight: 800;">معاينة فاتورة الكاشير الحرارية (80mm)</h3>
+        </div>
+        <button type="button" class="modal-close-btn" onclick="window.closePosReceiptModal()" style="background: transparent; border: none; color: #94a3b8; font-size: 1.5rem; cursor: pointer; line-height: 1;">&times;</button>
+      </div>
+
+      <div class="pos-receipt-modal-body">
+        <!-- The Printable Thermal Receipt Container -->
+        <div id="posThermalReceiptPrintArea" class="thermal-80mm-receipt">
+          
+          <!-- Store Header & Logo -->
+          <div class="receipt-header">
+            <img id="rcptStoreLogo" src="" style="display: none; max-height: 50px; margin: 0 auto 6px;" alt="شعار المتجر">
+            <h2 class="receipt-store-title" id="rcptStoreName">شركة الاميرة للتجارة</h2>
+            <p class="receipt-store-sub" id="rcptBranchName">الفرع الرئيسي - نقطة بيع [31]</p>
+            <p class="receipt-store-tax" id="rcptTaxNo">الرقم الضريبي: 300123456789003</p>
+          </div>
+
+          <div class="receipt-divider">--------------------------------</div>
+
+          <!-- Invoice Details Meta -->
+          <div class="receipt-meta-grid">
+            <div><span class="lbl">رقم الفاتورة:</span> <strong id="rcptInvNumber">#261223500001</strong></div>
+            <div><span class="lbl">التاريخ:</span> <span id="rcptDate">2026/08/10</span></div>
+            <div><span class="lbl">الوقت:</span> <span id="rcptTime">14:35:10</span></div>
+            <div><span class="lbl">الكاشير:</span> <span id="rcptCashier">وليد</span></div>
+            <div><span class="lbl">طريقة الدفع:</span> <strong id="rcptPayMethod">نقدي (Cash)</strong></div>
+            <div><span class="lbl">العميل:</span> <span id="rcptCustomer">زبون نقدي عام</span></div>
+          </div>
+
+          <div class="receipt-divider">================================</div>
+
+          <!-- Items Table -->
+          <table class="receipt-items-table">
+            <thead>
+              <tr>
+                <th style="text-align: right;">الصنف</th>
+                <th style="text-align: center;">الكمية</th>
+                <th style="text-align: left;">السعر</th>
+                <th style="text-align: left;">الإجمالي</th>
+              </tr>
+            </thead>
+            <tbody id="rcptItemsTbody">
+              <tr>
+                <td>صندل نسائي كعب</td>
+                <td style="text-align: center;">1</td>
+                <td style="text-align: left;">15002.00</td>
+                <td style="text-align: left; font-weight: bold;">15002.00</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="receipt-divider">--------------------------------</div>
+
+          <!-- Totals Summary -->
+          <div class="receipt-totals-box">
+            <div class="receipt-total-row">
+              <span>المجموع الفرعي (Subtotal):</span>
+              <strong id="rcptSubtotal">15002.00 د.أ</strong>
+            </div>
+            <div class="receipt-total-row" id="rcptDiscountRow" style="display: none;">
+              <span>الخصم (Discount):</span>
+              <strong class="text-rose" id="rcptDiscount">0.00 د.أ</strong>
+            </div>
+            <div class="receipt-total-row" id="rcptTaxRow" style="display: none;">
+              <span>ضريبة القيمة المضافة (VAT):</span>
+              <strong id="rcptTaxAmount">0.00 د.أ</strong>
+            </div>
+            <div class="receipt-total-row grand-total">
+              <span>الصافي النهائي (Grand Total):</span>
+              <strong id="rcptGrandTotal">15002.00 د.أ</strong>
+            </div>
+            <div class="receipt-total-words" id="rcptAmountWords">
+              فقط خمسة عشر ألفاً واثنان دينار أردني لا غير
+            </div>
+          </div>
+
+          <div class="receipt-divider">================================</div>
+
+          <!-- Barcode & QR Code Section -->
+          <div class="receipt-barcode-qr-area">
+            <svg id="rcptBarcodeSvg" class="receipt-barcode"></svg>
+            <div id="rcptQrCodeContainer" class="receipt-qrcode" style="display: flex; justify-content: center; margin: 6px auto;"></div>
+          </div>
+
+          <!-- Footer Message -->
+          <div class="receipt-footer-msg">
+            <p>شكراً لزيارتكم ونسعد بخدمتكم دائماً!</p>
+            <p>البضاعة المباعة ترد وتستبدل خلال 3 أيام بموجب الفاتورة الأصلية</p>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Modal Actions Footer -->
+      <div class="pos-receipt-modal-footer">
+        <button type="button" class="btn btn-primary" onclick="window.printCurrentPosReceiptDirect()" style="font-weight: 800; display: flex; align-items: center; gap: 6px;">
+          <i class="fa-solid fa-print"></i> طباعة الفاتورة الحرارية
+        </button>
+        <button type="button" class="btn btn-outline-danger" onclick="window.downloadCurrentPosReceiptPdf()" style="font-weight: bold; display: flex; align-items: center; gap: 6px;">
+          <i class="fa-solid fa-file-pdf"></i> تحميل PDF
+        </button>
+        <button type="button" class="btn btn-success" onclick="window.sendCurrentPosReceiptWhatsApp()" style="font-weight: bold; display: flex; align-items: center; gap: 6px;">
+          <i class="fa-brands fa-whatsapp"></i> إرسال عبر واتساب
+        </button>
+        <button type="button" class="btn btn-secondary" onclick="window.closePosReceiptModal()" style="margin-right: auto;">
+          إغلاق
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- ======================================================== -->
+  <!-- Auto-Updater Modal (نافذة التحديث التلقائي الشامل عبر GitHub) -->
+  <!-- ======================================================== -->
+  <div class="modal" id="systemUpdateModal">
+    <div class="modal-content system-update-modal-dialog">
+      
+      <!-- Modal Header -->
+      <div class="modal-header system-update-header">
+        <div class="updater-title-area">
+          <div class="updater-icon-badge">
+            <i class="fa-solid fa-cloud-arrow-down"></i>
+          </div>
+          <div>
+            <h3 class="modal-title">مركز التحديث التلقائي للنظام (Auto-Updater)</h3>
+            <p class="updater-subtitle">التحقق من التحديثات وتثبيتها مباشرة عبر مستودع GitHub بأمان وسرعة</p>
+          </div>
+        </div>
+        <button type="button" class="close-btn" onclick="closeSystemUpdateModal()">&times;</button>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <div class="updater-tabs-nav">
+        <button type="button" class="updater-tab-btn active" id="updaterTabUpdatesBtn" onclick="switchUpdaterTab('updates')">
+          <i class="fa-solid fa-arrows-rotate"></i> فحص وتثبيت التحديث
+        </button>
+        <button type="button" class="updater-tab-btn" id="updaterTabSettingsBtn" onclick="switchUpdaterTab('settings')">
+          <i class="fa-brands fa-github"></i> إعدادات المستودع (GitHub)
+        </button>
+        <button type="button" class="updater-tab-btn" id="updaterTabBackupsBtn" onclick="switchUpdaterTab('backups')">
+          <i class="fa-solid fa-clock-rotate-left"></i> النسخ الاحتياطية والتراجع
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="modal-body system-update-body">
+        
+        <!-- Tab 1: Updates & Installation -->
+        <div class="updater-tab-pane active" id="updaterPaneUpdates">
+          
+          <!-- Version Status Cards -->
+          <div class="updater-version-grid">
+            <div class="updater-version-card current">
+              <div class="card-label">الإصدار المثبت حالياً</div>
+              <div class="version-badge" id="updaterCurrentVerBadge">v1.0.0</div>
+              <div class="card-subtext" id="updaterCurrentStatusText">النظام قيد التشغيل</div>
+            </div>
+
+            <div class="updater-version-card latest" id="updaterLatestCard">
+              <div class="card-label">أحدث إصدار على GitHub</div>
+              <div class="version-badge" id="updaterLatestVerBadge">--</div>
+              <div class="card-subtext" id="updaterLatestStatusText">اضغط فحص للتحقق</div>
+            </div>
+          </div>
+
+          <!-- Alert / Notification Banner -->
+          <div class="updater-status-banner info" id="updaterStatusBanner">
+            <i class="fa-solid fa-circle-info banner-icon" id="updaterStatusIcon"></i>
+            <div class="banner-content">
+              <strong id="updaterStatusTitle">جاهز للتحقق من التحديثات</strong>
+              <span id="updaterStatusDesc">اضغط على زر "فحص التحديثات الآن" للاستعلام المباشر من GitHub.</span>
+            </div>
+          </div>
+
+          <!-- Changelog & Release Notes -->
+          <div class="updater-changelog-card">
+            <div class="changelog-header">
+              <i class="fa-solid fa-list-check"></i>
+              <span>سجل التغييرات والمميزات (Release Notes):</span>
+              <span class="commit-badge" id="updaterCommitBadge">--</span>
+            </div>
+            <div class="changelog-body" id="updaterChangelogBody">
+              لا توجد بيانات بعد. اضغط على فحص التحديثات لجلب التفاصيل.
+            </div>
+          </div>
+
+          <!-- Live Progress Bar (Hidden by default, shown during update) -->
+          <div class="updater-progress-wrapper" id="updaterProgressWrapper" style="display: none;">
+            <div class="progress-title-row">
+              <span id="updaterProgressStepText">جاري تهيئة التحديث...</span>
+              <span id="updaterProgressPercent">0%</span>
+            </div>
+            <div class="updater-progress-bar-bg">
+              <div class="updater-progress-bar-fill" id="updaterProgressFill" style="width: 0%;"></div>
+            </div>
+            <div class="updater-steps-list">
+              <div class="updater-step-item" id="step-backup">
+                <i class="fa-solid fa-circle-check"></i> 1. إنشاء نسخة احتياطية آمنة
+              </div>
+              <div class="updater-step-item" id="step-download">
+                <i class="fa-solid fa-circle-check"></i> 2. تنزيل التحديث من GitHub
+              </div>
+              <div class="updater-step-item" id="step-deps">
+                <i class="fa-solid fa-circle-check"></i> 3. فحص وتطبيق المكتبات
+              </div>
+              <div class="updater-step-item" id="step-restart">
+                <i class="fa-solid fa-circle-check"></i> 4. إعادة التشغيل وتحديث المتصفح
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Tab 2: GitHub Settings -->
+        <div class="updater-tab-pane" id="updaterPaneSettings" style="display: none;">
+          <div class="updater-settings-form">
+            <div class="form-group" style="margin-bottom: 12px;">
+              <label style="font-weight: bold; margin-bottom: 4px; display: block;"><i class="fa-brands fa-github"></i> مستودع GitHub (Owner/Repo):</label>
+              <input type="text" id="updaterInputRepo" class="form-control" value="senanye/AccountsExplorerwep" placeholder="مثال: senanye/AccountsExplorerwep" style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-family: monospace;">
+              <small style="color: #64748b; font-size: 0.75rem;">اسم المالك / اسم المستودع في GitHub</small>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 12px;">
+              <label style="font-weight: bold; margin-bottom: 4px; display: block;"><i class="fa-solid fa-code-branch"></i> الفرع (Branch):</label>
+              <input type="text" id="updaterInputBranch" class="form-control" value="main" placeholder="main أو master" style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-family: monospace;">
+            </div>
+
+            <div class="form-group" style="margin-bottom: 12px;">
+              <label style="font-weight: bold; margin-bottom: 4px; display: block;"><i class="fa-solid fa-key"></i> رمز الوصول GitHub Token (اختياري للمستودعات الخاصة):</label>
+              <input type="password" id="updaterInputToken" class="form-control" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-family: monospace;">
+            </div>
+
+            <div class="form-check-group" style="display: flex; flex-direction: column; gap: 8px; margin: 15px 0;">
+              <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.85rem;">
+                <input type="checkbox" id="updaterCheckAutoCheck" checked style="width: 16px; height: 16px;">
+                <span>التحقق التلقائي من التحديثات عند بدء تشغيل البرنامج</span>
+              </label>
+              <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.85rem;">
+                <input type="checkbox" id="updaterCheckAutoBackup" checked style="width: 16px; height: 16px;">
+                <span>أخذ نسخة احتياطية آمنة للملفات تلقائياً قبل تثبيت أي تحديث (موصى به)</span>
+              </label>
+            </div>
+
+            <button type="button" class="btn btn-primary" onclick="saveUpdaterSettings()" style="font-weight: bold; display: flex; align-items: center; gap: 6px; padding: 8px 18px;">
+              <i class="fa-solid fa-floppy-disk"></i> حفظ إعدادات التحديث
+            </button>
+          </div>
+        </div>
+
+        <!-- Tab 3: Backups & Rollback -->
+        <div class="updater-tab-pane" id="updaterPaneBackups" style="display: none;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <span style="font-weight: bold; color: #475569; font-size: 0.85rem;">سجل النسخ الاحتياطية المحفوظة تلقائياً:</span>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="createManualBackup()" style="font-weight: bold; display: flex; align-items: center; gap: 4px;">
+              <i class="fa-solid fa-plus"></i> أخذ نسخة احتياطية يدوية
+            </button>
+          </div>
+          <div class="backups-list-container" id="updaterBackupsList" style="max-height: 260px; overflow-y: auto; border: 1px solid #cbd5e1; border-radius: 6px; padding: 8px; background: #f8fafc;">
+            <!-- Rendered dynamically -->
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Modal Footer Actions -->
+      <div class="modal-footer system-update-footer">
+        <button type="button" class="btn btn-secondary" onclick="checkSystemUpdates(false)" id="updaterCheckBtn" style="font-weight: bold; display: flex; align-items: center; gap: 6px; padding: 6px 14px;">
+          <i class="fa-solid fa-magnifying-glass"></i> فحص التحديثات الآن
+        </button>
+        <button type="button" class="btn btn-success" onclick="applySystemUpdate()" id="updaterApplyBtn" style="font-weight: 800; display: flex; align-items: center; gap: 6px; padding: 6px 16px;" disabled>
+          <i class="fa-solid fa-rocket"></i> تنزيل وتثبيت التحديث الآن
+        </button>
+        <button type="button" class="btn btn-outline-secondary" onclick="closeSystemUpdateModal()" style="margin-right: auto; padding: 6px 14px;">
+          إغلاق
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+</body>
+</html>

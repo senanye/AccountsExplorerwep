@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+
+# Local sensitive configuration & credentials
+db_config.json
+.env
+
+# WhatsApp web session cache (locked files)
+.wwebjs_auth/
+.wwebjs_cache/
+
+# Logs
+*.log
+server_err.log
+server_out.log
+
+# Large backup archives
+*.zip
+backups/
+scratch/
+
+# Runtime binaries
+runtime/

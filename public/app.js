@@ -25634,24 +25634,34 @@ window.openSalesExplorerTab = function() {
   openTab('sales-explorer', 'استعلام المبيعات', 'fa-solid fa-list-check', 'text-primary', true);
 };
 
-// Open Sales Invoice tab
-window.openSaleInvoiceTab = function(saleId = null) {
+// Open Sales / Sales Return Invoice tab
+window.openSaleInvoiceTab = function(saleId = null, transType = 30) {
+  const isReturn = (transType === 31);
+  const menuId = isReturn ? 31 : 30;
+
   const isAdmin = state.currentUser && (state.currentUser.fldAdmin || state.currentUser.isAdmin || state.currentUser.id === 1);
   if (!isAdmin && state.permissions && state.permissions.length > 0) {
-    if (!hasPermission(30, 'fldSELECT')) {
-      showToast("عذراً، ليس لديك صلاحية استعلام (عرض) لشاشة المبيعات.", "error");
+    if (!hasPermission(menuId, 'fldSELECT')) {
+      showToast(isReturn ? "عذراً، ليس لديك صلاحية استعلام (عرض) لشاشة مردود المبيعات." : "عذراً، ليس لديك صلاحية استعلام (عرض) لشاشة المبيعات.", "error");
       return;
     }
   }
 
-  const tabId = saleId ? `sale-inv-${saleId}` : 'sale-inv-new';
-  const tabTitle = saleId ? `فاتورة مبيعات #${saleId}` : 'فاتورة المبيعات';
+  const tabId = saleId 
+    ? (isReturn ? `sales-return-inv-${saleId}` : `sale-inv-${saleId}`) 
+    : (isReturn ? `sales-return-inv-new-${Date.now()}` : `sale-inv-new-${Date.now()}`);
+  
+  const tabTitle = saleId 
+    ? (isReturn ? `فاتورة مردود #${saleId}` : `فاتورة مبيعات #${saleId}`) 
+    : (isReturn ? 'فاتورة مردود مبيعات' : 'فاتورة المبيعات');
 
+  state[`saleTransType-${tabId}`] = transType;
   if (saleId) {
     state.editingSaleId = saleId;
+    state[`activeSaleInvoiceId-${tabId}`] = saleId;
   }
 
-  openTab(tabId, tabTitle, 'fa-solid fa-receipt', 'text-success', true);
+  openTab(tabId, tabTitle, isReturn ? 'fa-solid fa-arrow-rotate-left' : 'fa-solid fa-receipt', isReturn ? 'text-rose' : 'text-success', true);
 
   if (saleId) {
     setTimeout(() => {
@@ -25660,6 +25670,10 @@ window.openSaleInvoiceTab = function(saleId = null) {
       }
     }, 250);
   }
+};
+
+window.openSalesReturnInvoiceTab = function(saleId = null) {
+  window.openSaleInvoiceTab(saleId, 31);
 };
 
 // -------------------------------------------------------------
@@ -28119,6 +28133,10 @@ window.selectSalesReturnRow = function(tabId, id) {
 
 window.openNewSalesReturnInvoice = function(tabId) {
   window.openSalesReturnInvoiceTab(null);
+};
+
+window.openSalesReturnInvoiceTab = function(saleId = null) {
+  window.openSaleInvoiceTab(saleId, 31);
 };
 
 window.openEditSalesReturnInvoice = function(tabId) {

@@ -3040,5 +3040,99 @@ FROM dbo.tblMenus LEFT OUTER JOIN
     </div>
   </div>
 
+
+  <!-- ======================================================== -->
+  <!-- Sales Invoice Print & Preview Modal (معاينة وطباعة فواتير المبيعات) -->
+  <!-- ======================================================== -->
+  <div class="modal" id="saleInvoicePrintModal" style="z-index: 1070;">
+    <div class="modal-content sale-print-modal-dialog">
+      
+      <!-- Modal Header -->
+      <div class="modal-header" style="background: linear-gradient(135deg, #1e3a8a, #2563eb); color: white; padding: 12px 18px; display: flex; justify-content: space-between; align-items: center;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <i class="fa-solid fa-print" style="font-size: 1.3rem; color: #93c5fd;"></i>
+          <div>
+            <h3 style="margin: 0; font-size: 1.1rem; font-weight: 800;">معاينة وطباعة فاتورة المبيعات</h3>
+            <span style="font-size: 0.75rem; opacity: 0.85;">تخصيص حجم الورق (A4 / A5 / 80mm) وإظهار/إخفاء الحقول والترويسة</span>
+          </div>
+        </div>
+        <button type="button" class="close-btn" onclick="closeSaleInvoicePrintModal()" style="color: white; font-size: 1.5rem; opacity: 0.9; background: transparent; border: none; cursor: pointer;">&times;</button>
+      </div>
+
+      <!-- Controls & Options Bar -->
+      <div class="sale-print-controls-bar" style="background: #f8fafc; border-bottom: 1px solid #cbd5e1; padding: 10px 16px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px;">
+        
+        <!-- Paper Size Selector -->
+        <div style="display: flex; align-items: center; gap: 6px;">
+          <span style="font-size: 0.8rem; font-weight: bold; color: #475569;"><i class="fa-solid fa-file-lines"></i> حجم الورق:</span>
+          <div class="btn-group" style="display: flex; gap: 4px;">
+            <button type="button" class="btn btn-sm btn-primary sale-paper-btn" id="paperBtn-A4" onclick="setSalePrintPaperSize('A4')" style="font-weight: 700; padding: 4px 12px; font-size: 0.78rem;">
+              📄 A4 قياسي
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-secondary sale-paper-btn" id="paperBtn-A5" onclick="setSalePrintPaperSize('A5')" style="font-weight: 700; padding: 4px 12px; font-size: 0.78rem;">
+              📑 A5 مدمج
+            </button>
+            <button type="button" class="btn btn-sm btn-outline-secondary sale-paper-btn" id="paperBtn-80mm" onclick="setSalePrintPaperSize('80mm')" style="font-weight: 700; padding: 4px 12px; font-size: 0.78rem;">
+              🧾 80mm حراري
+            </button>
+          </div>
+        </div>
+
+        <!-- Dynamic Column & Header Toggles -->
+        <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 12px; font-size: 0.78rem; color: #334155;">
+          <label style="display: flex; align-items: center; gap: 4px; cursor: pointer;">
+            <input type="checkbox" id="chkPrintHeader" checked onchange="refreshSaleInvoicePrintPreview()" style="width: 15px; height: 15px;">
+            <span>الترويسة والشعار</span>
+          </label>
+          <label style="display: flex; align-items: center; gap: 4px; cursor: pointer;">
+            <input type="checkbox" id="chkPrintFreeQty" onchange="refreshSaleInvoicePrintPreview()" style="width: 15px; height: 15px;">
+            <span>الكميات المجانية</span>
+          </label>
+          <label style="display: flex; align-items: center; gap: 4px; cursor: pointer;">
+            <input type="checkbox" id="chkPrintExpiry" onchange="refreshSaleInvoicePrintPreview()" style="width: 15px; height: 15px;">
+            <span>تاريخ الانتهاء</span>
+          </label>
+          <label style="display: flex; align-items: center; gap: 4px; cursor: pointer;">
+            <input type="checkbox" id="chkPrintSerial" onchange="refreshSaleInvoicePrintPreview()" style="width: 15px; height: 15px;">
+            <span>السيريال نمبر</span>
+          </label>
+          <label style="display: flex; align-items: center; gap: 4px; cursor: pointer;">
+            <input type="checkbox" id="chkPrintTax" onchange="refreshSaleInvoicePrintPreview()" style="width: 15px; height: 15px;">
+            <span>الضريبة</span>
+          </label>
+          <label style="display: flex; align-items: center; gap: 4px; cursor: pointer;">
+            <input type="checkbox" id="chkPrintSignatures" checked onchange="refreshSaleInvoicePrintPreview()" style="width: 15px; height: 15px;">
+            <span>التوقيعات</span>
+          </label>
+        </div>
+
+      </div>
+
+      <!-- Modal Body (Print Preview Container) -->
+      <div class="modal-body" style="background: #64748b; padding: 20px; max-height: 70vh; overflow-y: auto; display: flex; justify-content: center;">
+        
+        <!-- The Printable Invoice Element -->
+        <div id="saleInvoicePrintArea" class="sale-invoice-print-sheet paper-A4" style="background: white; box-shadow: 0 4px 15px rgba(0,0,0,0.3); border-radius: 4px; margin: 0 auto; box-sizing: border-box; width: 100%;">
+          <!-- Rendered dynamically -->
+        </div>
+
+      </div>
+
+      <!-- Modal Footer Actions -->
+      <div class="modal-footer" style="background: #f8fafc; border-top: 1px solid #cbd5e1; padding: 10px 18px; display: flex; gap: 8px; align-items: center;">
+        <button type="button" class="btn btn-primary" onclick="executeSaleInvoicePrint()" style="font-weight: 800; font-size: 0.9rem; padding: 8px 20px; display: flex; align-items: center; gap: 8px;">
+          <i class="fa-solid fa-print"></i> طباعة الفاتورة الآن
+        </button>
+        <button type="button" class="btn btn-success" onclick="shareSaleInvoicePrintWhatsApp()" style="font-weight: 700; font-size: 0.85rem; padding: 8px 16px; display: flex; align-items: center; gap: 6px;">
+          <i class="fa-brands fa-whatsapp"></i> إرسال عبر واتساب
+        </button>
+        <button type="button" class="btn btn-outline-secondary" onclick="closeSaleInvoicePrintModal()" style="margin-right: auto; padding: 8px 16px;">
+          إغلاق
+        </button>
+      </div>
+
+    </div>
+  </div>
+
 </body>
 </html>

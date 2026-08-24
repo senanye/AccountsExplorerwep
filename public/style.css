@@ -6206,3 +6206,124 @@ input:checked + .dark-switch-slider:before {
   gap: 8px !important;
   align-items: center !important;
 }
+
+
+
+/* ======================================================== */
+/* SALES INVOICE PRINT & PREVIEW SYSTEM STYLES              */
+/* ======================================================== */
+
+.sale-print-modal-dialog {
+  width: 1000px !important;
+  max-width: 96vw !important;
+  border-radius: 12px !important;
+  overflow: hidden !important;
+  font-family: var(--font-arabic) !important;
+}
+
+.sale-invoice-print-sheet {
+  background: #ffffff;
+  color: #0f172a;
+  direction: rtl;
+  font-family: 'Segoe UI', Tahoma, 'Cairo', sans-serif;
+  transition: all 0.2s ease;
+}
+
+.sale-invoice-print-sheet.paper-A4 {
+  width: 820px !important;
+  min-height: 1050px;
+  padding: 24px 30px;
+  font-size: 0.88rem;
+}
+
+.sale-invoice-print-sheet.paper-A5 {
+  width: 580px !important;
+  min-height: 750px;
+  padding: 16px 20px;
+  font-size: 0.78rem;
+}
+
+.sale-invoice-print-sheet.paper-80mm {
+  width: 320px !important;
+  padding: 10px 12px;
+  font-size: 0.75rem;
+  border: 1px dashed #94a3b8;
+  font-family: 'Courier New', monospace, var(--font-arabic);
+}
+
+.sale-invoice-print-sheet table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.sale-invoice-print-sheet th {
+  background-color: #f1f5f9;
+  color: #0f172a;
+  font-weight: 800;
+  border: 1px solid #94a3b8;
+  padding: 6px 4px;
+}
+
+.sale-invoice-print-sheet td {
+  border: 1px solid #cbd5e1;
+  padding: 5px 4px;
+}
+
+@media print {
+  /* Hide everything on page except the active print area */
+  body * {
+    visibility: hidden !important;
+  }
+  
+  #saleInvoicePrintArea, #saleInvoicePrintArea * {
+    visibility: visible !important;
+  }
+
+  #saleInvoicePrintModal, .modal-overlay {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    display: block !important;
+  }
+
+  .modal-header, .sale-print-controls-bar, .modal-footer, .modal-close-btn, .close-btn {
+    display: none !important;
+  }
+
+  .modal-body {
+    background: transparent !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  .sale-print-modal-dialog {
+    width: 100% !important;
+    max-width: 100% !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  #saleInvoicePrintArea {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    box-shadow: none !important;
+    border: none !important;
+    padding: 10mm !important;
+    margin: 0 !important;
+    page-break-after: auto;
+  }
+
+  #saleInvoicePrintArea.paper-80mm {
+    width: 80mm !important;
+    padding: 2mm !important;
+  }
+}

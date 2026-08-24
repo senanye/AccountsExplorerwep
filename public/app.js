@@ -26717,8 +26717,490 @@ window.clearSaleInvoiceForm = function(tabId) {
   applySalesInvoicePermissions(tabId);
 };
 
+// ========================================================
+// SALES INVOICE DYNAMIC PRINT ENGINE (محرك طباعة فواتير المبيعات)
+// ========================================================
+
+state.activeSalePrintPaperSize = 'A4';
+state.activeSalePrintTabId = null;
+
 window.printSingleSaleInvoice = function(tabId) {
+  if (!hasPermission(30, 'fldPrint')) {
+    showToast("ليس لديك صلاحية الطباعة لفواتير المبيعات.", "error");
+    return;
+  }
+
+  const items = state[`saleInvoiceItems-${tabId}`] || [];
+  if (items.length === 0) {
+    showToast("لا توجد أصناف في الفاتورة للطباعة.", "warning");
+    return;
+  }
+
+  state.activeSalePrintTabId = tabId;
+
+  // Auto-detect which optional columns are in use
+  const hasFree = items.some(i => (parseFloat(i.fldFreeQty) || 0) > 0);
+  const hasExpiry = items.some(i => i.fldExpDate && String(i.fldExpDate).trim() !== '');
+  const hasSerial = items.some(i => (i.fldSN || i.fldSerialNumber) && String(i.fldSN || i.fldSerialNumber).trim() !== '');
+  const hasTax = items.some(i => (parseFloat(i.fldlTaxTota_D) || 0) > 0);
+
+  const chkFree = document.getElementById('chkPrintFreeQty');
+  const chkExp = document.getElementById('chkPrintExpiry');
+  const chkSN = document.getElementById('chkPrintSerial');
+  const chkTax = document.getElementById('chkPrintTax');
+
+  if (chkFree) chkFree.checked = hasFree;
+  if (chkExp) chkExp.checked = hasExpiry;
+  if (chkSN) chkSN.checked = hasSerial;
+  if (chkTax) chkTax.checked = hasTax;
+
+  // Open the Print Preview Modal
+  const modal = document.getElementById('saleInvoicePrintModal');
+  if (modal) modal.classList.add('open');
+
+  setSalePrintPaperSize(state.activeSalePrintPaperSize || 'A4');
+
+  // Increment print count in background if invoice exists
+  const activeId = state[`activeSaleInvoiceId-${tabId}`];
+  if (activeId) {
+    fetch(`/api/sales/${activeId}/increment-print`, { method: 'POST' }).catch(() => {});
+  }
+};
+
+window.closeSaleInvoicePrintModal = function() {
+  const modal = document.getElementById('saleInvoicePrintModal');
+  if (modal) modal.classList.remove('open');
+};
+
+window.setSalePrintPaperSize = function(size) {
+  state.activeSalePrintPaperSize = size;
+  
+  ['A4', 'A5', '80mm'].forEach(s => {
+    const btn = document.getElementById(`paperBtn-${s}`);
+    if (btn) {
+      if (s === size) {
+        btn.className = 'btn btn-sm btn-primary sale-paper-btn';
+      } else {
+        btn.className = 'btn btn-sm btn-outline-secondary sale-paper-btn';
+      }
+    }
+  });
+
+  const printArea = document.getElementById('saleInvoicePrintArea');
+  if (printArea) {
+    printArea.className = `sale-invoice-print-sheet paper-${size}`;
+  }
+
+  refreshSaleInvoicePrintPreview();
+};
+
+window.refreshSaleInvoicePrintPreview = function() {
+  const tabId = state.activeSalePrintTabId;
+  const printArea = document.getElementById('saleInvoicePrintArea');
+  if (!tabId || !printArea) return;
+
+  const paperSize = state.activeSalePrintPaperSize || 'A4';
+  const showHeader = document.getElementById('chkPrintHeader')?.checked !== false;
+  const showFree = document.getElementById('chkPrintFreeQty')?.checked === true;
+  const showExpiry = document.getElementById('chkPrintExpiry')?.checked === true;
+  const showSerial = document.getElementById('chkPrintSerial')?.checked === true;
+  const showTax = document.getElementById('chkPrintTax')?.checked === true;
+  const showSignatures = document.getElementById('chkPrintSignatures')?.checked !== false;
+
+  // Read Invoice Header Fields
+  const transNo = document.getElementById(`siTransNo-${tabId}`)?.value || '0';
+  const invoiceDate = document.getElementById(`siDate-${tabId}`)?.value || new Date().toISOString().split('T')[0];
+  const refNo = document.getElementById(`siRefNo-${tabId}`)?.value || '';
+  const refDate = document.getElementById(`siRefDate-${tabId}`)?.value || '';
+  const customerName = document.getElementById(`siCustomerName-${tabId}`)?.value || 'عميل نقدي عام';
+  const description = document.getElementById(`siDescription-${tabId}`)?.value || '';
+
+  const branchSelect = document.getElementById(`siBranch-${tabId}`);
+  const branchName = branchSelect && branchSelect.selectedIndex >= 0 ? branchSelect.options[branchSelect.selectedIndex].textContent.trim() : "الفرع الرئيسي";
+
+  const paymentTypeSelect = document.getElementById(`siPaymentType-${tabId}`);
+  const paymentTypeName = paymentTypeSelect && paymentTypeSelect.selectedIndex >= 0 ? paymentTypeSelect.options[paymentTypeSelect.selectedIndex].textContent.trim() : "نقداً";
+
+  const warehouseSelect = document.getElementById(`siWarehouse-${tabId}`);
+  const warehouseName = warehouseSelect && warehouseSelect.selectedIndex >= 0 ? warehouseSelect.options[warehouseSelect.selectedIndex].textContent.trim() : "المستودع الرئيسي";
+
+  const curSelect = document.getElementById(`siCurrency-${tabId}`);
+  const currencyName = curSelect && curSelect.selectedIndex >= 0 ? curSelect.options[curSelect.selectedIndex].textContent.trim() : "ريال سعودي";
+  const rateVal = parseFloat(document.getElementById(`siRate-${tabId}`)?.value) || 1.0;
+
+  let currencySymbol = "ر.س";
+  if (currencyName.includes("يمني")) currencySymbol = "ر.ي";
+  else if (currencyName.includes("دولار")) currencySymbol = "$";
+  else if (currencyName.includes("درهم")) currencySymbol = "د.إ";
+
+  const boxName = document.getElementById(`siBoxAccountSearch-${tabId}`)?.value || 'الصندوق العام';
+  const userName = state.currentUser?.name || state.currentUser?.username || 'مدير النظام';
+
+  // Calculate Items & Totals
+  const items = state[`saleInvoiceItems-${tabId}`] || [];
+  let grossTotal = 0;
+  let discountTotal = 0;
+  let freeTotalQty = 0;
+  let freeTotalPrice = 0;
+  let taxTotal = 0;
+
+  items.forEach(itm => {
+    const qty = parseFloat(itm.fldQty) || 1;
+    const freeQty = parseFloat(itm.fldFreeQty) || 0;
+    const price = parseFloat(itm.fldPrice) || 0;
+    const disc = parseFloat(itm.fldDiscount) || 0;
+    const tax = parseFloat(itm.fldlTaxTota_D) || 0;
+
+    grossTotal += (qty * price);
+    discountTotal += disc;
+    freeTotalQty += freeQty;
+    freeTotalPrice += (freeQty * price);
+    taxTotal += tax;
+  });
+
+  const netTotal = grossTotal - discountTotal + taxTotal;
+  const tafqeetWords = (typeof tafqeet === 'function') ? tafqeet(netTotal, currencyName) : '';
+
+  // Get Saved Corporate Logo
+  const savedLogo = localStorage.getItem('reportHeaderImage') || (state.logoSettings && state.logoSettings.logoData) || localStorage.getItem('logoHeaderSetting');
+
+  // ==========================================
+  // 1. RENDER 80mm THERMAL RECEIPT FORMAT
+  // ==========================================
+  if (paperSize === '80mm') {
+    let rowsHtml = '';
+    items.forEach((itm, idx) => {
+      const lineTot = (itm.fldQty * itm.fldPrice) - itm.fldDiscount;
+      rowsHtml += `
+        <tr style="border-bottom: 1px dashed #cbd5e1; font-size: 0.75rem;">
+          <td style="padding: 4px 2px; text-align: right;">
+            <strong>${itm.fldItemName}</strong>
+            <div style="font-size: 0.68rem; color: #64748b;">${itm.fldUnit || 'حبه'} | كود: ${itm.fldCode || ''}</div>
+            ${(showFree && itm.fldFreeQty > 0) ? `<div style="font-size: 0.65rem; color: #059669;">مجاني: ${itm.fldFreeQty}</div>` : ''}
+            ${(showExpiry && itm.fldExpDate) ? `<div style="font-size: 0.65rem; color: #ea580c;">انتهاء: ${itm.fldExpDate.split('T')[0]}</div>` : ''}
+            ${(showSerial && itm.fldSN) ? `<div style="font-size: 0.65rem; color: #6366f1;">S/N: ${itm.fldSN}</div>` : ''}
+          </td>
+          <td style="padding: 4px 2px; text-align: center; font-family: monospace;">${itm.fldQty}</td>
+          <td style="padding: 4px 2px; text-align: left; font-family: monospace;">${itm.fldPrice.toFixed(2)}</td>
+          <td style="padding: 4px 2px; text-align: left; font-family: monospace; font-weight: bold;">${lineTot.toFixed(2)}</td>
+        </tr>
+      `;
+    });
+
+    printArea.innerHTML = `
+      <div style="text-align: center; padding: 4px 0; font-family: 'Segoe UI', Tahoma, sans-serif;">
+        ${(showHeader && savedLogo) ? `<img src="${savedLogo}" style="max-height: 55px; max-width: 90%; margin-bottom: 6px; object-fit: contain;">` : ''}
+        <h3 style="margin: 0; font-size: 1.1rem; font-weight: 900; color: #000;">${branchName}</h3>
+        <div style="font-size: 0.75rem; font-weight: bold; margin-top: 2px;">فاتورة مبيعات (${paymentTypeName})</div>
+        <div style="border-top: 1px dashed #000; margin: 6px 0;"></div>
+
+        <div style="font-size: 0.72rem; text-align: right; line-height: 1.5; margin-bottom: 6px;">
+          <div><strong>رقم الفاتورة:</strong> #${transNo}</div>
+          <div><strong>التاريخ:</strong> ${invoiceDate} | <strong>الوقت:</strong> ${new Date().toLocaleTimeString('ar-SA')}</div>
+          <div><strong>العميل:</strong> ${customerName}</div>
+          <div><strong>العملة:</strong> ${currencyName} (${currencySymbol})</div>
+          ${rateVal !== 1.0 ? `<div><strong>سعر الصرف:</strong> ${rateVal.toFixed(4)}</div>` : ''}
+        </div>
+
+        <div style="border-top: 1px solid #000; margin: 4px 0;"></div>
+
+        <table style="width: 100%; border-collapse: collapse; margin: 4px 0;">
+          <thead>
+            <tr style="border-bottom: 1px solid #000; font-size: 0.72rem;">
+              <th style="text-align: right; padding: 2px;">الصنف</th>
+              <th style="text-align: center; padding: 2px;">الكمية</th>
+              <th style="text-align: left; padding: 2px;">السعر</th>
+              <th style="text-align: left; padding: 2px;">الإجمالي</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rowsHtml}
+          </tbody>
+        </table>
+
+        <div style="border-top: 1px solid #000; margin: 6px 0;"></div>
+
+        <div style="font-size: 0.75rem; line-height: 1.6; text-align: right;">
+          <div style="display: flex; justify-content: space-between;">
+            <span>الإجمالي:</span>
+            <strong>${grossTotal.toFixed(2)} ${currencySymbol}</strong>
+          </div>
+          ${discountTotal > 0 ? `
+            <div style="display: flex; justify-content: space-between; color: #dc2626;">
+              <span>الخصم:</span>
+              <strong>${discountTotal.toFixed(2)} ${currencySymbol}</strong>
+            </div>
+          ` : ''}
+          ${(showTax && taxTotal > 0) ? `
+            <div style="display: flex; justify-content: space-between;">
+              <span>الضريبة:</span>
+              <strong>${taxTotal.toFixed(2)} ${currencySymbol}</strong>
+            </div>
+          ` : ''}
+          <div style="display: flex; justify-content: space-between; font-size: 0.9rem; font-weight: 900; border-top: 1px dashed #000; padding-top: 4px; margin-top: 4px;">
+            <span>الصافي:</span>
+            <strong>${netTotal.toFixed(2)} ${currencySymbol}</strong>
+          </div>
+          ${tafqeetWords ? `<div style="font-size: 0.68rem; font-weight: bold; margin-top: 4px; text-align: center; background: #f1f5f9; padding: 3px; border-radius: 4px;">فقط ${tafqeetWords} لا غير</div>` : ''}
+        </div>
+
+        <div style="border-top: 1px dashed #000; margin: 8px 0;"></div>
+        <div style="font-size: 0.68rem; color: #475569; text-align: center;">
+          <p style="margin: 2px 0;">شكراً لزيارتكم ونسعد بخدمتكم دائماً!</p>
+          <p style="margin: 2px 0;">البضاعة المباعة ترد وتستبدل بموجب أصل الفاتورة</p>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  // ==========================================
+  // 2. RENDER A4 & A5 FULL PROFESSIONAL INVOICE
+  // ==========================================
+  let headerHtml = '';
+  if (showHeader) {
+    if (savedLogo) {
+      headerHtml = `
+        <div style="width: 100%; text-align: center; margin-bottom: 12px; border-bottom: 2px solid #1e3a8a; padding-bottom: 8px;">
+          <img src="${savedLogo}" style="max-height: 90px; max-width: 100%; object-fit: contain;" alt="شعار الفاتورة">
+        </div>
+      `;
+    } else {
+      headerHtml = `
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #1e3a8a; padding-bottom: 10px; margin-bottom: 14px;">
+          <div>
+            <h2 style="margin: 0; font-size: 1.4rem; font-weight: 900; color: #1e3a8a;">${branchName}</h2>
+            <div style="font-size: 0.8rem; color: #64748b; margin-top: 2px;">نظام إدارة الحسابات ونقاط البيع | Accounts Explorer</div>
+          </div>
+          <div style="text-align: left; font-size: 0.78rem; color: #475569; line-height: 1.4;">
+            <div><strong>التاريخ:</strong> ${invoiceDate}</div>
+            <div><strong>الوقت:</strong> ${new Date().toLocaleTimeString('ar-SA')}</div>
+          </div>
+        </div>
+      `;
+    }
+  }
+
+  // Generate Table Columns Header & Widths dynamically
+  let colsHeaderHtml = `
+    <th style="border: 1px solid #1e3a8a; padding: 6px 4px; text-align: center; width: 4%;">م</th>
+    <th style="border: 1px solid #1e3a8a; padding: 6px 4px; text-align: center; width: 11%;">كود الصنف</th>
+    <th style="border: 1px solid #1e3a8a; padding: 6px 8px; text-align: right; width: 28%;">اسم الصنف والبيان</th>
+    <th style="border: 1px solid #1e3a8a; padding: 6px 4px; text-align: center; width: 8%;">العبوة</th>
+    <th style="border: 1px solid #1e3a8a; padding: 6px 4px; text-align: center; width: 7%;">الكمية</th>
+  `;
+
+  if (showFree) {
+    colsHeaderHtml += `
+      <th style="border: 1px solid #1e3a8a; padding: 6px 4px; text-align: center; width: 6%;">ك. مجاني</th>
+      <th style="border: 1px solid #1e3a8a; padding: 6px 4px; text-align: left; width: 8%;">قيمة المجاني</th>
+    `;
+  }
+  if (showExpiry) {
+    colsHeaderHtml += `<th style="border: 1px solid #1e3a8a; padding: 6px 4px; text-align: center; width: 9%;">تاريخ الانتهاء</th>`;
+  }
+  if (showSerial) {
+    colsHeaderHtml += `<th style="border: 1px solid #1e3a8a; padding: 6px 4px; text-align: center; width: 9%;">السيريال</th>`;
+  }
+
+  colsHeaderHtml += `
+    <th style="border: 1px solid #1e3a8a; padding: 6px 4px; text-align: left; width: 9%;">السعر</th>
+  `;
+
+  if (showTax) {
+    colsHeaderHtml += `<th style="border: 1px solid #1e3a8a; padding: 6px 4px; text-align: left; width: 7%;">الضريبة</th>`;
+  }
+
+  colsHeaderHtml += `
+    <th style="border: 1px solid #1e3a8a; padding: 6px 4px; text-align: left; width: 7%;">الخصم</th>
+    <th style="border: 1px solid #1e3a8a; padding: 6px 6px; text-align: left; width: 11%;">الإجمالي</th>
+  `;
+
+  // Generate Table Rows
+  let tableRowsHtml = '';
+  items.forEach((itm, idx) => {
+    const qty = parseFloat(itm.fldQty) || 1;
+    const freeQty = parseFloat(itm.fldFreeQty) || 0;
+    const price = parseFloat(itm.fldPrice) || 0;
+    const disc = parseFloat(itm.fldDiscount) || 0;
+    const tax = parseFloat(itm.fldlTaxTota_D) || 0;
+    const lineTotal = (qty * price) - disc + tax;
+    const expDateStr = itm.fldExpDate ? itm.fldExpDate.split('T')[0] : '';
+    const serialStr = itm.fldSN || itm.fldSerialNumber || '';
+
+    tableRowsHtml += `
+      <tr style="border-bottom: 1px solid #cbd5e1; font-size: 0.82rem;">
+        <td style="border: 1px solid #cbd5e1; padding: 5px 3px; text-align: center; color: #64748b;">${idx + 1}</td>
+        <td style="border: 1px solid #cbd5e1; padding: 5px 3px; text-align: center; font-family: monospace;">${itm.fldCode || ''}</td>
+        <td style="border: 1px solid #cbd5e1; padding: 5px 6px; text-align: right; font-weight: bold; color: #1e293b;">${itm.fldItemName || ''}</td>
+        <td style="border: 1px solid #cbd5e1; padding: 5px 3px; text-align: center;">${itm.fldUnit || 'حبه'}</td>
+        <td style="border: 1px solid #cbd5e1; padding: 5px 3px; text-align: center; font-family: monospace; font-weight: bold;">${qty}</td>
+        
+        ${showFree ? `
+          <td style="border: 1px solid #cbd5e1; padding: 5px 3px; text-align: center; font-family: monospace; color: #059669;">${freeQty}</td>
+          <td style="border: 1px solid #cbd5e1; padding: 5px 3px; text-align: left; font-family: monospace; color: #475569;">${(freeQty * price).toFixed(2)}</td>
+        ` : ''}
+
+        ${showExpiry ? `
+          <td style="border: 1px solid #cbd5e1; padding: 5px 3px; text-align: center; font-family: monospace; font-size: 0.75rem; color: #ea580c;">${expDateStr || '---'}</td>
+        ` : ''}
+
+        ${showSerial ? `
+          <td style="border: 1px solid #cbd5e1; padding: 5px 3px; text-align: center; font-family: monospace; font-size: 0.75rem; color: #6366f1;">${serialStr || '---'}</td>
+        ` : ''}
+
+        <td style="border: 1px solid #cbd5e1; padding: 5px 3px; text-align: left; font-family: monospace;">${price.toFixed(2)}</td>
+
+        ${showTax ? `
+          <td style="border: 1px solid #cbd5e1; padding: 5px 3px; text-align: left; font-family: monospace; color: #dc2626;">${tax.toFixed(2)}</td>
+        ` : ''}
+
+        <td style="border: 1px solid #cbd5e1; padding: 5px 3px; text-align: left; font-family: monospace; color: #dc2626;">${disc.toFixed(2)}</td>
+        <td style="border: 1px solid #cbd5e1; padding: 5px 6px; text-align: left; font-family: monospace; font-weight: 800; color: #1e3a8a;">${lineTotal.toFixed(2)}</td>
+      </tr>
+    `;
+  });
+
+  printArea.innerHTML = `
+    <div style="width: 100%; direction: rtl;">
+      <!-- 1. Header & Logo -->
+      ${headerHtml}
+
+      <!-- 2. Invoice Title Banner & Meta Details Grid -->
+      <div style="display: flex; justify-content: space-between; align-items: stretch; margin-bottom: 14px; gap: 10px;">
+        
+        <!-- Right Details Column -->
+        <div style="width: 32%; display: flex; flex-direction: column; justify-content: space-between; font-size: 0.8rem; line-height: 1.7; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; padding: 8px 12px;">
+          <div><strong style="color: #475569;">رقم الفاتورة:</strong> <span style="font-family: monospace; font-weight: 800; font-size: 1rem; color: #1e3a8a;">#${transNo}</span></div>
+          <div><strong style="color: #475569;">تاريخ الفاتورة:</strong> <span style="font-family: monospace; font-weight: bold;">${invoiceDate}</span></div>
+          <div><strong style="color: #475569;">الفرع:</strong> <span>${branchName}</span></div>
+        </div>
+
+        <!-- Center Badge Column -->
+        <div style="width: 34%; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 2px solid #1e3a8a; border-radius: 8px; padding: 8px 12px; background: #eff6ff; text-align: center;">
+          <h2 style="font-size: 1.3rem; font-weight: 900; color: #1e3a8a; margin: 0; padding-bottom: 3px; border-bottom: 2px solid #1e3a8a; width: 90%;">فاتورة مبيعات</h2>
+          <div style="font-size: 0.8rem; font-weight: 800; margin-top: 4px; color: #2563eb;">طريقة الدفع: ${paymentTypeName}</div>
+          ${rateVal !== 1.0 ? `<div style="font-size: 0.72rem; color: #64748b; margin-top: 2px;">سعر الصرف: ${rateVal.toFixed(4)}</div>` : ''}
+        </div>
+
+        <!-- Left Details Column -->
+        <div style="width: 32%; display: flex; flex-direction: column; justify-content: space-between; font-size: 0.8rem; line-height: 1.7; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; padding: 8px 12px;">
+          <div><strong style="color: #475569;">العملة:</strong> <span style="font-weight: bold; color: #0284c7;">${currencyName} (${currencySymbol})</span></div>
+          <div><strong style="color: #475569;">المستودع:</strong> <span>${warehouseName}</span></div>
+          <div><strong style="color: #475569;">المستخدم:</strong> <span>${userName}</span></div>
+        </div>
+
+      </div>
+
+      <!-- 3. Customer & Note Bar -->
+      <div style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; font-size: 0.84rem; background: #f1f5f9; padding: 8px 12px; border-radius: 6px; border: 1px solid #cbd5e1;">
+        <div style="display: flex; align-items: center;">
+          <span style="font-weight: bold; min-width: 100px; color: #475569;"><i class="fa-solid fa-user"></i> العميل المحترم:</span>
+          <span style="font-weight: 800; color: #1e293b; flex: 1;">${customerName}</span>
+          ${refNo ? `<span style="font-size: 0.78rem; color: #64748b; font-family: monospace;">(مرجع رقم: ${refNo} ${refDate ? '| تاريخ: ' + refDate : ''})</span>` : ''}
+        </div>
+        ${description ? `
+          <div style="display: flex; align-items: center;">
+            <span style="font-weight: bold; min-width: 100px; color: #475569;"><i class="fa-solid fa-pen-to-square"></i> البيان / الشرح:</span>
+            <span style="color: #334155; flex: 1;">${description}</span>
+          </div>
+        ` : ''}
+      </div>
+
+      <!-- 4. Items Table -->
+      <table style="width: 100%; border-collapse: collapse; margin-top: 8px;">
+        <thead>
+          <tr style="background: linear-gradient(135deg, #1e3a8a, #2563eb); color: white; font-size: 0.8rem;">
+            ${colsHeaderHtml}
+          </tr>
+        </thead>
+        <tbody>
+          ${tableRowsHtml}
+        </tbody>
+      </table>
+
+      <!-- 5. Summary & Tafqeet Section -->
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-top: 14px; gap: 15px;">
+        
+        <!-- Right side: Tafqeet & Notes & QR -->
+        <div style="flex: 1; display: flex; flex-direction: column; justify-content: space-between; height: 100%;">
+          <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; padding: 8px 12px; margin-bottom: 8px;">
+            <div style="font-size: 0.75rem; font-weight: bold; color: #475569; margin-bottom: 2px;">المبلغ الصافي كتابةً (فقط):</div>
+            <div style="font-size: 0.88rem; font-weight: 800; color: #1e3a8a;">فقط ${tafqeetWords} لا غير.</div>
+          </div>
+
+          <div style="font-size: 0.72rem; color: #64748b; line-height: 1.5; border: 1px dashed #cbd5e1; border-radius: 6px; padding: 6px 10px;">
+            <div>• البضاعة المباعة ترد وتستبدل خلال 3 أيام بموجب أصل الفاتورة.</div>
+            <div>• شكراً لتعاملكم معنا ونسعد بخدمتكم دائماً.</div>
+          </div>
+        </div>
+
+        <!-- Left side: Totals Box -->
+        <div style="width: 280px; background: #f8fafc; border: 2px solid #1e3a8a; border-radius: 8px; padding: 10px 14px; font-size: 0.85rem; line-height: 1.9;">
+          <div style="display: flex; justify-content: space-between;">
+            <span style="color: #475569;">الإجمالي قبل الخصم:</span>
+            <strong style="font-family: monospace;">${grossTotal.toFixed(2)} ${currencySymbol}</strong>
+          </div>
+
+          ${discountTotal > 0 ? `
+            <div style="display: flex; justify-content: space-between; color: #dc2626;">
+              <span>إجمالي الخصم:</span>
+              <strong style="font-family: monospace;">${discountTotal.toFixed(2)} ${currencySymbol}</strong>
+            </div>
+          ` : ''}
+
+          ${(showFree && freeTotalPrice > 0) ? `
+            <div style="display: flex; justify-content: space-between; color: #059669; font-size: 0.78rem;">
+              <span>إجمالي قيمة المجاني:</span>
+              <strong style="font-family: monospace;">${freeTotalPrice.toFixed(2)} ${currencySymbol}</strong>
+            </div>
+          ` : ''}
+
+          ${(showTax && taxTotal > 0) ? `
+            <div style="display: flex; justify-content: space-between; color: #dc2626;">
+              <span>ضريبة القيمة المضافة:</span>
+              <strong style="font-family: monospace;">${taxTotal.toFixed(2)} ${currencySymbol}</strong>
+            </div>
+          ` : ''}
+
+          <div style="display: flex; justify-content: space-between; border-top: 2px solid #1e3a8a; padding-top: 4px; margin-top: 4px; font-size: 1.1rem; color: #1e3a8a; font-weight: 900;">
+            <span>الصافي النهائي:</span>
+            <strong style="font-family: monospace;">${netTotal.toFixed(2)} ${currencySymbol}</strong>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- 6. Signatures (Optional) -->
+      ${showSignatures ? `
+        <div style="display: flex; justify-content: space-between; margin-top: 25px; padding-top: 10px; border-top: 1px dotted #94a3b8; font-size: 0.8rem; text-align: center;">
+          <div style="width: 30%;">
+            <div style="font-weight: bold; color: #475569; margin-bottom: 25px;">توقيع البائع / الكاشير</div>
+            <div style="border-top: 1px solid #000; width: 80%; margin: 0 auto;"></div>
+          </div>
+          <div style="width: 30%;">
+            <div style="font-weight: bold; color: #475569; margin-bottom: 25px;">توقيع المحاسب / الإدارة</div>
+            <div style="border-top: 1px solid #000; width: 80%; margin: 0 auto;"></div>
+          </div>
+          <div style="width: 30%;">
+            <div style="font-weight: bold; color: #475569; margin-bottom: 25px;">توقيع المستلم / العميل</div>
+            <div style="border-top: 1px solid #000; width: 80%; margin: 0 auto;"></div>
+          </div>
+        </div>
+      ` : ''}
+
+    </div>
+  `;
+};
+
+window.executeSaleInvoicePrint = function() {
   window.print();
+};
+
+window.shareSaleInvoicePrintWhatsApp = function() {
+  const tabId = state.activeSalePrintTabId;
+  if (!tabId) return;
+  whatsappSingleSaleInvoice(tabId);
 };
 
 window.whatsappSingleSaleInvoice = function(tabId) {

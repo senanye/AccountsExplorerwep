@@ -15239,6 +15239,132 @@ app.post('/api/pos/sales-report/download-pdf', async (req, res) => {
   }
 });
 
+// POST /api/sales/send-whatsapp (إرسال فاتورة المبيعات مباشرة عبر موديول الواتساب المدمج)
+app.post('/api/sales/send-whatsapp', async (req, res) => {
+  const { phone, invoiceData } = req.body;
+  if (!phone || !phone.trim()) {
+    return res.status(400).json({ success: false, error: "يرجى تحديد أو إدخال رقم الواتساب الخاص بالعميل." });
+  }
+
+  if (clientStatus !== "ready" || !whatsappClient) {
+    return res.status(400).json({ 
+      success: false, 
+      isWhatsAppDisconnected: true, 
+      error: "موديول الواتساب المدمج غير متصل حالياً. يرجى فتح شاشة الواتساب في البرنامج وربط الحساب عبر QR Code." 
+    });
+  }
+
+  try {
+    const branch = invoiceData?.branchName || 'الفرع الرئيسي';
+    const transNo = invoiceData?.transNo || '0';
+    const cust = invoiceData?.customerName || 'عميل نقدي';
+    const date = invoiceData?.date || new Date().toISOString().split('T')[0];
+    const payType = invoiceData?.paymentTypeName || 'نقداً';
+    const curSym = invoiceData?.currencySymbol || 'ر.س';
+    const curName = invoiceData?.currencyName || 'ريال سعودي';
+    const rateVal = parseFloat(invoiceData?.rate) || 1.0;
+    const gross = parseFloat(invoiceData?.grossTotal || 0).toFixed(2);
+    const disc = parseFloat(invoiceData?.discountTotal || 0).toFixed(2);
+    const tax = parseFloat(invoiceData?.taxTotal || 0).toFixed(2);
+    const net = parseFloat(invoiceData?.netTotal || 0).toFixed(2);
+    const tafqeet = invoiceData?.tafqeetWords || '';
+
+    let msg = `🧾 *فاتورة مبيعات رقم #${transNo}*
+`;
+    msg += `🏛️ *المنشأة / الفرع:* ${branch}
+`;
+    msg += `👤 *العميل المحترم:* ${cust}
+`;
+    msg += `📅 *التاريخ:* ${date}
+`;
+    msg += `💳 *طريقة الدفع:* ${payType}
+`;
+    if (curName && curName !== 'ريال سعودي') {
+      msg += `💱 *العملة:* ${curName} (سعر الصرف: ${rateVal})
+`;
+    }
+    msg += `─────────────────────────
+`;
+    msg += `📦 *تفاصيل الأصناف:*
+`;
+
+    const items = invoiceData?.items || [];
+    items.forEach((item, idx) => {
+      const qty = item.fldQty || 1;
+      const unit = item.fldUnit ? `[${item.fldUnit}]` : '';
+      const price = parseFloat(item.fldPrice || 0).toFixed(2);
+      const lineTot = ((qty * item.fldPrice) - (parseFloat(item.fldDiscount) || 0) + (parseFloat(item.fldlTaxTota_D) || 0)).toFixed(2);
+      
+      msg += `${idx + 1}. *${item.fldItemName}* ${unit}
+`;
+      msg += `   الكمية: ${qty} × ${price} = *${lineTot} ${curSym}*
+`;
+      if (item.fldFreeQty > 0) msg += `   🎁 ك. مجانية: ${item.fldFreeQty}
+`;
+      if (item.fldExpDate) msg += `   ⏳ الصلاحية: ${String(item.fldExpDate).split('T')[0]}
+`;
+      if (item.fldSN) msg += `   🔢 السيريال: ${item.fldSN}
+`;
+    });
+
+    msg += `─────────────────────────
+`;
+    msg += `💰 *الإجمالي قبل الخصم:* ${gross} ${curSym}
+`;
+    if (parseFloat(disc) > 0) {
+      msg += `✂️ *إجمالي الخصم:* ${disc} ${curSym}
+`;
+    }
+    if (parseFloat(tax) > 0) {
+      msg += `📊 *ضريبة القيمة المضافة:* ${tax} ${curSym}
+`;
+    }
+    msg += `💵 *الصافي النهائي:* *${net} ${curSym}*
+`;
+    if (tafqeet) {
+      msg += `✍️ *المبلغ كتابةً:* فقط ${tafqeet} لا غير
+`;
+    }
+    msg += `─────────────────────────
+`;
+    msg += `✨ *شكراً لتعاملكم معنا ونسعد بخدمتكم دائماً!*
+`;
+    if (invoiceData?.description) {
+      msg += `📝 ملاحظة: ${invoiceData.description}
+`;
+    }
+
+    let cleanPhone = formatWhatsAppNumber(phone);
+    let chatId = cleanPhone.endsWith('@c.us') ? cleanPhone : `${cleanPhone}@c.us`;
+
+    if (whatsappClient && typeof whatsappClient.getNumberId === 'function') {
+      try {
+        const numId = await whatsappClient.getNumberId(cleanPhone);
+        if (numId && numId._serialized) {
+          chatId = numId._serialized;
+        }
+      } catch (e) {}
+    }
+
+    await whatsappClient.sendMessage(chatId, msg);
+    console.log(`[WhatsApp Sales] Invoice #${transNo} sent directly to ${phone} (ChatId: ${chatId})`);
+
+    if (globalPool && globalPool.connected) {
+      try {
+        const qReq = globalPool.request();
+        qReq.input('phone', sql.NVarChar, phone);
+        qReq.input('body', sql.NVarChar, msg);
+        await qReq.query("INSERT INTO dbo.WhatsAppQueue (PhoneNumber, MessageBody, Status, ProcessedAt) VALUES (@phone, @body, 'Sent', GETDATE())");
+      } catch (qe) {}
+    }
+
+    res.json({ success: true, message: `تم إرسال الفاتورة بنجاح عبر موديول الواتساب المدمج إلى الرقم ${phone}!` });
+  } catch (err) {
+    console.error("Error sending sales invoice via WhatsApp module:", err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // 4. Send / Download Expenses & Vouchers Report PDF
 app.post('/api/pos/expenses-report/send-whatsapp-pdf', async (req, res) => {
   const { pointNo, startDate, endDate, phone } = req.body;

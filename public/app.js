@@ -27200,24 +27200,195 @@ window.refreshSaleInvoicePrintPreview = function() {
 };
 
 window.executeSaleInvoicePrint = function() {
-  window.print();
+  const printArea = document.getElementById('saleInvoicePrintArea');
+  if (!printArea) {
+    window.print();
+    return;
+  }
+
+  const paperSize = state.activeSalePrintPaperSize || 'A4';
+  const printContent = printArea.innerHTML;
+
+  let iframe = document.getElementById('saleInvoicePrintIframe');
+  if (!iframe) {
+    iframe = document.createElement('iframe');
+    iframe.id = 'saleInvoicePrintIframe';
+    iframe.style.position = 'fixed';
+    iframe.style.right = '0';
+    iframe.style.bottom = '0';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = '0';
+    iframe.style.zIndex = '-1000';
+    document.body.appendChild(iframe);
+  }
+
+  const doc = iframe.contentWindow.document;
+  doc.open();
+  doc.write(`
+    <!DOCTYPE html>
+    <html dir="rtl" lang="ar">
+    <head>
+      <meta charset="utf-8">
+      <title>طباعة فاتورة مبيعات</title>
+      <style>
+        @page {
+          size: ${paperSize === 'A4' ? 'A4 portrait' : (paperSize === 'A5' ? 'A5 portrait' : '80mm auto')};
+          margin: ${paperSize === '80mm' ? '2mm' : '8mm'};
+        }
+        * {
+          box-sizing: border-box;
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+        }
+        body {
+          margin: 0;
+          padding: ${paperSize === '80mm' ? '2mm' : '5mm'};
+          background: #fff;
+          color: #000;
+          direction: rtl;
+          font-family: 'Segoe UI', Tahoma, 'Cairo', sans-serif;
+          font-size: ${paperSize === '80mm' ? '11px' : (paperSize === 'A5' ? '12px' : '13px')};
+        }
+        table {
+          width: 100%;
+          border-collapse: collapse;
+        }
+        th, td {
+          border: 1px solid #94a3b8;
+          padding: ${paperSize === '80mm' ? '3px 2px' : '5px 4px'};
+        }
+        th {
+          background-color: #f1f5f9 !important;
+          color: #000 !important;
+          font-weight: bold;
+        }
+      </style>
+    </head>
+    <body>
+      ${printContent}
+      <script>
+        window.onload = function() {
+          window.focus();
+          window.print();
+        };
+      </script>
+    </body>
+    </html>
+  `);
+  doc.close();
 };
 
 window.shareSaleInvoicePrintWhatsApp = function() {
   const tabId = state.activeSalePrintTabId;
   if (!tabId) return;
-  whatsappSingleSaleInvoice(tabId);
+  window.whatsappSingleSaleInvoice(tabId);
 };
 
-window.whatsappSingleSaleInvoice = function(tabId) {
-  const transNo = document.getElementById(`siTransNo-${tabId}`)?.value;
-  const net = document.getElementById(`siNetTotal-${tabId}`)?.innerText;
-  const customer = document.getElementById(`siCustomerName-${tabId}`)?.value || 'العميل';
-  const phone = document.getElementById(`siWhatsappNo-${tabId}`)?.value || '';
+window.whatsappSingleSaleInvoice = async function(tabId) {
+  if (!tabId) tabId = state.activeTabId || 'sales-invoice';
 
-  const text = `مرحباً ${customer}،\nفاتورة مبيعاتك رقم #${transNo}\nالمبلغ الإجمالي: ${net} ر.س\nشكراً لتعاملكم معنا!`;
-  const url = phone ? `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(text)}` : `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
-  window.open(url, '_blank');
+  const phoneInput = document.getElementById(`siWhatsappNo-${tabId}`);
+  let phone = phoneInput ? phoneInput.value.trim() : '';
+
+  if (!phone) {
+    const entered = prompt("يرجى إدخال رقم الواتساب الخاص بالعميل لإرسال الفاتورة (مثال: 96777xxxxxxx أو 9665xxxxxxx):");
+    if (!entered || !entered.trim()) {
+      showToast("لم يتم إدخال رقم الواتساب.", "warning");
+      return;
+    }
+    phone = entered.trim();
+    if (phoneInput) phoneInput.value = phone;
+  }
+
+  const items = state[`saleInvoiceItems-${tabId}`] || [];
+  if (items.length === 0) {
+    showToast("لا توجد أصناف في الفاتورة لإرسالها.", "warning");
+    return;
+  }
+
+  const transNo = document.getElementById(`siTransNo-${tabId}`)?.value || '0';
+  const customerName = document.getElementById(`siCustomerName-${tabId}`)?.value || 'العميل';
+  const invoiceDate = document.getElementById(`siDate-${tabId}`)?.value || new Date().toISOString().split('T')[0];
+  const description = document.getElementById(`siDescription-${tabId}`)?.value || '';
+
+  const branchSelect = document.getElementById(`siBranch-${tabId}`);
+  const branchName = branchSelect && branchSelect.selectedIndex >= 0 ? branchSelect.options[branchSelect.selectedIndex].textContent.trim() : "الفرع الرئيسي";
+
+  const paymentTypeSelect = document.getElementById(`siPaymentType-${tabId}`);
+  const paymentTypeName = paymentTypeSelect && paymentTypeSelect.selectedIndex >= 0 ? paymentTypeSelect.options[paymentTypeSelect.selectedIndex].textContent.trim() : "نقداً";
+
+  const curSelect = document.getElementById(`siCurrency-${tabId}`);
+  const currencyName = curSelect && curSelect.selectedIndex >= 0 ? curSelect.options[curSelect.selectedIndex].textContent.trim() : "ريال سعودي";
+  const rateVal = parseFloat(document.getElementById(`siRate-${tabId}`)?.value) || 1.0;
+
+  let currencySymbol = "ر.س";
+  if (currencyName.includes("يمني")) currencySymbol = "ر.ي";
+  else if (currencyName.includes("دولار")) currencySymbol = "$";
+  else if (currencyName.includes("درهم")) currencySymbol = "د.إ";
+
+  let grossTotal = 0;
+  let discountTotal = 0;
+  let taxTotal = 0;
+
+  items.forEach(itm => {
+    const qty = parseFloat(itm.fldQty) || 1;
+    const price = parseFloat(itm.fldPrice) || 0;
+    const disc = parseFloat(itm.fldDiscount) || 0;
+    const tax = parseFloat(itm.fldlTaxTota_D) || 0;
+
+    grossTotal += (qty * price);
+    discountTotal += disc;
+    taxTotal += tax;
+  });
+
+  const netTotal = grossTotal - discountTotal + taxTotal;
+  const tafqeetWords = (typeof tafqeet === 'function') ? tafqeet(netTotal, currencyName) : '';
+
+  const invoiceData = {
+    transNo,
+    customerName,
+    branchName,
+    paymentTypeName,
+    currencyName,
+    currencySymbol,
+    rate: rateVal,
+    date: invoiceDate,
+    description,
+    items,
+    grossTotal,
+    discountTotal,
+    taxTotal,
+    netTotal,
+    tafqeetWords
+  };
+
+  showToast(`جاري إرسال الفاتورة عبر موديول الواتساب المدمج إلى ${phone}...`, "info");
+
+  try {
+    const res = await fetch('/api/sales/send-whatsapp', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-user-id': state.currentUser?.id || '1'
+      },
+      body: JSON.stringify({ phone, invoiceData })
+    });
+
+    const result = await res.json();
+    if (result.success) {
+      showToast(result.message || "تم إرسال الفاتورة عبر الواتساب بنجاح!", "success");
+    } else {
+      if (result.isWhatsAppDisconnected) {
+        showToast(result.error || "موديول الواتساب غير متصل. يرجى ربط الواتساب أولاً.", "warning");
+      } else {
+        showToast(result.error || "فشل إرسال الفاتورة عبر الواتساب.", "error");
+      }
+    }
+  } catch (err) {
+    console.error("Error sending invoice via WhatsApp:", err);
+    showToast("خطأ في الاتصال بالخادم لإرسال الواتساب.", "error");
+  }
 };
 
 window.openSaleJournalEntryFromForm = async function(tabId) {

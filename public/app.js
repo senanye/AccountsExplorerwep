@@ -26233,35 +26233,54 @@ window.selectSaleInvoiceItem = async function(tabId, itemId) {
   document.getElementById(`siItemSearch-${tabId}`).value = item.fldName || '';
   document.getElementById(`siItemSearchDropdown-${tabId}`).style.display = 'none';
 
-  // Load Units for this Item
+  // Load Units from dbo.tblItemsUnit for this Item
   const unitSelect = document.getElementById(`siItemUnitSelect-${tabId}`);
-  unitSelect.innerHTML = '<option value="">جاري جلب العبوات...</option>';
+  unitSelect.innerHTML = '<option value="">جاري جلب العبوات والأسعار...</option>';
 
   try {
-    const res = await fetch(`/api/items/${itemId}/units`);
+    const res = await fetch(`/api/items/${itemId}/units`, {
+      headers: { 'x-user-id': '1' }
+    });
     const data = await res.json();
-    const units = data.data || [];
+    const units = data.data || data.units || [];
 
     if (units.length === 0) {
+      // Fallback if item has no records in tblItemsUnit
       const uCost = parseFloat(item.fldCostPrice || 0);
       const uPrice = parseFloat(item.fldSalesPrice || 0);
-      unitSelect.innerHTML = `<option value="1" data-base-price="${uPrice}" data-base-cost="${uCost}" selected>حبه [1]</option>`;
+      unitSelect.innerHTML = `<option value="1" data-base-price="${uPrice}" data-base-cost="${uCost}" data-qty="1" selected>حبه [1]</option>`;
     } else {
       let optHtml = '';
       units.forEach((u, i) => {
-        const uCost = parseFloat(u.fldCost || item.fldCostPrice || 0);
-        const uPrice = parseFloat(u.fldSalesPrice1 || item.fldSalesPrice || 0);
-        optHtml += `<option value="${u.fldID}" data-base-price="${uPrice}" data-base-cost="${uCost}" ${i === 0 ? 'selected' : ''}>${u.fldUnitName || 'حبه'} [${u.fldQuantity || 1}]</option>`;
+        const uCost = parseFloat(u.fldCost || 0);
+        const uPrice = parseFloat(u.fldSalesPrice1 || 0);
+        const uPrice2 = parseFloat(u.fldSalesPrice2 || 0);
+        const uPrice3 = parseFloat(u.fldSalesPrice3 || 0);
+        const uMinPrice = parseFloat(u.fldMinPrice || 0);
+        const uQty = parseFloat(u.fldQuantity || 1);
+
+        optHtml += `<option value="${u.fldID}" 
+                            data-base-price="${uPrice}" 
+                            data-base-cost="${uCost}" 
+                            data-price2="${uPrice2}" 
+                            data-price3="${uPrice3}" 
+                            data-min-price="${uMinPrice}" 
+                            data-qty="${uQty}"
+                            ${i === 0 ? 'selected' : ''}>${u.fldUnitName || 'حبه'} [${uQty}]</option>`;
       });
       unitSelect.innerHTML = optHtml;
     }
 
     const selectedOpt = unitSelect.options[unitSelect.selectedIndex];
-    const initialBasePrice = selectedOpt ? parseFloat(selectedOpt.getAttribute('data-base-price') || item.fldSalesPrice || 0) : (item.fldSalesPrice || 0);
-    const initialBaseCost = selectedOpt ? parseFloat(selectedOpt.getAttribute('data-base-cost') || item.fldCostPrice || 0) : (item.fldCostPrice || 0);
+    const initialBasePrice = selectedOpt ? parseFloat(selectedOpt.getAttribute('data-base-price') || 0) : 0;
+    const initialBaseCost = selectedOpt ? parseFloat(selectedOpt.getAttribute('data-base-cost') || 0) : 0;
 
-    document.getElementById(`siItemPrice-${tabId}`).value = (initialBasePrice * rate).toFixed(2);
-    document.getElementById(`siSelectedItemCost-${tabId}`).value = (initialBaseCost * rate).toFixed(2);
+    // Multiply by current exchange rate
+    const calculatedPrice = initialBasePrice * rate;
+    const calculatedCost = initialBaseCost * rate;
+
+    document.getElementById(`siItemPrice-${tabId}`).value = calculatedPrice.toFixed(2);
+    document.getElementById(`siSelectedItemCost-${tabId}`).value = calculatedCost.toFixed(2);
     document.getElementById(`siItemQty-${tabId}`).value = "1";
     document.getElementById(`siItemQty-${tabId}`).focus();
 
@@ -26276,9 +26295,10 @@ window.selectSaleInvoiceItem = async function(tabId, itemId) {
       }
     };
   } catch (err) {
+    console.error("Error loading units from tblItemsUnit:", err);
     const baseP = parseFloat(item.fldSalesPrice || 0);
     const baseC = parseFloat(item.fldCostPrice || 0);
-    unitSelect.innerHTML = `<option value="1" data-base-price="${baseP}" data-base-cost="${baseC}" selected>حبه</option>`;
+    unitSelect.innerHTML = `<option value="1" data-base-price="${baseP}" data-base-cost="${baseC}" data-qty="1" selected>حبه</option>`;
     document.getElementById(`siItemPrice-${tabId}`).value = (baseP * rate).toFixed(2);
     document.getElementById(`siSelectedItemCost-${tabId}`).value = (baseC * rate).toFixed(2);
   }

@@ -8430,6 +8430,45 @@ function generateNextCode(lastCode, groupCode) {
   return prefix + "00001";
 }
 
+// GET /api/items/:id/units (جلب كافة العبوات والأسعار والتكلفة من dbo.tblItemsUnit)
+app.get('/api/items/:id/units', async (req, res) => {
+  const { id } = req.params;
+  const isConnected = globalPool !== null && globalPool.connected;
+  if (!isConnected) {
+    return res.json({ success: true, source: 'mock', data: [] });
+  }
+
+  try {
+    const request = globalPool.request();
+    request.input('id', sql.Int, parseInt(id));
+    const result = await request.query(`
+      SELECT [fldID]
+            ,[flditemID]
+            ,[fldUnitName]
+            ,[fldTypeOperation]
+            ,[fldSalesLevel]
+            ,[fldSalesPrice1]
+            ,[fldSalesPrice2]
+            ,[fldSalesPrice3]
+            ,[fldMinPrice]
+            ,[fldcamition]
+            ,[fldpurchases]
+            ,[fldsales]
+            ,[fldQuantity]
+            ,[fldQuantity2]
+            ,[fldCost]
+      FROM [dbo].[tblItemsUnit]
+      WHERE [flditemID] = @id
+      ORDER BY [fldQuantity] ASC, [fldID] ASC
+    `);
+
+    res.json({ success: true, source: 'database', data: result.recordset, units: result.recordset });
+  } catch (err) {
+    console.error("Error in GET /api/items/:id/units:", err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // 9-extra5_6. Retrieve single item details
 app.get('/api/items/:id', async (req, res) => {
   const menuId = parseInt(req.query.menuId) || 201;

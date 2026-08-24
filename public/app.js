@@ -345,13 +345,7 @@ function setupEventListeners() {
       const selectedOpt = DOM.loginBranchSelect.options[DOM.loginBranchSelect.selectedIndex];
       const bId = selectedOpt ? selectedOpt.getAttribute('data-id') : null;
       if (bId) {
-        try {
-          const res = await fetch(`/api/users?branchId=${bId}`);
-          const result = await res.json();
-          populateDropdown(DOM.loginUserSelect, result.data, 'fldID', 'fldName');
-        } catch (err) {
-          console.error("Error loading branch users on change:", err.message);
-        }
+        await loadUsersForSelectedBranch(bId);
       }
     });
   }
@@ -5865,7 +5859,18 @@ window.populateLoginProviderDropdown = async function() {
 
 window.handleLoginProviderChange = async function(profileId) {
   if (!profileId) return;
-  showToast("جاري التبديل إلى قاعدة البيانات المختارة...", "info");
+  
+  const branchSelect = document.getElementById('loginBranchSelect') || DOM.loginBranchSelect;
+  const userSelect = document.getElementById('loginUserSelect') || DOM.loginUserSelect;
+
+  if (branchSelect) {
+    branchSelect.innerHTML = '<option value="">جاري جلب فروع قاعدة البيانات...</option>';
+  }
+  if (userSelect) {
+    userSelect.innerHTML = '<option value="">جاري جلب المستخدمين...</option>';
+  }
+
+  showToast("جاري التبديل إلى قاعدة البيانات المختارة وربط النظام...", "info");
 
   try {
     const res = await fetch('/api/connections/select', {
@@ -5874,17 +5879,19 @@ window.handleLoginProviderChange = async function(profileId) {
       body: JSON.stringify({ id: profileId })
     });
     const result = await res.json();
+    
     if (result.success) {
       showToast(result.message, result.connected ? "success" : "warning");
-      // Reload branches and users for login screen
-      if (typeof fetchBranchesAndUsers === 'function') {
-        fetchBranchesAndUsers();
-      }
+      // Force reload branches from tblBranchList and users from tblBranchUser for this newly selected DB
+      await loadLoginLists();
     } else {
-      showToast(result.error, "error");
+      showToast(result.error || "خطأ عند التبديل إلى قاعدة البيانات.", "error");
+      await loadLoginLists();
     }
   } catch (err) {
+    console.error("Error switching provider:", err);
     showToast("فشل تبديل قاعدة البيانات: " + err.message, "error");
+    await loadLoginLists();
   }
 };
 
@@ -6101,28 +6108,80 @@ function updateClock() {
 
 // 2. Fetch branches and users from backend API (tblBranchList & tblBranchUser)
 window.loadLoginLists = async function() {
+  const branchSelect = document.getElementById('loginBranchSelect') || DOM.loginBranchSelect;
+  const userSelect = document.getElementById('loginUserSelect') || DOM.loginUserSelect;
+  if (!branchSelect) return;
+
   try {
-    // Fetch branches list from tblBranchList
+    // 1. Fetch branches list from tblBranchList
     const branchRes = await fetch('/api/branches');
     const branchResult = await branchRes.json();
-    populateDropdown(DOM.loginBranchSelect, branchResult.data || branchResult.branches, 'fldID', 'fldName');
+    const branches = branchResult.data || branchResult.branches || [];
 
-    // Get initially selected branch ID
-    const activeBranchOpt = DOM.loginBranchSelect?.options[DOM.loginBranchSelect.selectedIndex];
-    const activeBranchId = activeBranchOpt ? activeBranchOpt.getAttribute('data-id') : null;
+    branchSelect.innerHTML = '';
+    if (branches.length === 0) {
+      const opt = document.createElement('option');
+      opt.value = '';
+      opt.textContent = 'لا توجد فروع مسجلة';
+      branchSelect.appendChild(opt);
+      if (userSelect) userSelect.innerHTML = '<option value="">لا يوجد مستخدمين</option>';
+      return;
+    }
 
-    // Fetch users allowed for this branch from tblBranchUser
-    const url = activeBranchId ? `/api/users?branchId=${activeBranchId}` : '/api/users';
-    const userRes = await fetch(url);
-    const userResult = await userRes.json();
-    populateDropdown(DOM.loginUserSelect, userResult.data, 'fldID', 'fldName');
+    branches.forEach((b, idx) => {
+      const opt = document.createElement('option');
+      opt.value = b.fldName;
+      opt.textContent = b.fldName;
+      opt.setAttribute('data-id', b.fldID);
+      if (idx === 0) opt.selected = true;
+      branchSelect.appendChild(opt);
+    });
+
+    branchSelect.selectedIndex = 0;
+    const firstBranchId = branches[0].fldID;
+
+    // 2. Fetch users allowed for this selected branch from tblBranchUser
+    await loadUsersForSelectedBranch(firstBranchId);
   } catch (err) {
     console.error("Error loading login branches/users data:", err.message);
   }
 };
 
+window.loadUsersForSelectedBranch = async function(branchId) {
+  const userSelect = document.getElementById('loginUserSelect') || DOM.loginUserSelect;
+  if (!userSelect) return;
+
+  try {
+    const url = branchId ? `/api/users?branchId=${branchId}` : '/api/users';
+    const userRes = await fetch(url);
+    const userResult = await userRes.json();
+    const users = userResult.data || [];
+
+    userSelect.innerHTML = '';
+    if (users.length === 0) {
+      const opt = document.createElement('option');
+      opt.value = '';
+      opt.textContent = 'لا يوجد مستخدمين مخولين لهذا الفرع';
+      userSelect.appendChild(opt);
+      return;
+    }
+
+    users.forEach((u, idx) => {
+      const opt = document.createElement('option');
+      opt.value = u.fldName;
+      opt.textContent = u.fldName;
+      opt.setAttribute('data-id', u.fldID || u.fldUserID);
+      if (idx === 0) opt.selected = true;
+      userSelect.appendChild(opt);
+    });
+    userSelect.selectedIndex = 0;
+  } catch (err) {
+    console.error("Error loading branch users:", err.message);
+  }
+};
+
 window.fetchBranchesAndUsers = function() {
-  window.loadLoginLists();
+  return window.loadLoginLists();
 };
 
 // Helper to fill select dropdown list

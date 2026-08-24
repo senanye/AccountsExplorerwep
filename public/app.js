@@ -1734,7 +1734,7 @@ function getScreenContent(tabId, tabTitle, iconClass, colorClass) {
             </div>
             <div style="display: flex; align-items: center; gap: 2px;">
               <span style="font-weight: bold; width: 65px;">سعر الصرف:</span>
-              <input type="number" id="siRate-${tabId}" value="1.0000" step="0.0001" style="flex: 1; padding: 2px 4px; height: 24px; border: 1px solid #cbd5e1; border-radius: 4px; font-family: monospace; font-size: 0.78rem;" onchange="recalcSaleInvoiceTotals('${tabId}')">
+              <input type="number" id="siRate-${tabId}" value="1.0000" step="0.0001" style="flex: 1; padding: 2px 4px; height: 24px; border: 1px solid #cbd5e1; border-radius: 4px; font-family: monospace; font-size: 0.78rem;" onchange="siRateChanged('${tabId}')">
             </div>
             <div style="display: flex; align-items: center; gap: 2px;">
               <span style="font-weight: bold; width: 65px;">مركز الكلفة:</span>
@@ -26078,11 +26078,56 @@ window.siCurrencyChanged = function(tabId) {
 
   const curId = parseInt(curSelect.value);
   const cur = (state.currencies || []).find(c => c.fldID === curId);
-  if (cur) {
-    rateInput.value = parseFloat(cur.fldValue || 1.0).toFixed(4);
-  } else {
-    rateInput.value = "1.0000";
+  const newRate = cur ? parseFloat(cur.fldValue || 1.0) : 1.0;
+  rateInput.value = newRate.toFixed(4);
+
+  siApplyRateConversion(tabId, newRate);
+};
+
+window.siRateChanged = function(tabId) {
+  const rateInput = document.getElementById(`siRate-${tabId}`);
+  const newRate = parseFloat(rateInput?.value) || 1.0;
+  siApplyRateConversion(tabId, newRate);
+};
+
+window.siApplyRateConversion = function(tabId, rate) {
+  if (!rate || rate <= 0) rate = 1.0;
+
+  // 1. Convert all existing invoice rows
+  const items = state[`saleInvoiceItems-${tabId}`] || [];
+  items.forEach(itm => {
+    if (itm.fldBasePrice === undefined || isNaN(itm.fldBasePrice)) {
+      itm.fldBasePrice = itm.fldPrice || 0;
+    }
+    if (itm.fldBaseCost === undefined || isNaN(itm.fldBaseCost)) {
+      itm.fldBaseCost = itm.fldCost || 0;
+    }
+    if (itm.fldBaseDiscount === undefined || isNaN(itm.fldBaseDiscount)) {
+      itm.fldBaseDiscount = itm.fldDiscount || 0;
+    }
+
+    itm.fldPrice = itm.fldBasePrice * rate;
+    itm.fldCost = itm.fldBaseCost * rate;
+    itm.fldDiscount = itm.fldBaseDiscount * rate;
+    itm.fldTotalAmount = (itm.fldQty * itm.fldPrice) - itm.fldDiscount;
+  });
+  state[`saleInvoiceItems-${tabId}`] = items;
+
+  // 2. Convert quick item input bar if item/unit is currently selected
+  const unitSelect = document.getElementById(`siItemUnitSelect-${tabId}`);
+  const opt = unitSelect?.options[unitSelect.selectedIndex];
+  if (opt && opt.value) {
+    const basePrice = parseFloat(opt.getAttribute('data-base-price') || 0);
+    const baseCost = parseFloat(opt.getAttribute('data-base-cost') || 0);
+    if (basePrice > 0) {
+      document.getElementById(`siItemPrice-${tabId}`).value = (basePrice * rate).toFixed(2);
+    }
+    if (baseCost > 0) {
+      document.getElementById(`siSelectedItemCost-${tabId}`).value = (baseCost * rate).toFixed(2);
+    }
   }
+
+  renderSaleInvoiceItems(tabId);
   recalcSaleInvoiceTotals(tabId);
 };
 
@@ -26121,6 +26166,8 @@ window.setupSaleInvoiceItemSearch = function(tabId) {
       state.items = itemsData.data || [];
     }
 
+    const rate = parseFloat(document.getElementById(`siRate-${tabId}`)?.value) || 1.0;
+
     const matches = (state.items || []).filter(itm => {
       const name = (itm.fldName || '').toLowerCase();
       const code = (itm.fldCode || '').toLowerCase();
@@ -26136,6 +26183,8 @@ window.setupSaleInvoiceItemSearch = function(tabId) {
 
     let html = '';
     matches.forEach(itm => {
+      const basePrice = parseFloat(itm.fldSalesPrice || 0);
+      const curPrice = basePrice * rate;
       html += `
         <div class="pos-item-search-row" 
              style="padding: 8px 12px; border-bottom: 1px solid #f1f5f9; cursor: pointer; display: flex; justify-content: space-between; align-items: center;"
@@ -26145,7 +26194,7 @@ window.setupSaleInvoiceItemSearch = function(tabId) {
             <div style="font-size: 0.72rem; color: #64748b;">كود: ${itm.fldCode || ''} | باركود: ${itm.fldBarCode || ''}</div>
           </div>
           <div style="text-align: left;">
-            <span style="font-weight: 800; color: #0284c7; font-family: monospace;">${(parseFloat(itm.fldSalesPrice || 0)).toFixed(2)}</span>
+            <span style="font-weight: 800; color: #0284c7; font-family: monospace;">${curPrice.toFixed(2)}</span>
           </div>
         </div>
       `;
@@ -26176,6 +26225,8 @@ window.selectSaleInvoiceItem = async function(tabId, itemId) {
   const item = (state.items || []).find(i => i.fldID === itemId);
   if (!item) return;
 
+  const rate = parseFloat(document.getElementById(`siRate-${tabId}`)?.value) || 1.0;
+
   document.getElementById(`siSelectedItemId-${tabId}`).value = item.fldID;
   document.getElementById(`siSelectedItemCode-${tabId}`).value = item.fldCode || item.fldBarCode || item.fldID;
   document.getElementById(`siSelectedItemName-${tabId}`).value = item.fldName || '';
@@ -26192,36 +26243,44 @@ window.selectSaleInvoiceItem = async function(tabId, itemId) {
     const units = data.data || [];
 
     if (units.length === 0) {
-      unitSelect.innerHTML = `<option value="1" data-price="${item.fldSalesPrice || 0}" data-cost="${item.fldCostPrice || 0}" selected>حبه [1]</option>`;
+      const uCost = parseFloat(item.fldCostPrice || 0);
+      const uPrice = parseFloat(item.fldSalesPrice || 0);
+      unitSelect.innerHTML = `<option value="1" data-base-price="${uPrice}" data-base-cost="${uCost}" selected>حبه [1]</option>`;
     } else {
       let optHtml = '';
       units.forEach((u, i) => {
         const uCost = parseFloat(u.fldCost || item.fldCostPrice || 0);
         const uPrice = parseFloat(u.fldSalesPrice1 || item.fldSalesPrice || 0);
-        optHtml += `<option value="${u.fldID}" data-price="${uPrice}" data-cost="${uCost}" ${i === 0 ? 'selected' : ''}>${u.fldUnitName || 'حبه'} [${u.fldQuantity || 1}]</option>`;
+        optHtml += `<option value="${u.fldID}" data-base-price="${uPrice}" data-base-cost="${uCost}" ${i === 0 ? 'selected' : ''}>${u.fldUnitName || 'حبه'} [${u.fldQuantity || 1}]</option>`;
       });
       unitSelect.innerHTML = optHtml;
     }
 
     const selectedOpt = unitSelect.options[unitSelect.selectedIndex];
-    const initialPrice = selectedOpt ? parseFloat(selectedOpt.getAttribute('data-price') || item.fldSalesPrice || 0) : (item.fldSalesPrice || 0);
-    const initialCost = selectedOpt ? parseFloat(selectedOpt.getAttribute('data-cost') || item.fldCostPrice || 0) : (item.fldCostPrice || 0);
+    const initialBasePrice = selectedOpt ? parseFloat(selectedOpt.getAttribute('data-base-price') || item.fldSalesPrice || 0) : (item.fldSalesPrice || 0);
+    const initialBaseCost = selectedOpt ? parseFloat(selectedOpt.getAttribute('data-base-cost') || item.fldCostPrice || 0) : (item.fldCostPrice || 0);
 
-    document.getElementById(`siItemPrice-${tabId}`).value = initialPrice.toFixed(2);
-    document.getElementById(`siSelectedItemCost-${tabId}`).value = initialCost.toFixed(2);
+    document.getElementById(`siItemPrice-${tabId}`).value = (initialBasePrice * rate).toFixed(2);
+    document.getElementById(`siSelectedItemCost-${tabId}`).value = (initialBaseCost * rate).toFixed(2);
     document.getElementById(`siItemQty-${tabId}`).value = "1";
     document.getElementById(`siItemQty-${tabId}`).focus();
 
     unitSelect.onchange = function() {
       const opt = unitSelect.options[unitSelect.selectedIndex];
       if (opt) {
-        document.getElementById(`siItemPrice-${tabId}`).value = parseFloat(opt.getAttribute('data-price') || 0).toFixed(2);
-        document.getElementById(`siSelectedItemCost-${tabId}`).value = parseFloat(opt.getAttribute('data-cost') || 0).toFixed(2);
+        const curRate = parseFloat(document.getElementById(`siRate-${tabId}`)?.value) || 1.0;
+        const bPrice = parseFloat(opt.getAttribute('data-base-price') || 0);
+        const bCost = parseFloat(opt.getAttribute('data-base-cost') || 0);
+        document.getElementById(`siItemPrice-${tabId}`).value = (bPrice * curRate).toFixed(2);
+        document.getElementById(`siSelectedItemCost-${tabId}`).value = (bCost * curRate).toFixed(2);
       }
     };
   } catch (err) {
-    unitSelect.innerHTML = `<option value="1" data-price="${item.fldSalesPrice || 0}" data-cost="${item.fldCostPrice || 0}" selected>حبه</option>`;
-    document.getElementById(`siItemPrice-${tabId}`).value = parseFloat(item.fldSalesPrice || 0).toFixed(2);
+    const baseP = parseFloat(item.fldSalesPrice || 0);
+    const baseC = parseFloat(item.fldCostPrice || 0);
+    unitSelect.innerHTML = `<option value="1" data-base-price="${baseP}" data-base-cost="${baseC}" selected>حبه</option>`;
+    document.getElementById(`siItemPrice-${tabId}`).value = (baseP * rate).toFixed(2);
+    document.getElementById(`siSelectedItemCost-${tabId}`).value = (baseC * rate).toFixed(2);
   }
 };
 
@@ -26249,6 +26308,7 @@ window.addSaleItemRow = function(tabId) {
     unitName = unitName.substring(0, unitName.indexOf('[')).trim();
   }
 
+  const rate = parseFloat(document.getElementById(`siRate-${tabId}`)?.value) || 1.0;
   const qty = parseFloat(document.getElementById(`siItemQty-${tabId}`).value) || 1;
   const freeQty = parseFloat(document.getElementById(`siItemFreeQty-${tabId}`)?.value) || 0;
   const price = parseFloat(document.getElementById(`siItemPrice-${tabId}`).value) || 0.00;
@@ -26257,6 +26317,10 @@ window.addSaleItemRow = function(tabId) {
   const expDate = document.getElementById(`siItemExpiry-${tabId}`)?.value || '';
   const serialNo = document.getElementById(`siItemSerial-${tabId}`)?.value || '';
 
+  const basePrice = rate > 0 ? (price / rate) : price;
+  const baseCost = rate > 0 ? (cost / rate) : cost;
+  const baseDiscount = rate > 0 ? (discount / rate) : discount;
+
   const items = state[`saleInvoiceItems-${tabId}`] || [];
   const existing = items.find(i => i.fldItemID === itemId && i.fldUnityID === unitId);
 
@@ -26264,6 +26328,7 @@ window.addSaleItemRow = function(tabId) {
     existing.fldQty += qty;
     existing.fldFreeQty = (existing.fldFreeQty || 0) + freeQty;
     existing.fldDiscount += discount;
+    existing.fldBaseDiscount = rate > 0 ? (existing.fldDiscount / rate) : existing.fldDiscount;
     existing.fldTotalAmount = (existing.fldQty * existing.fldPrice) - existing.fldDiscount;
   } else {
     items.push({
@@ -26273,8 +26338,11 @@ window.addSaleItemRow = function(tabId) {
       fldQty: qty,
       fldFreeQty: freeQty,
       fldPrice: price,
-      fldDiscount: discount,
+      fldBasePrice: basePrice,
       fldCost: cost,
+      fldBaseCost: baseCost,
+      fldDiscount: discount,
+      fldBaseDiscount: baseDiscount,
       fldExpDate: expDate,
       fldSN: serialNo,
       fldTotalAmount: (qty * price) - discount,
@@ -26364,7 +26432,7 @@ window.renderSaleInvoiceItems = function(tabId) {
 
         <td style="padding: 3px; text-align: center;">
           <input type="number" value="${item.fldPrice.toFixed(2)}" step="0.01"
-                 style="width: 70px; border: 1px solid #cbd5e1; padding: 2px; text-align: left; font-family: monospace;"
+                 style="width: 75px; border: 1px solid #cbd5e1; padding: 2px; text-align: left; font-family: monospace;"
                  onchange="updateSaleItemField('${tabId}', ${idx}, 'fldPrice', this.value)">
         </td>
 
@@ -26402,6 +26470,7 @@ window.renderSaleInvoiceItems = function(tabId) {
 window.updateSaleItemField = function(tabId, index, field, value) {
   const items = state[`saleInvoiceItems-${tabId}`] || [];
   if (!items[index]) return;
+  const rate = parseFloat(document.getElementById(`siRate-${tabId}`)?.value) || 1.0;
 
   if (field === 'fldQty') {
     items[index].fldQty = parseFloat(value) || 0;
@@ -26410,9 +26479,14 @@ window.updateSaleItemField = function(tabId, index, field, value) {
     items[index].fldFreeQty = parseFloat(value) || 0;
   } else if (field === 'fldPrice') {
     items[index].fldPrice = parseFloat(value) || 0;
+    items[index].fldBasePrice = rate > 0 ? (items[index].fldPrice / rate) : items[index].fldPrice;
     items[index].fldTotalAmount = (items[index].fldQty * items[index].fldPrice) - items[index].fldDiscount;
+  } else if (field === 'fldCost') {
+    items[index].fldCost = parseFloat(value) || 0;
+    items[index].fldBaseCost = rate > 0 ? (items[index].fldCost / rate) : items[index].fldCost;
   } else if (field === 'fldDiscount') {
     items[index].fldDiscount = parseFloat(value) || 0;
+    items[index].fldBaseDiscount = rate > 0 ? (items[index].fldDiscount / rate) : items[index].fldDiscount;
     items[index].fldTotalAmount = (items[index].fldQty * items[index].fldPrice) - items[index].fldDiscount;
   } else if (field === 'fldExpDate') {
     items[index].fldExpDate = value;
@@ -26428,24 +26502,26 @@ window.recalcSaleInvoiceTotals = function(tabId) {
   const items = state[`saleInvoiceItems-${tabId}`] || [];
   let gross = 0;
   let discount = 0;
-  let totalCost = 0;
+  let totalCostBase = 0;
+
+  const rate = parseFloat(document.getElementById(`siRate-${tabId}`)?.value) || 1.0;
 
   items.forEach(itm => {
     gross += (itm.fldQty * itm.fldPrice);
     discount += (itm.fldDiscount || 0);
-    totalCost += ((itm.fldQty + (itm.fldFreeQty || 0)) * (itm.fldCost || 0));
+    const bCost = (itm.fldBaseCost !== undefined && !isNaN(itm.fldBaseCost)) ? itm.fldBaseCost : (rate > 0 ? (itm.fldCost / rate) : itm.fldCost);
+    totalCostBase += ((itm.fldQty + (itm.fldFreeQty || 0)) * bCost);
   });
 
   const net = gross - discount;
-  const rate = parseFloat(document.getElementById(`siRate-${tabId}`)?.value) || 1.0;
   const baseNet = rate > 0 ? (rate === 1.0 ? net : (net / rate)) : net;
-  const grossProfit = baseNet - totalCost;
+  const grossProfit = baseNet - totalCostBase;
 
   document.getElementById(`siGrossTotal-${tabId}`).innerText = gross.toFixed(2);
   document.getElementById(`siDiscountTotal-${tabId}`).innerText = discount.toFixed(2);
   document.getElementById(`siNetTotal-${tabId}`).innerText = net.toFixed(2);
   document.getElementById(`siBaseNetTotal-${tabId}`).innerText = baseNet.toFixed(2);
-  document.getElementById(`siTotalCost-${tabId}`).innerText = totalCost.toFixed(2);
+  document.getElementById(`siTotalCost-${tabId}`).innerText = totalCostBase.toFixed(2);
 
   const profitEl = document.getElementById(`siGrossProfit-${tabId}`);
   profitEl.innerText = grossProfit.toFixed(2);
@@ -26462,6 +26538,7 @@ window.loadSaleInvoiceDetails = async function(tabId, id) {
     }
 
     const h = data.header;
+    const rate = parseFloat(h.fldVoisherMoneyValue || 1.0);
     document.getElementById(`siTransNo-${tabId}`).value = h.fldTransNo;
     document.getElementById(`siDate-${tabId}`).value = h.fldDate ? h.fldDate.split('T')[0] : '';
     document.getElementById(`siCustomerName-${tabId}`).value = h.fldName || '';
@@ -26470,7 +26547,7 @@ window.loadSaleInvoiceDetails = async function(tabId, id) {
     document.getElementById(`siPaymentType-${tabId}`).value = h.fldType || 1;
     document.getElementById(`siWarehouse-${tabId}`).value = h.fldstoreID || 1;
     document.getElementById(`siCurrency-${tabId}`).value = h.fldVoisherMoneyID || 1;
-    document.getElementById(`siRate-${tabId}`).value = parseFloat(h.fldVoisherMoneyValue || 1).toFixed(4);
+    document.getElementById(`siRate-${tabId}`).value = rate.toFixed(4);
     document.getElementById(`siRefNo-${tabId}`).value = h.fldRefNo || '';
     document.getElementById(`siRefDate-${tabId}`).value = h.fldRefDate ? h.fldRefDate.split('T')[0] : '';
 
@@ -26479,22 +26556,32 @@ window.loadSaleInvoiceDetails = async function(tabId, id) {
       document.getElementById(`siBoxAccount-${tabId}`).innerHTML = `<option value="${h.fldVoisherAccID || h.fldAccNumberID}" selected>${h.fldAccBoxName}</option>`;
     }
 
-    state[`saleInvoiceItems-${tabId}`] = (data.details || []).map(d => ({
-      fldCode: d.fldCode || d.fldBarCode || String(d.flditemID),
-      fldItemName: d.fldItemName,
-      fldUnit: d.fldUnitName || 'حبه',
-      fldQty: parseFloat(d.fldQty || d.fldQTY || 1),
-      fldFreeQty: parseFloat(d.fldFreeQty || d.fldFreeQTY || 0),
-      fldPrice: parseFloat(d.fldPrice || 0),
-      fldDiscount: parseFloat(d.fldDiscount || 0),
-      fldCost: parseFloat(d.fldCost || 0),
-      fldExpDate: d.fldExpDate || '',
-      fldSN: d.fldSerialNumber || '',
-      fldlTaxTota_D: parseFloat(d.fldlTaxTota_D || 0),
-      fldTotalAmount: parseFloat(d.fldTotalAmount || d.fldTotalPrice || 0),
-      fldItemID: d.flditemID,
-      fldUnityID: d.fldUnityID
-    }));
+    state[`saleInvoiceItems-${tabId}`] = (data.details || []).map(d => {
+      const price = parseFloat(d.fldPrice || 0);
+      const cost = parseFloat(d.fldCost || 0);
+      const disc = parseFloat(d.fldDiscount || 0);
+      const qty = parseFloat(d.fldQty || d.fldQTY || 1);
+      const freeQty = parseFloat(d.fldFreeQty || d.fldFreeQTY || 0);
+      return {
+        fldCode: d.fldCode || d.fldBarCode || String(d.flditemID),
+        fldItemName: d.fldItemName,
+        fldUnit: d.fldUnitName || 'حبه',
+        fldQty: qty,
+        fldFreeQty: freeQty,
+        fldPrice: price,
+        fldBasePrice: rate > 0 ? (price / rate) : price,
+        fldDiscount: disc,
+        fldBaseDiscount: rate > 0 ? (disc / rate) : disc,
+        fldCost: cost,
+        fldBaseCost: rate > 0 ? (cost / rate) : cost,
+        fldExpDate: d.fldExpDate || '',
+        fldSN: d.fldSerialNumber || '',
+        fldlTaxTota_D: parseFloat(d.fldlTaxTota_D || 0),
+        fldTotalAmount: parseFloat(d.fldTotalAmount || d.fldTotalPrice || ((qty * price) - disc)),
+        fldItemID: d.flditemID,
+        fldUnityID: d.fldUnityID
+      };
+    });
 
     renderSaleInvoiceItems(tabId);
     applySalesInvoicePermissions(tabId);

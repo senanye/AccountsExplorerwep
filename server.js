@@ -6415,13 +6415,16 @@ app.post('/api/sales', async (req, res) => {
     const isCash = (parseInt(header.fldType) === 1);
     const customerOrBoxAccID = isCash ? (parseInt(header.fldVoisherAccID) || defaultBoxAccID) : (parseInt(header.fldAccNumberID || header.fldVoisherAccID) || defaultBoxAccID);
 
-    // Calculate COGS total
+    // Calculate COGS total in Base Currency (SAR)
     let totalCostBase = 0;
     const items = header.items || [];
     items.forEach(itm => {
-      const q = parseFloat(itm.fldQty) || 1;
-      const c = parseFloat(itm.fldCost) || 0;
-      totalCostBase += (q * c);
+      const q = (parseFloat(itm.fldQty) || 1) + (parseFloat(itm.fldFreeQty) || 0);
+      const rawC = parseFloat(itm.fldCost) || 0;
+      const baseC = (itm.fldBaseCost !== undefined && !isNaN(itm.fldBaseCost)) 
+        ? parseFloat(itm.fldBaseCost) 
+        : ((opType === 2 && rate > 0) ? (rawC / rate) : (rawC * (rate === 1.0 ? 1.0 : (1.0 / rate))));
+      totalCostBase += (q * baseC);
     });
 
     const netBaseAmount = (opType === 2 && rate > 0) ? (netPayable / rate) : (netPayable * (rate === 1.0 ? 1.0 : (1.0 / rate)));
@@ -6501,11 +6504,11 @@ app.post('/api/sales', async (req, res) => {
           detReq.input('itemId', sql.Int, parseInt(item.fldItemID));
           detReq.input('qty', sql.Decimal(18, 2), qty);
           detReq.input('freeQty', sql.Decimal(18, 2), parseFloat(item.fldFreeQty) || 0);
-          detReq.input('price', sql.Decimal(18, 4), basePrice);
+          detReq.input('price', sql.Decimal(18, 4), rawPrice);
           detReq.input('cost', sql.Decimal(18, 4), rawCost);
-          detReq.input('totalCost', sql.Decimal(18, 4), totalCost);
-          detReq.input('totalPrice', sql.Decimal(18, 4), baseTotal);
-          detReq.input('discount', sql.Decimal(18, 4), baseDiscount);
+          detReq.input('totalCost', sql.Decimal(18, 4), rawCost * (qty + (parseFloat(item.fldFreeQty) || 0)));
+          detReq.input('totalPrice', sql.Decimal(18, 4), itmTotal);
+          detReq.input('discount', sql.Decimal(18, 4), itmDiscount);
           detReq.input('unitId', sql.Int, unitId);
           detReq.input('warehouseId', sql.Int, storeId);
           detReq.input('branchNo', sql.TinyInt, branchNo);

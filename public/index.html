@@ -54,9 +54,10 @@
             <div class="login-field-row">
               <div class="login-field-label">مزود البيانات</div>
               <div class="login-field-input-wrapper">
-                <input type="text" id="loginProvider" value="bw" class="login-readonly-input" readonly>
-                <button type="button" class="login-icon-btn" onclick="openDbModal()" title="إعدادات الاتصال بقاعدة البيانات"><i class="fa-solid fa-plus"></i></button>
-                <button type="button" class="login-icon-btn" tabindex="-1"><i class="fa-solid fa-caret-down"></i></button>
+                <select id="loginProvider" onchange="handleLoginProviderChange(this.value)" style="flex: 1; padding: 6px; font-weight: bold; font-family: var(--font-arabic); border: 1px solid #94a3b8; border-radius: 4px; background: #ffffff;">
+                  <!-- Populated dynamically from SQLite connection profiles -->
+                </select>
+                <button type="button" class="login-icon-btn" onclick="openDbModal()" title="إعدادات الاتصال بقاعدة البيانات (محمي بكلمة سر)"><i class="fa-solid fa-plus"></i></button>
               </div>
             </div>
 
@@ -1591,67 +1592,191 @@
     </div>
 
   <!-- SQL Server Connection Modal -->
-    <div class="modal-overlay" id="dbSettingsModal">
-      <div class="modal-container">
-        <div class="modal-header">
-          <div class="modal-title-group">
-            <i class="fa-solid fa-database modal-header-icon"></i>
-            <h2>إعدادات الاتصال بقاعدة بيانات SQL Server</h2>
-          </div>
-          <button class="modal-close-btn" onclick="closeDbModal()">&times;</button>
-        </div>
+    <!-- ======================================================== -->
+    <!-- SQL Server & SQLite Branch Connection Management Modal   -->
+    <!-- Matching Exact Theme & Design from media_1787601799158   -->
+    <!-- ======================================================== -->
+    <div class="modal-overlay" id="dbSettingsModal" style="z-index: 1080; display: none; background: rgba(0, 0, 0, 0.75);">
+      <div class="modal-container" style="max-width: 1100px; width: 96vw; background: #0b1528; border: 1px solid #1e3a8a; border-radius: 12px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.7); color: #ffffff; direction: rtl; text-align: right; padding: 0; overflow: hidden; font-family: var(--font-arabic);">
         
-        <form id="dbSettingsForm" onsubmit="saveConnectionSettings(event)">
-          <div class="modal-body">
-            <p class="modal-description">أدخل تفاصيل الاتصال بخادم SQL Server الخاص بك. سيقوم النظام بحفظ هذه الإعدادات محلياً وإجراء استعلام ديناميكي للقوائم.</p>
+        <!-- Modal Top Bar -->
+        <div style="background: linear-gradient(135deg, #091122, #101f3c); border-bottom: 2px solid #1d4ed8; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <i class="fa-solid fa-pen-to-square" style="color: #fbbf24; font-size: 1.3rem;"></i>
+            <h2 id="dbModalHeaderTitle" style="margin: 0; font-size: 1.15rem; font-weight: 800; color: #fde047;">
+              ✏️ نموذج تعديل بيانات الفرع: #<span id="hdrPointNo">71</span> (<span id="hdrBranchName">هيا</span>)
+            </h2>
+          </div>
+          <button type="button" onclick="closeDbModal()" style="background: none; border: none; color: #94a3b8; font-size: 1.6rem; cursor: pointer; line-height: 1;">&times;</button>
+        </div>
+
+        <div style="padding: 16px 20px; max-height: 80vh; overflow-y: auto;">
+          <input type="hidden" id="dbProfileHiddenId" value="">
+
+          <!-- Form Edit Card -->
+          <div style="background: #0f2042; border: 1px solid #1e3a8a; border-radius: 10px; padding: 16px; margin-bottom: 16px; position: relative;">
             
-            <div class="form-grid">
-              <div class="form-group full-width">
-                <label for="dbServer"><i class="fa-solid fa-server"></i> اسم السيرفر / العنوان (Server Name/Host)</label>
-                <input type="text" id="dbServer" placeholder="مثال: localhost أو 192.168.1.100\SQLEXPRESS" required>
-              </div>
-
-              <div class="form-group">
-                <label for="dbPort"><i class="fa-solid fa-door-open"></i> رقم المنفذ (Port)</label>
-                <input type="number" id="dbPort" value="1433" placeholder="افتراضي: 1433">
-              </div>
-
-              <div class="form-group">
-                <label for="dbDatabase"><i class="fa-solid fa-folder-closed"></i> اسم قاعدة البيانات (Database Name)</label>
-                <input type="text" id="dbDatabase" placeholder="مثال: AccountsExplorerDB" required>
-              </div>
-
-              <div class="form-group">
-                <label for="dbUsername"><i class="fa-solid fa-user"></i> اسم المستخدم (Username)</label>
-                <input type="text" id="dbUsername" placeholder="مثال: sa" required>
-              </div>
-
-              <div class="form-group">
-                <label for="dbPassword"><i class="fa-solid fa-key"></i> كلمة المرور (Password)</label>
-                <input type="password" id="dbPassword" placeholder="كلمة مرور قاعدة البيانات">
-              </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+              <span style="background: #334155; color: #fde047; padding: 3px 10px; border-radius: 4px; font-size: 0.78rem; font-weight: bold; border: 1px solid #475569;">
+                غير أي حقل واضغط حفظ التعديلات لتطبيقها فوراً
+              </span>
             </div>
 
-            <div class="modal-alert-container" id="modalAlert">
-              <!-- Success or Error messages go here -->
+            <!-- Row 1: Point No, Branch Name, Primary Branch No -->
+            <div style="display: grid; grid-template-columns: 1fr 1.8fr 1fr; gap: 12px; margin-bottom: 12px;">
+              
+              <div>
+                <label style="font-size: 0.78rem; color: #cbd5e1; display: flex; justify-content: space-between; margin-bottom: 4px;">
+                  <span>رقم النقطة (fldPointNO)</span>
+                  <span style="background: #fbbf24; color: #0f172a; padding: 0 4px; border-radius: 3px; font-size: 0.7rem; font-weight: 900;">123</span>
+                </label>
+                <input type="text" id="dbInputPointNo" value="71" style="width: 100%; height: 34px; background: #070e1c; border: 1px solid #1e3a8a; border-radius: 6px; color: #38bdf8; font-family: monospace; font-weight: bold; text-align: center; font-size: 0.95rem;">
+              </div>
+
+              <div>
+                <label style="font-size: 0.78rem; color: #cbd5e1; display: flex; justify-content: space-between; margin-bottom: 4px;">
+                  <span>اسم الفرع (fldName)</span>
+                  <i class="fa-solid fa-store" style="color: #fbbf24;"></i>
+                </label>
+                <input type="text" id="dbInputBranchName" value="هيا" style="width: 100%; height: 34px; background: #070e1c; border: 1px solid #1e3a8a; border-radius: 6px; color: #ffffff; font-family: var(--font-arabic); font-weight: bold; text-align: center; font-size: 0.95rem;">
+              </div>
+
+              <div>
+                <label style="font-size: 0.78rem; color: #cbd5e1; display: flex; justify-content: space-between; margin-bottom: 4px;">
+                  <span>رقم الفرع الأساسي (fldBranchNo)</span>
+                  <span style="color: #38bdf8; font-weight: 900;">#</span>
+                </label>
+                <input type="number" id="dbInputBranchNo" value="1" style="width: 100%; height: 34px; background: #070e1c; border: 1px solid #1e3a8a; border-radius: 6px; color: #ffffff; font-family: monospace; font-weight: bold; text-align: center; font-size: 0.95rem;">
+              </div>
+
+            </div>
+
+            <!-- Row 2: Branch Server, Branch DB, Main Server, Main DB -->
+            <div style="display: grid; grid-template-columns: 1.5fr 1fr 1.5fr 1fr; gap: 12px; margin-bottom: 12px;">
+              
+              <div>
+                <label style="font-size: 0.78rem; color: #cbd5e1; display: flex; justify-content: space-between; margin-bottom: 4px;">
+                  <span>سيرفر الفرع (DataSource / IP)</span>
+                  <i class="fa-solid fa-server" style="color: #38bdf8;"></i>
+                </label>
+                <input type="text" id="dbInputDataSource" value="SENANSERVER\SQLEXPRESS" style="width: 100%; height: 34px; background: #070e1c; border: 1px solid #1e3a8a; border-radius: 6px; color: #38bdf8; font-family: monospace; font-weight: bold; text-align: center; font-size: 0.9rem;">
+              </div>
+
+              <div>
+                <label style="font-size: 0.78rem; color: #cbd5e1; display: flex; justify-content: space-between; margin-bottom: 4px;">
+                  <span>قاعدة بيانات الفرع (Catalog)</span>
+                  <i class="fa-solid fa-database" style="color: #94a3b8;"></i>
+                </label>
+                <input type="text" id="dbInputCatalog" value="sp" style="width: 100%; height: 34px; background: #070e1c; border: 1px solid #1e3a8a; border-radius: 6px; color: #ffffff; font-family: monospace; font-weight: bold; text-align: center; font-size: 0.9rem;">
+              </div>
+
+              <div>
+                <label style="font-size: 0.78rem; color: #cbd5e1; display: flex; justify-content: space-between; margin-bottom: 4px;">
+                  <span>السيرفر الرئيسي (MainDataSource)</span>
+                  <i class="fa-solid fa-asterisk" style="color: #fbbf24;"></i>
+                </label>
+                <input type="text" id="dbInputMainDataSource" value="SENANSERVER\SQLEXPRESS" style="width: 100%; height: 34px; background: #070e1c; border: 1px solid #1e3a8a; border-radius: 6px; color: #fbbf24; font-family: monospace; font-weight: bold; text-align: center; font-size: 0.9rem;">
+              </div>
+
+              <div>
+                <label style="font-size: 0.78rem; color: #cbd5e1; display: flex; justify-content: space-between; margin-bottom: 4px;">
+                  <span>قاعدة البيانات الرئيسية (MainCatalog)</span>
+                  <i class="fa-solid fa-network-wired" style="color: #fbbf24;"></i>
+                </label>
+                <input type="text" id="dbInputMainCatalog" value="mydb" style="width: 100%; height: 34px; background: #070e1c; border: 1px solid #1e3a8a; border-radius: 6px; color: #fbbf24; font-family: monospace; font-weight: bold; text-align: center; font-size: 0.9rem;">
+              </div>
+
+            </div>
+
+            <!-- Row 3: UserID, Password, Port + Action Buttons -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr 0.8fr 1.4fr 1.1fr; gap: 10px; align-items: end;">
+              
+              <div>
+                <label style="font-size: 0.78rem; color: #cbd5e1; display: flex; justify-content: space-between; margin-bottom: 4px;">
+                  <span>اسم المستخدم (UserID)</span>
+                  <i class="fa-solid fa-user" style="color: #94a3b8;"></i>
+                </label>
+                <input type="text" id="dbInputUserID" value="sa" style="width: 100%; height: 34px; background: #070e1c; border: 1px solid #1e3a8a; border-radius: 6px; color: #ffffff; font-family: monospace; font-weight: bold; text-align: center;">
+              </div>
+
+              <div>
+                <label style="font-size: 0.78rem; color: #cbd5e1; display: flex; justify-content: space-between; margin-bottom: 4px;">
+                  <span>كلمة المرور (Password)</span>
+                  <i class="fa-solid fa-key" style="color: #94a3b8;"></i>
+                </label>
+                <input type="password" id="dbInputPassword" value="as" style="width: 100%; height: 34px; background: #070e1c; border: 1px solid #1e3a8a; border-radius: 6px; color: #ffffff; font-family: monospace; font-weight: bold; text-align: center;">
+              </div>
+
+              <div>
+                <label style="font-size: 0.78rem; color: #cbd5e1; display: block; margin-bottom: 4px;">المنفذ (Port)</label>
+                <input type="text" id="dbInputPort" value="1433" style="width: 100%; height: 34px; background: #070e1c; border: 1px solid #1e3a8a; border-radius: 6px; color: #ffffff; font-family: monospace; text-align: center;">
+              </div>
+
+              <div>
+                <button type="button" onclick="saveConnectionProfileForm()" style="width: 100%; height: 36px; background: #f59e0b; hover: #d97706; border: none; border-radius: 6px; color: #000000; font-weight: 800; font-size: 0.82rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                  <i class="fa-solid fa-floppy-disk"></i> حفظ وتطبيق في SQLite
+                </button>
+              </div>
+
+              <div style="display: flex; gap: 6px;">
+                <button type="button" onclick="testCurrentDbConnection()" style="flex: 1; height: 36px; background: #0284c7; border: none; border-radius: 6px; color: #ffffff; font-weight: 800; font-size: 0.8rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px;">
+                  <i class="fa-solid fa-satellite-dish"></i> فحص
+                </button>
+                <button type="button" onclick="resetDbProfileFormForNew()" style="height: 36px; padding: 0 10px; background: #10b981; border: none; border-radius: 6px; color: #ffffff; font-weight: 800; font-size: 0.8rem; cursor: pointer; title: 'إضافة فرع / مزود جديد';">
+                  <i class="fa-solid fa-plus"></i> جديد
+                </button>
+              </div>
+
+            </div>
+
+          </div>
+
+          <!-- Counter & Search Filter Row -->
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px;">
+            <div style="background: #0f2042; border: 1px solid #1e3a8a; padding: 6px 14px; border-radius: 6px; font-size: 0.82rem; font-weight: bold; color: #fbbf24; display: flex; align-items: center; gap: 6px;">
+              <i class="fa-solid fa-list-check"></i> إجمالي الفروع: <span id="dbProfilesCount">1</span>
+            </div>
+
+            <div style="position: relative; flex: 1; max-width: 450px;">
+              <input type="text" id="dbSearchProfilesInput" placeholder="ابحث عن أي فرع بالاسم أو الرقم لتعديله فوراً..." oninput="filterDbProfilesTable(this.value)" style="width: 100%; height: 34px; padding: 0 34px 0 12px; background: #070e1c; border: 1px solid #1e3a8a; border-radius: 6px; color: #ffffff; font-family: var(--font-arabic); font-size: 0.85rem;">
+              <i class="fa-solid fa-magnifying-glass" style="position: absolute; right: 12px; top: 10px; color: #94a3b8;"></i>
             </div>
           </div>
-          
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" onclick="closeDbModal()">إلغاء</button>
-            <button type="button" class="btn btn-info" id="btnTestConnection" onclick="testDbConnection()">
-              <i class="fa-solid fa-rotate"></i> اختبار الاتصال
-            </button>
-            <button type="submit" class="btn btn-primary" id="btnSaveConnection">
-              <i class="fa-solid fa-circle-check"></i> حفظ الاتصال والتشغيل
-            </button>
-            <button type="button" class="btn btn-danger hidden" id="btnDisconnect" onclick="disconnectDb()">
-              <i class="fa-solid fa-unlink"></i> حذف الاتصال
-            </button>
+
+          <!-- Profiles Table -->
+          <div style="background: #070e1c; border: 1px solid #1e3a8a; border-radius: 8px; overflow: hidden; margin-bottom: 16px;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 0.82rem; text-align: center;">
+              <thead>
+                <tr style="background: #0f2042; border-bottom: 2px solid #1e3a8a; color: #93c5fd; font-weight: 800;">
+                  <th style="padding: 8px 10px; width: 110px;">تعديل فوري</th>
+                  <th style="padding: 8px 8px; width: 85px;">رقم النقطة</th>
+                  <th style="padding: 8px 14px; text-align: right;">اسم الفرع</th>
+                  <th style="padding: 8px 8px; width: 80px;">رقم الفرع</th>
+                  <th style="padding: 8px 12px; color: #38bdf8;">سيرفر الفرع (DataSource)</th>
+                  <th style="padding: 8px 12px;">قاعدة بيانات الفرع</th>
+                  <th style="padding: 8px 12px; color: #fbbf24;">السيرفر الرئيسي (MainDataSource)</th>
+                  <th style="padding: 8px 12px; color: #fbbf24;">قاعدة البيانات الرئيسية</th>
+                  <th style="padding: 8px 10px; width: 80px;">حذف</th>
+                </tr>
+              </thead>
+              <tbody id="dbProfilesTableBody">
+                <!-- Populated dynamically from SQLite connection profiles -->
+              </tbody>
+            </table>
           </div>
-        </form>
+
+        </div>
+
+        <!-- Modal Footer Matching Image Red/Pink Button -->
+        <div style="background: #091122; border-top: 1px solid #1e3a8a; padding: 12px 20px; display: flex; justify-content: flex-start;">
+          <button type="button" onclick="closeDbModalAndApply()" style="background: #f43f5e; hover: #e11d48; border: none; border-radius: 6px; padding: 8px 24px; color: #ffffff; font-weight: 800; font-size: 0.88rem; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 6px -1px rgba(244, 63, 94, 0.3);">
+            <i class="fa-solid fa-circle-check"></i> إغلاق وتطبيق التحديثات
+          </button>
+        </div>
+
       </div>
     </div>
+    
     <!-- IP Display Modal -->
     <div class="modal-overlay" id="ipModal">
       <div class="modal-container modal-sm">

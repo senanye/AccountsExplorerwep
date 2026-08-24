@@ -16610,6 +16610,207 @@ app.post('/api/shops/:id/toggle-active', async (req, res) => {
   }
 });
 
+
+// ========================================================
+// SQLITE & CONNECTION PROFILES MANAGER (إدارة مزودات الاتصال وقواعد البيانات)
+// ========================================================
+const CONNECTIONS_FILE = path.join(__dirname, 'connections.json');
+
+function loadConnectionProfiles() {
+  if (fs.existsSync(CONNECTIONS_FILE)) {
+    try {
+      return JSON.parse(fs.readFileSync(CONNECTIONS_FILE, 'utf8'));
+    } catch (e) {
+      console.error("Error reading connections.json:", e);
+    }
+  }
+
+  // Default profiles if file does not exist yet
+  const currentDb = loadDbConfig() || {
+    server: "SENANSERVER\\SQLEXPRESS",
+    port: "1433",
+    database: "mydb0",
+    username: "sa",
+    password: "as"
+  };
+
+  const initialProfiles = [
+    {
+      id: 1,
+      fldPointNO: "71",
+      fldName: "هيا",
+      fldBranchNo: 1,
+      DataSource: "SENANSERVER\\SQLEXPRESS",
+      Catalog: "sp",
+      MainDataSource: "SENANSERVER\\SQLEXPRESS",
+      MainCatalog: "mydb",
+      UserID: "sa",
+      Password: "as",
+      Port: "1433",
+      isDefault: false
+    },
+    {
+      id: 2,
+      fldPointNO: "1",
+      fldName: "الفرع الرئيسي",
+      fldBranchNo: 1,
+      DataSource: currentDb.server || "SENANSERVER\\SQLEXPRESS",
+      Catalog: currentDb.database || "mydb0",
+      MainDataSource: currentDb.server || "SENANSERVER\\SQLEXPRESS",
+      MainCatalog: currentDb.database || "mydb0",
+      UserID: currentDb.username || "sa",
+      Password: currentDb.password || "as",
+      Port: String(currentDb.port || "1433"),
+      isDefault: true
+    }
+  ];
+
+  saveConnectionProfiles(initialProfiles);
+  return initialProfiles;
+}
+
+function saveConnectionProfiles(profiles) {
+  try {
+    fs.writeFileSync(CONNECTIONS_FILE, JSON.stringify(profiles, null, 2), 'utf8');
+    return true;
+  } catch (e) {
+    console.error("Error saving connections.json:", e);
+    return false;
+  }
+}
+
+// GET /api/connections - List all connection profiles
+app.get('/api/connections', (req, res) => {
+  const profiles = loadConnectionProfiles();
+  res.json({ success: true, data: profiles });
+});
+
+// POST /api/connections - Add new profile
+app.post('/api/connections', (req, res) => {
+  const profiles = loadConnectionProfiles();
+  const newProfile = {
+    id: Date.now(),
+    fldPointNO: String(req.body.fldPointNO || '1'),
+    fldName: String(req.body.fldName || 'فرع جديد'),
+    fldBranchNo: parseInt(req.body.fldBranchNo) || 1,
+    DataSource: String(req.body.DataSource || 'localhost'),
+    Catalog: String(req.body.Catalog || 'mydb'),
+    MainDataSource: String(req.body.MainDataSource || req.body.DataSource || 'localhost'),
+    MainCatalog: String(req.body.MainCatalog || req.body.Catalog || 'mydb'),
+    UserID: String(req.body.UserID || 'sa'),
+    Password: String(req.body.Password || ''),
+    Port: String(req.body.Port || '1433'),
+    isDefault: false
+  };
+
+  profiles.push(newProfile);
+  saveConnectionProfiles(profiles);
+  res.json({ success: true, message: "تمت إضافة مزود الاتصال بنجاح!", data: newProfile });
+});
+
+// PUT /api/connections/:id - Update profile
+app.put('/api/connections/:id', (req, res) => {
+  const id = parseInt(req.params.id);
+  let profiles = loadConnectionProfiles();
+  const idx = profiles.findIndex(p => p.id === id);
+  if (idx === -1) return res.status(404).json({ success: false, error: "المزود غير موجود." });
+
+  profiles[idx] = {
+    ...profiles[idx],
+    fldPointNO: String(req.body.fldPointNO || profiles[idx].fldPointNO),
+    fldName: String(req.body.fldName || profiles[idx].fldName),
+    fldBranchNo: parseInt(req.body.fldBranchNo) || profiles[idx].fldBranchNo,
+    DataSource: String(req.body.DataSource || profiles[idx].DataSource),
+    Catalog: String(req.body.Catalog || profiles[idx].Catalog),
+    MainDataSource: String(req.body.MainDataSource || profiles[idx].MainDataSource),
+    MainCatalog: String(req.body.MainCatalog || profiles[idx].MainCatalog),
+    UserID: String(req.body.UserID !== undefined ? req.body.UserID : profiles[idx].UserID),
+    Password: String(req.body.Password !== undefined ? req.body.Password : profiles[idx].Password),
+    Port: String(req.body.Port || profiles[idx].Port || '1433')
+  };
+
+  saveConnectionProfiles(profiles);
+  res.json({ success: true, message: "تم تعديل بيانات مزود الاتصال والفرع بنجاح!", data: profiles[idx] });
+});
+
+// DELETE /api/connections/:id - Delete profile
+app.delete('/api/connections/:id', (req, res) => {
+  const id = parseInt(req.params.id);
+  let profiles = loadConnectionProfiles();
+  profiles = profiles.filter(p => p.id !== id);
+  saveConnectionProfiles(profiles);
+  res.json({ success: true, message: "تم حذف مزود الاتصال بنجاح!" });
+});
+
+// POST /api/connections/select - Switch active connection and reconnect pool
+app.post('/api/connections/select', async (req, res) => {
+  const { id, profile } = req.body;
+  let target = profile;
+  let profiles = loadConnectionProfiles();
+
+  if (id) {
+    target = profiles.find(p => p.id === parseInt(id));
+  }
+
+  if (!target) {
+    return res.status(400).json({ success: false, error: "لم يتم العثور على مزود الاتصال المحدد." });
+  }
+
+  // Update default flags
+  profiles = profiles.map(p => ({
+    ...p,
+    isDefault: (p.id === target.id)
+  }));
+  saveConnectionProfiles(profiles);
+
+  // Write to db_config.json
+  const newConfig = {
+    server: target.DataSource || "localhost",
+    port: target.Port || "1433",
+    database: target.Catalog || "mydb",
+    username: target.UserID || "sa",
+    password: target.Password || ""
+  };
+  saveDbConfig(newConfig);
+
+  // Reinitialize database pool
+  const connected = await initializePool();
+  res.json({
+    success: true,
+    connected,
+    message: connected ? `تم الاتصال بنجاح بقاعدة البيانات: ${newConfig.database}` : `فشل الاتصال: ${connectionError}`,
+    database: newConfig.database,
+    server: newConfig.server,
+    profile: target
+  });
+});
+
+// POST /api/connections/test - Test connection parameters
+app.post('/api/connections/test', async (req, res) => {
+  const { DataSource, Catalog, UserID, Password, Port } = req.body;
+  const testConfig = {
+    user: UserID || "sa",
+    password: Password || "",
+    server: DataSource || "localhost",
+    port: parseInt(Port) || 1433,
+    database: Catalog || "master",
+    options: {
+      encrypt: false,
+      trustServerCertificate: true,
+      connectionTimeout: 4000,
+      requestTimeout: 6000
+    }
+  };
+
+  try {
+    const testPool = await sql.connect(testConfig);
+    await testPool.close();
+    res.json({ success: true, message: `نجح الاتصال بالسيرفر ${testConfig.server} وقاعدة البيانات ${testConfig.database} بنجاح!` });
+  } catch (err) {
+    res.json({ success: false, error: `فشل الاتصال: ${err.message}` });
+  }
+});
+
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });

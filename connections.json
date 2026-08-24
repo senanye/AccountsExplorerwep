@@ -1,0 +1,30 @@
+[
+  {
+    "id": 1,
+    "fldPointNO": "71",
+    "fldName": "هيا",
+    "fldBranchNo": 1,
+    "DataSource": "SENANSERVER\\SQLEXPRESS",
+    "Catalog": "sp",
+    "MainDataSource": "SENANSERVER\\SQLEXPRESS",
+    "MainCatalog": "mydb",
+    "UserID": "sa",
+    "Password": "as",
+    "Port": "1433",
+    "isDefault": false
+  },
+  {
+    "id": 2,
+    "fldPointNO": "1",
+    "fldName": "الفرع الرئيسي",
+    "fldBranchNo": 1,
+    "DataSource": "SENANSERVER\\SQLEXPRESS",
+    "Catalog": "mydb0",
+    "MainDataSource": "SENANSERVER\\SQLEXPRESS",
+    "MainCatalog": "mydb0",
+    "UserID": "sa",
+    "Password": "as",
+    "Port": "1433",
+    "isDefault": true
+  }
+]

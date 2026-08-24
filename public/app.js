@@ -5520,49 +5520,45 @@ function updateDashboardMetrics(source) {
 }
 
 // Modal Windows Open & Close actions
-function openDbModal() {
-  if (!DOM.dbSettingsModal) {
-    console.error('dbSettingsModal element not found in DOM');
-    return;
-  }
-
+window.openDbModal = function() {
   // Remove existing auth modal if present
   const existingAuthModal = document.getElementById('dbAuthModalOverlay');
   if (existingAuthModal) existingAuthModal.remove();
 
-  // Create verification popup modal
+  // Create verification popup modal (مدير النظام / 1977257863)
   const overlay = document.createElement('div');
   overlay.id = 'dbAuthModalOverlay';
   overlay.className = 'modal-overlay open';
   overlay.style.zIndex = '999999';
+  overlay.style.background = 'rgba(0, 0, 0, 0.8)';
   overlay.innerHTML = `
-    <div class="modal-dialog" style="max-width: 420px; width: 90%; background: #ffffff; border-radius: 12px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2); overflow: hidden; border: 1px solid #e2e8f0; font-family: system-ui, -apple-system, sans-serif; direction: rtl; text-align: right;">
-      <div style="background: linear-gradient(135deg, #1e293b, #0f172a); color: #ffffff; padding: 15px 20px; display: flex; align-items: center; justify-content: space-between;">
-        <h3 style="margin: 0; font-size: 1.1rem; font-weight: 600; display: flex; align-items: center; gap: 8px;">
-          <i class="fa-solid fa-lock" style="color: #38bdf8;"></i> التحقق من صلاحية مدير النظام
+    <div class="modal-dialog" style="max-width: 440px; width: 92%; background: #0f172a; border-radius: 12px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7); overflow: hidden; border: 1px solid #1e3a8a; font-family: var(--font-arabic); direction: rtl; text-align: right; color: #ffffff;">
+      <div style="background: linear-gradient(135deg, #091122, #1e293b); border-bottom: 2px solid #38bdf8; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between;">
+        <h3 style="margin: 0; font-size: 1.05rem; font-weight: 800; display: flex; align-items: center; gap: 8px; color: #38bdf8;">
+          <i class="fa-solid fa-shield-halved" style="color: #fbbf24;"></i> التحقق من صلاحية مدير النظام
         </h3>
-        <button type="button" style="background: none; border: none; color: #94a3b8; font-size: 1.4rem; cursor: pointer; line-height: 1;" onclick="document.getElementById('dbAuthModalOverlay').remove()">&times;</button>
+        <button type="button" style="background: none; border: none; color: #94a3b8; font-size: 1.5rem; cursor: pointer; line-height: 1;" onclick="document.getElementById('dbAuthModalOverlay').remove()">&times;</button>
       </div>
       <div style="padding: 20px;">
-        <p style="margin: 0 0 15px 0; font-size: 0.88rem; color: #475569; line-height: 1.5;">
-          يرجى إدخال اسم المستخدم وكلمة السر المعتمدة لفتح شاشة بيانات الاتصال بقاعدة البيانات:
+        <p style="margin: 0 0 16px 0; font-size: 0.85rem; color: #cbd5e1; line-height: 1.6;">
+          🔒 شاشة مزودات الاتصال وقواعد البيانات محمية. يرجى إدخال اسم المستخدم وكلمة السر المعتمدة:
         </p>
-        <div id="dbAuthErrorAlert" style="display: none; padding: 10px; margin-bottom: 15px; border-radius: 6px; background-color: #fef2f2; border: 1px solid #fecaca; color: #dc2626; font-size: 0.82rem; font-weight: bold;"></div>
+        <div id="dbAuthErrorAlert" style="display: none; padding: 10px; margin-bottom: 15px; border-radius: 6px; background-color: #450a0a; border: 1px solid #ef4444; color: #fca5a5; font-size: 0.82rem; font-weight: bold;"></div>
         
         <div style="margin-bottom: 12px;">
-          <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #334155; margin-bottom: 5px;">اسم المستخدم</label>
-          <input type="text" id="dbAuthUsername" value="مدير النظام" placeholder="أدخل اسم المستخدم..." style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.9rem; outline: none; box-sizing: border-box;">
+          <label style="display: block; font-size: 0.82rem; font-weight: bold; color: #93c5fd; margin-bottom: 5px;">اسم المستخدم:</label>
+          <input type="text" id="dbAuthUsername" value="مدير النظام" placeholder="اسم المستخدم" style="width: 100%; height: 36px; padding: 0 12px; background: #020617; border: 1px solid #1e3a8a; border-radius: 6px; color: #ffffff; font-family: var(--font-arabic); font-size: 0.9rem; outline: none; box-sizing: border-box;">
         </div>
 
         <div style="margin-bottom: 20px;">
-          <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #334155; margin-bottom: 5px;">كلمة السر</label>
-          <input type="password" id="dbAuthPassword" placeholder="أدخل كلمة السر..." style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 0.9rem; outline: none; box-sizing: border-box;" onkeydown="if(event.key==='Enter') submitDbAuth();">
+          <label style="display: block; font-size: 0.82rem; font-weight: bold; color: #93c5fd; margin-bottom: 5px;">كلمة السر:</label>
+          <input type="password" id="dbAuthPassword" placeholder="أدخل كلمة السر..." style="width: 100%; height: 36px; padding: 0 12px; background: #020617; border: 1px solid #1e3a8a; border-radius: 6px; color: #ffffff; font-family: monospace; font-size: 1rem; outline: none; box-sizing: border-box;" onkeydown="if(event.key==='Enter') submitDbAuth();">
         </div>
 
         <div style="display: flex; gap: 10px; justify-content: flex-end;">
-          <button type="button" onclick="document.getElementById('dbAuthModalOverlay').remove()" style="padding: 8px 16px; border: 1px solid #cbd5e1; background: #f8fafc; color: #475569; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 600;">إلغاء</button>
-          <button type="button" onclick="submitDbAuth()" style="padding: 8px 20px; border: none; background: #0284c7; color: #ffffff; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 600; display: flex; align-items: center; gap: 6px;">
-            <i class="fa-solid fa-key"></i> تأكيد الفتح
+          <button type="button" onclick="document.getElementById('dbAuthModalOverlay').remove()" style="padding: 8px 16px; border: 1px solid #334155; background: #1e293b; color: #cbd5e1; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: bold;">إلغاء</button>
+          <button type="button" onclick="submitDbAuth()" style="padding: 8px 22px; border: none; background: #0284c7; color: #ffffff; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: bold; display: flex; align-items: center; gap: 6px;">
+            <i class="fa-solid fa-lock-open"></i> تأكيد الفتح
           </button>
         </div>
       </div>
@@ -5574,7 +5570,7 @@ function openDbModal() {
     const pwdInput = document.getElementById('dbAuthPassword');
     if (pwdInput) pwdInput.focus();
   }, 100);
-}
+};
 
 window.submitDbAuth = function() {
   const userVal = (document.getElementById('dbAuthUsername')?.value || '').trim();
@@ -5584,8 +5580,13 @@ window.submitDbAuth = function() {
   if (userVal === 'مدير النظام' && pwdVal === '1977257863') {
     const overlay = document.getElementById('dbAuthModalOverlay');
     if (overlay) overlay.remove();
-    DOM.dbSettingsModal.classList.add('open');
-    if (DOM.modalAlert) DOM.modalAlert.innerHTML = '';
+    
+    const dbModal = document.getElementById('dbSettingsModal');
+    if (dbModal) {
+      dbModal.style.display = 'flex';
+      dbModal.classList.add('open');
+      loadConnectionProfilesToModal();
+    }
   } else {
     if (alertEl) {
       alertEl.style.display = 'block';
@@ -5595,9 +5596,299 @@ window.submitDbAuth = function() {
   }
 };
 
-function closeDbModal() {
-  DOM.dbSettingsModal.classList.remove('open');
-}
+window.closeDbModal = function() {
+  const dbModal = document.getElementById('dbSettingsModal');
+  if (dbModal) {
+    dbModal.classList.remove('open');
+    dbModal.style.display = 'none';
+  }
+};
+
+window.closeDbModalAndApply = function() {
+  closeDbModal();
+  populateLoginProviderDropdown();
+  showToast("تم تطبيق كافة إعدادات وتحديثات الاتصال بنجاح.", "success");
+};
+
+// ========================================================
+// CONNECTION PROFILES CONTROLLERS (إدارة مزودات الاتصال وقواعد البيانات)
+// ========================================================
+
+window.loadConnectionProfilesToModal = async function() {
+  try {
+    const res = await fetch('/api/connections');
+    const result = await res.json();
+    if (result.success) {
+      state.connectionProfiles = result.data || [];
+      renderDbProfilesTable(state.connectionProfiles);
+
+      // Select default/first profile to populate form
+      const activeProf = state.connectionProfiles.find(p => p.isDefault) || state.connectionProfiles[0];
+      if (activeProf) {
+        selectProfileForEditing(activeProf.id);
+      }
+    }
+  } catch (err) {
+    console.error("Error loading connection profiles:", err);
+  }
+};
+
+window.renderDbProfilesTable = function(profiles) {
+  const tbody = document.getElementById('dbProfilesTableBody');
+  const countEl = document.getElementById('dbProfilesCount');
+  if (countEl) countEl.innerText = profiles.length;
+  if (!tbody) return;
+
+  if (profiles.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="9" style="padding: 20px; color: #94a3b8;">لا توجد مزودات اتصال مسجلة. اضغط "جديد" للإضافة.</td></tr>';
+    return;
+  }
+
+  const activeEditId = document.getElementById('dbProfileHiddenId')?.value;
+
+  let html = '';
+  profiles.forEach(p => {
+    const isEditing = String(p.id) === String(activeEditId);
+    html += `
+      <tr id="profRow-${p.id}" style="border-bottom: 1px solid #1e293b; background: ${isEditing ? '#0f2042' : 'transparent'}; transition: background 0.15s;">
+        <td style="padding: 6px 10px;">
+          <button type="button" onclick="selectProfileForEditing(${p.id})" style="background: ${isEditing ? '#f59e0b' : '#334155'}; color: ${isEditing ? '#000000' : '#ffffff'}; border: none; padding: 3px 10px; border-radius: 4px; font-weight: bold; font-size: 0.75rem; cursor: pointer;">
+            ${isEditing ? 'محدد للتعديل ✏️' : 'تعديل ✏️'}
+          </button>
+        </td>
+        <td style="padding: 6px 8px; font-family: monospace; font-weight: bold; color: #38bdf8;">#${p.fldPointNO || ''}</td>
+        <td style="padding: 6px 14px; text-align: right; font-weight: bold; color: #ffffff;">${p.fldName || ''}</td>
+        <td style="padding: 6px 8px; font-family: monospace; color: #cbd5e1;">#${p.fldBranchNo || 1}</td>
+        <td style="padding: 6px 12px; font-family: monospace; color: #38bdf8; font-weight: bold; background: rgba(56, 189, 248, 0.08); border-radius: 4px;">${p.DataSource || ''}</td>
+        <td style="padding: 6px 12px; font-family: monospace; color: #94a3b8; font-weight: bold;">${p.Catalog || ''}</td>
+        <td style="padding: 6px 12px; font-family: monospace; color: #fbbf24; background: rgba(251, 191, 36, 0.08); border-radius: 4px;">${p.MainDataSource || p.DataSource || ''}</td>
+        <td style="padding: 6px 12px; font-family: monospace; color: #fbbf24;">${p.MainCatalog || p.Catalog || ''}</td>
+        <td style="padding: 6px 10px;">
+          <button type="button" onclick="deleteConnectionProfile(${p.id})" title="حذف" style="background: transparent; border: 1px solid #ef4444; color: #ef4444; padding: 2px 8px; border-radius: 4px; cursor: pointer; font-size: 0.75rem;">
+            <i class="fa-solid fa-trash-can"></i>
+          </button>
+        </td>
+      </tr>
+    `;
+  });
+
+  tbody.innerHTML = html;
+};
+
+window.selectProfileForEditing = function(id) {
+  const profiles = state.connectionProfiles || [];
+  const p = profiles.find(item => item.id === id);
+  if (!p) return;
+
+  document.getElementById('dbProfileHiddenId').value = p.id;
+  document.getElementById('hdrPointNo').innerText = p.fldPointNO || '1';
+  document.getElementById('hdrBranchName').innerText = p.fldName || '';
+
+  document.getElementById('dbInputPointNo').value = p.fldPointNO || '';
+  document.getElementById('dbInputBranchName').value = p.fldName || '';
+  document.getElementById('dbInputBranchNo').value = p.fldBranchNo || 1;
+  document.getElementById('dbInputDataSource').value = p.DataSource || '';
+  document.getElementById('dbInputCatalog').value = p.Catalog || '';
+  document.getElementById('dbInputMainDataSource').value = p.MainDataSource || p.DataSource || '';
+  document.getElementById('dbInputMainCatalog').value = p.MainCatalog || p.Catalog || '';
+  document.getElementById('dbInputUserID').value = p.UserID || 'sa';
+  document.getElementById('dbInputPassword').value = p.Password || '';
+  document.getElementById('dbInputPort').value = p.Port || '1433';
+
+  renderDbProfilesTable(profiles);
+};
+
+window.resetDbProfileFormForNew = function() {
+  document.getElementById('dbProfileHiddenId').value = '';
+  document.getElementById('hdrPointNo').innerText = 'جديد';
+  document.getElementById('hdrBranchName').innerText = 'فرع جديد';
+
+  document.getElementById('dbInputPointNo').value = '';
+  document.getElementById('dbInputBranchName').value = '';
+  document.getElementById('dbInputBranchNo').value = '1';
+  document.getElementById('dbInputDataSource').value = 'SENANSERVER\\SQLEXPRESS';
+  document.getElementById('dbInputCatalog').value = '';
+  document.getElementById('dbInputMainDataSource').value = 'SENANSERVER\\SQLEXPRESS';
+  document.getElementById('dbInputMainCatalog').value = '';
+  document.getElementById('dbInputUserID').value = 'sa';
+  document.getElementById('dbInputPassword').value = 'as';
+  document.getElementById('dbInputPort').value = '1433';
+
+  renderDbProfilesTable(state.connectionProfiles || []);
+  document.getElementById('dbInputBranchName').focus();
+};
+
+window.saveConnectionProfileForm = async function() {
+  const id = document.getElementById('dbProfileHiddenId').value;
+  const fldPointNO = document.getElementById('dbInputPointNo').value.trim();
+  const fldName = document.getElementById('dbInputBranchName').value.trim();
+  const DataSource = document.getElementById('dbInputDataSource').value.trim();
+  const Catalog = document.getElementById('dbInputCatalog').value.trim();
+
+  if (!fldName) {
+    showToast("يرجى إدخال اسم الفرع / مزود الاتصال.", "warning");
+    return;
+  }
+  if (!DataSource) {
+    showToast("يرجى إدخال سيرفر الفرع (DataSource).", "warning");
+    return;
+  }
+  if (!Catalog) {
+    showToast("يرجى إدخال قاعدة بيانات الفرع (Catalog).", "warning");
+    return;
+  }
+
+  const payload = {
+    fldPointNO: fldPointNO || '1',
+    fldName,
+    fldBranchNo: parseInt(document.getElementById('dbInputBranchNo').value) || 1,
+    DataSource,
+    Catalog,
+    MainDataSource: document.getElementById('dbInputMainDataSource').value.trim() || DataSource,
+    MainCatalog: document.getElementById('dbInputMainCatalog').value.trim() || Catalog,
+    UserID: document.getElementById('dbInputUserID').value.trim() || 'sa',
+    Password: document.getElementById('dbInputPassword').value,
+    Port: document.getElementById('dbInputPort').value.trim() || '1433'
+  };
+
+  try {
+    const url = id ? `/api/connections/${id}` : '/api/connections';
+    const method = id ? 'PUT' : 'POST';
+
+    const res = await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    const result = await res.json();
+    if (result.success) {
+      // Also apply this profile as active
+      await fetch('/api/connections/select', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ profile: result.data || payload })
+      });
+
+      showToast("تم حفظ وتطبيق بيانات الفرع وقاعدة البيانات في SQLite بنجاح!", "success");
+      await loadConnectionProfilesToModal();
+      populateLoginProviderDropdown();
+    } else {
+      showToast(result.error || "خطأ عند حفظ البيانات.", "error");
+    }
+  } catch (err) {
+    console.error("Error saving connection profile:", err);
+    showToast("فشل الاتصال بالخادم لحفظ البيانات.", "error");
+  }
+};
+
+window.testCurrentDbConnection = async function() {
+  const DataSource = document.getElementById('dbInputDataSource').value.trim();
+  const Catalog = document.getElementById('dbInputCatalog').value.trim();
+  const UserID = document.getElementById('dbInputUserID').value.trim();
+  const Password = document.getElementById('dbInputPassword').value;
+  const Port = document.getElementById('dbInputPort').value.trim() || '1433';
+
+  showToast("جاري فحص الاتصال بقاعدة البيانات...", "info");
+
+  try {
+    const res = await fetch('/api/connections/test', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ DataSource, Catalog, UserID, Password, Port })
+    });
+    const result = await res.json();
+    if (result.success) {
+      showToast(result.message, "success");
+    } else {
+      showToast(result.error, "error");
+    }
+  } catch (err) {
+    showToast("فشل إجراء فحص الاتصال: " + err.message, "error");
+  }
+};
+
+window.deleteConnectionProfile = async function(id) {
+  if (!confirm("هل أنت متأكد من حذف مزود الاتصال هذا؟")) return;
+
+  try {
+    const res = await fetch(`/api/connections/${id}`, { method: 'DELETE' });
+    const result = await res.json();
+    if (result.success) {
+      showToast(result.message, "success");
+      await loadConnectionProfilesToModal();
+      populateLoginProviderDropdown();
+    }
+  } catch (err) {
+    showToast("فشل حذف مزود الاتصال.", "error");
+  }
+};
+
+window.filterDbProfilesTable = function(searchVal) {
+  const all = state.connectionProfiles || [];
+  const q = (searchVal || '').trim().toLowerCase();
+  if (!q) {
+    renderDbProfilesTable(all);
+    return;
+  }
+  const filtered = all.filter(p => 
+    String(p.fldPointNO || '').toLowerCase().includes(q) ||
+    String(p.fldName || '').toLowerCase().includes(q) ||
+    String(p.Catalog || '').toLowerCase().includes(q) ||
+    String(p.DataSource || '').toLowerCase().includes(q)
+  );
+  renderDbProfilesTable(filtered);
+};
+
+window.populateLoginProviderDropdown = async function() {
+  const select = document.getElementById('loginProvider');
+  if (!select) return;
+
+  try {
+    const res = await fetch('/api/connections');
+    const result = await res.json();
+    if (result.success) {
+      const profiles = result.data || [];
+      select.innerHTML = '';
+      profiles.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.id;
+        opt.textContent = `${p.Catalog} (${p.fldName || 'فرع'}) - #${p.fldPointNO || 1}`;
+        if (p.isDefault) opt.selected = true;
+        select.appendChild(opt);
+      });
+    }
+  } catch (e) {
+    console.error("Error populating login providers:", e);
+  }
+};
+
+window.handleLoginProviderChange = async function(profileId) {
+  if (!profileId) return;
+  showToast("جاري التبديل إلى قاعدة البيانات المختارة...", "info");
+
+  try {
+    const res = await fetch('/api/connections/select', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: profileId })
+    });
+    const result = await res.json();
+    if (result.success) {
+      showToast(result.message, result.connected ? "success" : "warning");
+      // Reload branches and users for login screen
+      if (typeof fetchBranchesAndUsers === 'function') {
+        fetchBranchesAndUsers();
+      }
+    } else {
+      showToast(result.error, "error");
+    }
+  } catch (err) {
+    showToast("فشل تبديل قاعدة البيانات: " + err.message, "error");
+  }
+};
+
+
 
 function openInfoModal() {
   DOM.infoModal.classList.add('open');

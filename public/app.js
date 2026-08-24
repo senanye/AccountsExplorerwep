@@ -881,8 +881,12 @@ async function openTab(tabId, tabTitle, iconClass, colorClass, bypassPermission 
     initPurchasesInvoiceTab(tabId);
   } else if (tabTitle === "عرض مبيعات" || tabTitle === "المبيعات" || tabTitle === "استعلام المبيعات" || tabId === "menu-30" || tabId === "sales-explorer") {
     initSalesExplorerTab(tabId);
+  } else if (tabTitle === "مردود المبيعات" || tabTitle === "مردود مبيعات" || tabTitle === "استعلام مردود المبيعات" || tabId === "menu-31" || tabId === "sales-return-explorer") {
+    initSalesReturnExplorerTab(tabId);
+  } else if (tabTitle === "فاتورة مردود مبيعات" || tabId.includes("menu-31-invoice") || tabId.includes("sales-return-inv")) {
+    initSalesInvoiceTab(tabId, 31);
   } else if (tabTitle === "فاتورة مبيعات" || tabTitle === "فاتورة المبيعات" || tabId.includes("menu-30-invoice") || tabId.includes("sale-inv")) {
-    initSalesInvoiceTab(tabId);
+    initSalesInvoiceTab(tabId, 30);
   } else if (tabTitle === "دفتر الاستاذ العام" || tabId === "menu-64" || tabTitle.includes("الاستاذ العام")) {
     initGeneralLedgerTab(tabId);
   } else if (tabTitle === "تدقيق ميزان المراجعة" || tabId === "menu-402" || tabTitle.includes("ميزان المراجعة")) {
@@ -985,8 +989,10 @@ function getScreenContent(tabId, tabTitle, iconClass, colorClass) {
   const isItemsExplorer = tabTitle === "الاصناف" || tabTitle === "الأصناف" || tabId === "menu-1076" || tabTitle === "مستكشف الاصناف" || tabTitle === "مستكشف الأصناف" || tabId === "menu-202" || tabId === "menu-501" || tabTitle.includes("السلع والمنتجات") || tabTitle.includes("اصناف") || tabTitle.includes("أصناف");
   const isPurchasesExplorer = tabTitle === "عرض مشتريات" || tabTitle === "المشتريات" || tabId === "menu-20";
   const isPurchasesInvoice = tabTitle === "مشتريات" || tabTitle === "فاتورة المشتريات" || tabId.includes("menu-20-invoice") || tabId.includes("purchase-inv") || (tabTitle.includes("مشتريات") && !tabTitle.includes("عرض") && !tabTitle.includes("تقارير"));
-  const isSalesExplorer = tabTitle === "عرض مبيعات" || tabTitle === "المبيعات" || tabTitle === "استعلام المبيعات" || tabId === "menu-30" || tabId === "sales-explorer" || tabId === "menu-30-explorer";
-  const isSalesInvoice = tabTitle === "فاتورة مبيعات" || tabTitle === "فاتورة المبيعات" || tabId.includes("menu-30-invoice") || tabId.includes("sale-inv") || (tabTitle.includes("مبيعات") && !tabTitle.includes("عرض") && !tabTitle.includes("استعلام") && !tabTitle.includes("تقارير") && !tabTitle.includes("نقاط"));
+  const isSalesReturnExplorer = tabTitle === "مردود المبيعات" || tabTitle === "مردود مبيعات" || tabTitle === "استعلام مردود المبيعات" || tabId === "menu-31" || tabId === "sales-return-explorer" || tabId === "menu-31-explorer";
+  const isSalesReturnInvoice = tabTitle === "فاتورة مردود مبيعات" || tabId.includes("menu-31-invoice") || tabId.includes("sales-return-inv");
+  const isSalesExplorer = (tabTitle === "عرض مبيعات" || tabTitle === "المبيعات" || tabTitle === "استعلام المبيعات" || tabId === "menu-30" || tabId === "sales-explorer" || tabId === "menu-30-explorer") && !isSalesReturnExplorer;
+  const isSalesInvoice = (tabTitle === "فاتورة مبيعات" || tabTitle === "فاتورة المبيعات" || tabId.includes("menu-30-invoice") || tabId.includes("sale-inv") || (tabTitle.includes("مبيعات") && !tabTitle.includes("عرض") && !tabTitle.includes("استعلام") && !tabTitle.includes("تقارير") && !tabTitle.includes("نقاط") && !tabTitle.includes("مردود"))) || isSalesReturnInvoice;
 
   let bodyHtml = '';
 
@@ -1472,6 +1478,141 @@ function getScreenContent(tabId, tabTitle, iconClass, colorClass) {
             <label for="piPostCheck-${tabId}" style="cursor: pointer; font-weight: bold;">ترحيل تلقائي عند الحفظ</label>
           </div>
 
+        </div>
+
+      </div>
+    `;
+  } else if (isSalesReturnExplorer) {
+    bodyHtml = `
+      <div class="voucher-screen" style="direction: rtl; text-align: right; font-family: var(--font-arabic); display: flex; flex-direction: column; gap: 12px; height: 100%;">
+        
+        <!-- Premium Toolbar (Sales Returns) -->
+        <div class="accounts-toolbar" style="background-color: #fff1f2; padding: 10px 15px; border-bottom: 2px solid #fecdd3; display: flex; gap: 10px; align-items: center; border-radius: 6px; flex-wrap: wrap;">
+          <button class="btn btn-secondary btn-sm" id="srNewBtn-${tabId}" onclick="openNewSalesReturnInvoice('${tabId}')" style="font-weight: bold; display: flex; align-items: center; gap: 6px; background: #ffe4e6; border: 1px solid #f43f5e; color: #be123c;">
+            <i class="fa-solid fa-file-circle-plus" style="color: #e11d48; font-size: 1.1rem;"></i>+ فاتورة مردود جديدة
+          </button>
+          <button class="btn btn-secondary btn-sm" id="srEditBtn-${tabId}" onclick="openEditSalesReturnInvoice('${tabId}')" style="font-weight: bold; display: flex; align-items: center; gap: 6px;">
+            <i class="fa-solid fa-pen-to-square" style="color: #0284c7; font-size: 1.1rem;"></i>تعديل
+          </button>
+          <button class="btn btn-secondary btn-sm" onclick="loadSalesReturnsList('${tabId}')" style="font-weight: bold; display: flex; align-items: center; gap: 6px;">
+            <i class="fa-solid fa-magnifying-glass" style="color: #475569; font-size: 1.1rem;"></i>استعلام
+          </button>
+          <button class="btn btn-secondary btn-sm" id="srPrintBtn-${tabId}" onclick="printSalesReturnsList('${tabId}')" style="font-weight: bold; display: flex; align-items: center; gap: 6px;">
+            <i class="fa-solid fa-print" style="color: #475569; font-size: 1.1rem;"></i>طباعة الكشف
+          </button>
+          <button class="btn btn-secondary btn-sm" onclick="whatsappSalesReturnsList('${tabId}')" style="font-weight: bold; display: flex; align-items: center; gap: 6px;">
+            <i class="fa-brands fa-whatsapp" style="color: #25d366; font-size: 1.1rem;"></i>واتس اب
+          </button>
+          <button class="btn btn-secondary btn-sm" id="srDeleteBtn-${tabId}" onclick="deleteSalesReturnInvoice('${tabId}')" style="font-weight: bold; display: flex; align-items: center; gap: 6px;">
+            <i class="fa-solid fa-trash-can" style="color: #ef4444; font-size: 1.1rem;"></i>حذف
+          </button>
+          <button class="btn btn-secondary btn-sm" onclick="openSaleJournalEntry('${tabId}')" style="font-weight: bold; display: flex; align-items: center; gap: 6px;">
+            <i class="fa-solid fa-receipt" style="color: #6366f1; font-size: 1.1rem;"></i>عرض القيد
+          </button>
+          <button class="btn btn-secondary btn-sm" onclick="exportSalesReturnsToExcel('${tabId}')" style="font-weight: bold; display: flex; align-items: center; gap: 6px; margin-right: auto;">
+            <i class="fa-solid fa-file-excel" style="color: #16a34a; font-size: 1.1rem;"></i>تصدير إكسل
+          </button>
+        </div>
+
+        <!-- Filter Grid -->
+        <div style="background-color: #fff1f2; border: 1px solid #fecdd3; border-radius: 8px; padding: 12px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; font-size: 0.8rem;">
+          
+          <!-- Column 1 -->
+          <div style="display: flex; flex-direction: column; gap: 6px;">
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <span style="font-weight: bold; width: 75px;">الفرع:</span>
+              <select id="srBranch-${tabId}" style="flex: 1; padding: 5px; border: 1px solid #cbd5e1; border-radius: 4px; font-family: var(--font-arabic);" onchange="loadSalesReturnsList('${tabId}')">
+                <option value="">-- جميع الفروع --</option>
+              </select>
+            </div>
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <span style="font-weight: bold; width: 75px;">من تاريخ:</span>
+              <input type="date" id="srStartDate-${tabId}" value="2025-01-01" style="flex: 1; padding: 4px; border: 1px solid #cbd5e1; border-radius: 4px; font-family: monospace;" onchange="loadSalesReturnsList('${tabId}')">
+            </div>
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <span style="font-weight: bold; width: 75px;">إلى تاريخ:</span>
+              <input type="date" id="srEndDate-${tabId}" value="2026-12-31" style="flex: 1; padding: 4px; border: 1px solid #cbd5e1; border-radius: 4px; font-family: monospace;" onchange="loadSalesReturnsList('${tabId}')">
+            </div>
+          </div>
+
+          <!-- Column 2 -->
+          <div style="display: flex; flex-direction: column; gap: 6px;">
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <span style="font-weight: bold; width: 75px;">طريقة الدفع:</span>
+              <select id="srPaymentType-${tabId}" style="flex: 1; padding: 5px; border: 1px solid #cbd5e1; border-radius: 4px; font-family: var(--font-arabic);" onchange="loadSalesReturnsList('${tabId}')">
+                <option value="0">الكل</option>
+                <option value="1">نقد</option>
+                <option value="2">آجل</option>
+              </select>
+            </div>
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <span style="font-weight: bold; width: 75px;">بحث عام:</span>
+              <input type="text" id="srSearch-${tabId}" placeholder="رقم المردود أو العميل..." style="flex: 1; padding: 4px; border: 1px solid #cbd5e1; border-radius: 4px; font-family: var(--font-arabic);" oninput="loadSalesReturnsList('${tabId}')">
+            </div>
+          </div>
+
+          <!-- Column 3 -->
+          <div style="display: flex; flex-direction: column; gap: 6px;">
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <span style="font-weight: bold; width: 75px;">الصندوق/العميل:</span>
+              <div style="position: relative; flex: 1; display: flex; align-items: center;">
+                <select id="srBox-${tabId}" style="flex: 1; padding: 5px; border: 1px solid #cbd5e1; border-radius: 4px; font-family: var(--font-arabic);" onchange="loadSalesReturnsList('${tabId}')">
+                  <option value="">-- الكل --</option>
+                </select>
+                <button onclick="clearSalesReturnInput('${tabId}', 'srBox')" style="position: absolute; left: 5px; background: none; border: none; cursor: pointer; color: #a0aec0; font-weight: bold;">&times;</button>
+              </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <span style="font-weight: bold; width: 75px;">العملة:</span>
+              <div style="position: relative; flex: 1; display: flex; align-items: center;">
+                <select id="srCurrency-${tabId}" style="flex: 1; padding: 5px; border: 1px solid #cbd5e1; border-radius: 4px; font-family: var(--font-arabic);" onchange="loadSalesReturnsList('${tabId}')">
+                  <option value="">-- الكل --</option>
+                </select>
+                <button onclick="clearSalesReturnInput('${tabId}', 'srCurrency')" style="position: absolute; left: 5px; background: none; border: none; cursor: pointer; color: #a0aec0; font-weight: bold;">&times;</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Column 4: Summary Badges -->
+          <div style="display: flex; flex-direction: column; gap: 6px; justify-content: center; background: #ffffff; padding: 8px 12px; border-radius: 6px; border: 1px solid #fecdd3;">
+            <div style="display: flex; justify-content: space-between; font-weight: bold; color: #be123c;">
+              <span>إجمالي المردودات:</span>
+              <span id="srKpiTotalReturns-${tabId}" style="font-family: monospace;">0.00</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-weight: bold; color: #64748b;">
+              <span>إجمالي التكلفة المستردة:</span>
+              <span id="srKpiTotalCost-${tabId}" style="font-family: monospace;">0.00</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-weight: bold; color: #e11d48; border-top: 1px solid #fecdd3; padding-top: 4px;">
+              <span>عدد فواتير المردود:</span>
+              <span id="srKpiCount-${tabId}" style="font-family: monospace;">0</span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Table Grid -->
+        <div style="border: 1px solid #fecdd3; border-radius: 8px; overflow: auto; flex: 1; box-shadow: var(--shadow-sm); min-height: 250px;">
+          <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; text-align: right;">
+            <thead style="background-color: #ffe4e6; border-bottom: 2px solid #fecdd3; position: sticky; top: 0; z-index: 10; font-family: var(--font-arabic);">
+              <tr>
+                <th style="padding: 8px; border: 1px solid #fecdd3; text-align: center; width: 60px;">الرقم</th>
+                <th style="padding: 8px; border: 1px solid #fecdd3; text-align: center; width: 95px;">التاريخ</th>
+                <th style="padding: 8px; border: 1px solid #fecdd3; text-align: center; width: 110px;">الفرع</th>
+                <th style="padding: 8px; border: 1px solid #fecdd3; text-align: center; width: 100px;">نوع الحركة</th>
+                <th style="padding: 8px; border: 1px solid #fecdd3; text-align: center; width: 65px;">طريقة الدفع</th>
+                <th style="padding: 8px; border: 1px solid #fecdd3; text-align: right;">العميل / الحساب</th>
+                <th style="padding: 8px; border: 1px solid #fecdd3; text-align: left; width: 95px; color: #be123c;">صافي المردود</th>
+                <th style="padding: 8px; border: 1px solid #fecdd3; text-align: left; width: 85px; color: #475569;">التكلفة (SAR)</th>
+                <th style="padding: 8px; border: 1px solid #fecdd3; text-align: center; width: 45px;">الاصناف</th>
+                <th style="padding: 8px; border: 1px solid #fecdd3; text-align: center; width: 65px;">العملة</th>
+                <th style="padding: 8px; border: 1px solid #fecdd3; text-align: right;">البيان / الشرح</th>
+              </tr>
+            </thead>
+            <tbody id="salesReturnsTableBody-${tabId}">
+              <!-- Dynamic Rows -->
+            </tbody>
+          </table>
         </div>
 
       </div>
@@ -23244,6 +23385,7 @@ window.savePosPointForm = async function() {
         fldName: name,
         fldBranchNo: branchNo,
         fldstoreID: storeId,
+      fldTransType: state[`saleTransType-${tabId}`] || 30,
         DataSource: dataSource,
         Catalog: catalog,
         UserID: userId,
@@ -25802,7 +25944,8 @@ window.openSaleJournalEntry = function(tabId) {
 // -------------------------------------------------------------
 // 2. SALES INVOICE TAB CONTROLLER (شاشة فاتورة المبيعات)
 // -------------------------------------------------------------
-window.initSalesInvoiceTab = async function(tabId) {
+window.initSalesInvoiceTab = async function(tabId, transType = 30) {
+  state[`saleTransType-${tabId}`] = transType;
   try {
     if (!state.accounts || state.accounts.length === 0) {
       const accRes = await fetch('/api/accounts');
@@ -26132,6 +26275,7 @@ window.siApplyRateConversion = function(tabId, rate) {
 };
 
 window.siFetchNextNumber = async function(tabId) {
+  const transType = state[`saleTransType-${tabId}`] || 30;
   try {
     const branchNo = document.getElementById(`siBranch-${tabId}`)?.value || 1;
     const paymentType = document.getElementById(`siPaymentType-${tabId}`)?.value || 1;
@@ -27803,3 +27947,243 @@ setTimeout(() => {
     checkSystemUpdates(true);
   }
 }, 3000);
+
+
+// ========================================================
+// SALES RETURNS EXPLORER CONTROLLERS (استعلام فواتير مردود المبيعات)
+// ========================================================
+
+window.initSalesReturnExplorerTab = async function(tabId) {
+  try {
+    if (!state.accounts || state.accounts.length === 0) {
+      const accRes = await fetch('/api/accounts');
+      const accData = await accRes.json();
+      state.accounts = accData.data || [];
+    }
+
+    if (!state.currencies || state.currencies.length === 0) {
+      const curRes = await fetch('/api/currencies');
+      const curData = await curRes.json();
+      state.currencies = curData.data || [];
+    }
+
+    if (!state.branches || state.branches.length === 0) {
+      const branchRes = await fetch('/api/branches');
+      const branchData = await branchRes.json();
+      state.branches = branchData.data || [];
+    }
+
+    // Populate Branch dropdown
+    const branchSelect = document.getElementById(`srBranch-${tabId}`);
+    if (branchSelect) {
+      branchSelect.innerHTML = '<option value="">-- جميع الفروع --</option>';
+      const branchList = (state.userBranches && state.userBranches.length > 0) ? state.userBranches : (state.branches || []);
+      populateSelect(branchSelect, branchList, 'fldID', 'fldName');
+    }
+
+    // Populate Box/Customer dropdown
+    const boxSelect = document.getElementById(`srBox-${tabId}`);
+    if (boxSelect) {
+      boxSelect.innerHTML = '<option value="">-- الكل --</option>';
+      const subAccs = (state.accounts || []).filter(a => !a.fldIs_Primary || a.fldIs_Primary === 0 || a.fldIs_Primary === "0");
+      populateSelect(boxSelect, subAccs, 'fldID', 'fldName');
+    }
+
+    // Populate Currency dropdown
+    const curSelect = document.getElementById(`srCurrency-${tabId}`);
+    if (curSelect) {
+      curSelect.innerHTML = '<option value="">-- الكل --</option>';
+      populateSelect(curSelect, state.currencies, 'fldID', 'fldName');
+    }
+
+    applySalesReturnExplorerPermissions(tabId);
+    await loadSalesReturnsList(tabId);
+  } catch (err) {
+    console.error("Error in initSalesReturnExplorerTab:", err);
+  }
+};
+
+function applySalesReturnExplorerPermissions(tabId) {
+  const newBtn = document.getElementById(`srNewBtn-${tabId}`);
+  const editBtn = document.getElementById(`srEditBtn-${tabId}`);
+  const deleteBtn = document.getElementById(`srDeleteBtn-${tabId}`);
+  const printBtn = document.getElementById(`srPrintBtn-${tabId}`);
+
+  if (newBtn && !hasPermission(31, 'fldINSERT')) newBtn.style.display = 'none';
+  if (editBtn && !hasPermission(31, 'fldUPDATE')) editBtn.style.display = 'none';
+  if (deleteBtn && !hasPermission(31, 'fldDELETE')) deleteBtn.style.display = 'none';
+  if (printBtn && !hasPermission(31, 'fldPrint')) printBtn.style.display = 'none';
+}
+
+window.clearSalesReturnInput = function(tabId, inputId) {
+  const el = document.getElementById(`${inputId}-${tabId}`);
+  if (el) el.value = '';
+  loadSalesReturnsList(tabId);
+};
+
+window.loadSalesReturnsList = async function(tabId) {
+  const tbody = document.getElementById(`salesReturnsTableBody-${tabId}`);
+  if (!tbody) return;
+
+  tbody.innerHTML = `<tr><td colspan="11" style="text-align: center; padding: 25px;"><i class="fa-solid fa-spinner fa-spin fa-2x" style="color: #e11d48;"></i> جاري تحميل حركة مردود المبيعات...</td></tr>`;
+
+  try {
+    const startDate = document.getElementById(`srStartDate-${tabId}`)?.value || '';
+    const endDate = document.getElementById(`srEndDate-${tabId}`)?.value || '';
+    const branchNo = document.getElementById(`srBranch-${tabId}`)?.value || '';
+    const paymentType = document.getElementById(`srPaymentType-${tabId}`)?.value || '';
+    const boxAccId = document.getElementById(`srBox-${tabId}`)?.value || '';
+    const currencyId = document.getElementById(`srCurrency-${tabId}`)?.value || '';
+    const search = document.getElementById(`srSearch-${tabId}`)?.value || '';
+
+    const url = `/api/sales?transType=31&startDate=${startDate}&endDate=${endDate}&branchNo=${branchNo}&paymentType=${paymentType}&boxAccId=${boxAccId}&currencyId=${currencyId}&search=${encodeURIComponent(search)}`;
+    const res = await fetch(url);
+    const result = await res.json();
+
+    if (!result.success) {
+      tbody.innerHTML = `<tr><td colspan="11" style="text-align: center; padding: 20px; color: var(--danger);">خطأ عند تحميل البيانات: ${result.error}</td></tr>`;
+      return;
+    }
+
+    const returns = result.data || [];
+    state[`salesReturnsList-${tabId}`] = returns;
+    state[`selectedSalesReturnId-${tabId}`] = null;
+
+    let totalReturnsAmt = 0;
+    let totalCostAmt = 0;
+
+    if (returns.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="11" style="text-align: center; padding: 20px; color: #a0aec0;">لا توجد فواتير مردود مبيعات مطابقة للبحث</td></tr>`;
+      document.getElementById(`srKpiTotalReturns-${tabId}`).innerText = '0.00';
+      document.getElementById(`srKpiTotalCost-${tabId}`).innerText = '0.00';
+      document.getElementById(`srKpiCount-${tabId}`).innerText = '0';
+      return;
+    }
+
+    let html = '';
+    returns.forEach(r => {
+      let dateStr = r.fldDate ? r.fldDate.split('T')[0] : '';
+      if (dateStr) {
+        const parts = dateStr.split('-');
+        if (parts.length === 3) dateStr = `${parts[2]}/${parts[1]}/${parts[0]}`;
+      }
+
+      const netAmount = parseFloat(r.fldVoisherTotal) || 0;
+      const costAmount = parseFloat(r.fldCostTotal) || 0;
+
+      totalReturnsAmt += netAmount;
+      totalCostAmt += costAmount;
+
+      html += `
+        <tr id="srRow-${tabId}-${r.fldTransID}" 
+            style="border-bottom: 1px solid #fecdd3; cursor: pointer; transition: background 0.15s;" 
+            onclick="selectSalesReturnRow('${tabId}', ${r.fldTransID})"
+            ondblclick="openEditSalesReturnInvoiceDirect('${tabId}', ${r.fldTransID})">
+          <td style="padding: 8px; text-align: center; font-family: monospace; font-weight: bold; color: #be123c;">#${r.fldTransNo}</td>
+          <td style="padding: 8px; text-align: center; font-family: monospace;">${dateStr}</td>
+          <td style="padding: 8px; text-align: center;">${r.fldBranchName || 'الفرع الرئيسي'}</td>
+          <td style="padding: 8px; text-align: center; font-weight: bold; color: #e11d48;">مردود مبيعات</td>
+          <td style="padding: 8px; text-align: center; font-weight: bold; color: ${r.fldType === 1 ? '#059669' : '#d97706'}">${r.fldTypeName}</td>
+          <td style="padding: 8px; text-align: right; font-weight: bold;">${r.fldName || r.fldAccBoxName || 'عميل نقدي'}</td>
+          <td style="padding: 8px; text-align: left; font-family: monospace; font-weight: 800; color: #be123c;">${netAmount.toFixed(2)}</td>
+          <td style="padding: 8px; text-align: left; font-family: monospace; color: #475569;">${costAmount.toFixed(2)}</td>
+          <td style="padding: 8px; text-align: center; font-family: monospace;">${r.itemCount || 1}</td>
+          <td style="padding: 8px; text-align: center;">${r.fldMoneyName || r.fldsymbol || 'ريال'}</td>
+          <td style="padding: 8px; text-align: right; color: #64748b;">${r.fldDescription || ''}</td>
+        </tr>
+      `;
+    });
+
+    tbody.innerHTML = html;
+
+    // Update KPI Badges
+    document.getElementById(`srKpiTotalReturns-${tabId}`).innerText = totalReturnsAmt.toFixed(2);
+    document.getElementById(`srKpiTotalCost-${tabId}`).innerText = totalCostAmt.toFixed(2);
+    document.getElementById(`srKpiCount-${tabId}`).innerText = returns.length;
+
+  } catch (err) {
+    console.error("Error loading sales returns list:", err);
+    tbody.innerHTML = `<tr><td colspan="11" style="text-align: center; padding: 20px; color: var(--danger);">فشل الاتصال بالخادم: ${err.message}</td></tr>`;
+  }
+};
+
+window.selectSalesReturnRow = function(tabId, id) {
+  state[`selectedSalesReturnId-${tabId}`] = id;
+  const tbody = document.getElementById(`salesReturnsTableBody-${tabId}`);
+  if (tbody) {
+    tbody.querySelectorAll('tr').forEach(tr => tr.style.backgroundColor = '');
+    const row = document.getElementById(`srRow-${tabId}-${id}`);
+    if (row) row.style.backgroundColor = '#ffe4e6';
+  }
+};
+
+window.openNewSalesReturnInvoice = function(tabId) {
+  window.openSalesReturnInvoiceTab(null);
+};
+
+window.openEditSalesReturnInvoice = function(tabId) {
+  const selectedId = state[`selectedSalesReturnId-${tabId}`];
+  if (!selectedId) {
+    showToast("يرجى تحديد فاتورة مردود أولاً من الجدول لتعديلها.", "warning");
+    return;
+  }
+  window.openSalesReturnInvoiceTab(selectedId);
+};
+
+window.openEditSalesReturnInvoiceDirect = function(tabId, transId) {
+  if (!transId) return;
+  window.openSalesReturnInvoiceTab(transId);
+};
+
+window.deleteSalesReturnInvoice = async function(tabId) {
+  const selectedId = state[`selectedSalesReturnId-${tabId}`];
+  if (!selectedId) {
+    showToast("يرجى تحديد فاتورة مردود أولاً لحذفها.", "warning");
+    return;
+  }
+
+  if (!confirm("هل أنت متأكد من حذف فاتورة مردود المبيعات المحددة وكافة قيودها؟")) return;
+
+  try {
+    const res = await fetch(`/api/sales/${selectedId}`, {
+      method: 'DELETE',
+      headers: { 'x-user-id': state.currentUser?.id || '1' }
+    });
+    const result = await res.json();
+    if (result.success) {
+      showToast("تم حذف فاتورة مردود المبيعات بنجاح.", "success");
+      loadSalesReturnsList(tabId);
+    } else {
+      showToast("خطأ عند حذف الفاتورة: " + result.error, "error");
+    }
+  } catch (err) {
+    showToast("فشل الاتصال بالخادم لحذف الفاتورة.", "error");
+  }
+};
+
+window.printSalesReturnsList = function(tabId) {
+  window.print();
+};
+
+window.whatsappSalesReturnsList = function(tabId) {
+  showToast("جاري تجهيز كشف مردودات المبيعات للواتساب...", "info");
+};
+
+window.exportSalesReturnsToExcel = function(tabId) {
+  const returns = state[`salesReturnsList-${tabId}`] || [];
+  if (returns.length === 0) {
+    showToast("لا توجد بيانات لتصديرها.", "warning");
+    return;
+  }
+  let csv = "رقم المردود,التاريخ,الفرع,طريقة الدفع,العميل,الصافي,التكلفة,عدد الأصناف,العملة,البيان\n";
+  returns.forEach(r => {
+    csv += `"${r.fldTransNo}","${r.fldDate || ''}","${r.fldBranchName || ''}","${r.fldTypeName || ''}","${r.fldName || ''}","${r.fldVoisherTotal || 0}","${r.fldCostTotal || 0}","${r.itemCount || 1}","${r.fldMoneyName || ''}","${r.fldDescription || ''}"\n`;
+  });
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `sales_returns_${Date.now()}.csv`;
+  a.click();
+};
+

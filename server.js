@@ -822,6 +822,7 @@ app.get('/api/branches', async (req, res) => {
     let result;
     if (userId) {
       const request = globalPool.request();
+    request.input('transType', sql.Int, transType);
       request.input('userId', sql.Int, parseInt(userId));
       const query = `
         SELECT dbo.tblBranchList.fldName, dbo.tblBranchUser.fldBranchID AS fldID, dbo.tblBranchUser.fldUserID
@@ -6168,7 +6169,8 @@ const mockPurchaseDetails = {
 app.get('/api/sales', async (req, res) => {
   if (!(await authorizeAction(req, res, 30, 'fldSELECT'))) return;
 
-  const { startDate, endDate, branchNo, paymentType, boxAccId, currencyId, search } = req.query;
+  const { startDate, endDate, branchNo, paymentType, boxAccId, currencyId, search, transType: qTransType } = req.query;
+  const transType = parseInt(qTransType) || 30;
   const isConnected = globalPool !== null && globalPool.connected;
 
   if (!isConnected) {
@@ -6177,6 +6179,7 @@ app.get('/api/sales', async (req, res) => {
 
   try {
     const request = globalPool.request();
+    request.input('transType', sql.Int, transType);
     let query = `
       SELECT t.fldID AS fldTransID, t.fldID, t.fldTransNo, t.fldDate, t.fldDescription, t.fldOK, t.fldClosed,
              b.fldName AS fldBranchName, t.fldBranchNo, t.fldTransType, t.fldType,
@@ -6192,7 +6195,7 @@ app.get('/api/sales', async (req, res) => {
       LEFT JOIN dbo.tblAccount a ON ISNULL(t.fldAccNumberID, t.fldVoisherAccID) = a.fldID
       LEFT JOIN dbo.tblMoney m ON t.fldVoisherMoneyID = m.fldID
       LEFT JOIN dbo.tblUser u ON t.fldUserID = u.fldID
-      WHERE t.fldTransType = 30
+      WHERE t.fldTransType = @transType
     `;
 
     if (startDate) {
@@ -6238,7 +6241,8 @@ app.get('/api/sales', async (req, res) => {
 // GET /api/sales/next-number
 app.get('/api/sales/next-number', async (req, res) => {
   if (!(await authorizeAction(req, res, 30, 'fldSELECT'))) return;
-  const { branchNo, paymentType, boxId, date } = req.query;
+  const { branchNo, paymentType, boxId, date, transType: qTransType } = req.query;
+  const transType = parseInt(qTransType) || 30;
   const bNo = parseInt(branchNo) || 1;
   const payType = parseInt(paymentType) || 1;
   const bxId = parseInt(boxId) || 0;
@@ -6253,6 +6257,7 @@ app.get('/api/sales/next-number', async (req, res) => {
 
   try {
     const request = globalPool.request();
+    request.input('transType', sql.Int, transType);
     request.input('branchNo', sql.Int, bNo);
     request.input('paymentType', sql.Int, payType);
     request.input('year', sql.TinyInt, yearVal);
@@ -6260,7 +6265,7 @@ app.get('/api/sales/next-number', async (req, res) => {
     let query = `
       SELECT ISNULL(MAX(fldTransNo), 0) + 1 AS nextNo 
       FROM dbo.tblTransAction 
-      WHERE fldBranchNo = @branchNo AND fldTransType = 30 AND fldType = @paymentType AND fldYaer = @year
+      WHERE fldBranchNo = @branchNo AND fldTransType = @transType AND fldType = @paymentType AND fldYaer = @year
     `;
 
     if (payType === 1 && bxId) {
@@ -6298,7 +6303,7 @@ app.get('/api/sales/:id', async (req, res) => {
       LEFT JOIN dbo.tblMoney m ON t.fldVoisherMoneyID = m.fldID
       LEFT JOIN dbo.tblStore s ON t.fldstoreID = s.fldID
       LEFT JOIN dbo.tblUser u ON t.fldUserID = u.fldID
-      WHERE t.fldID = @transID AND t.fldTransType = 30
+      WHERE t.fldID = @transID AND (t.fldTransType = 30 OR t.fldTransType = 31)
     `;
     const headerRes = await request.query(headerQuery);
     if (headerRes.recordset.length === 0) {

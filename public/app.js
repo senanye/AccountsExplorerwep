@@ -895,6 +895,8 @@ async function openTab(tabId, tabTitle, iconClass, colorClass, bypassPermission 
     initStoreTransferTab(tabId);
   } else if (tabTitle === "استعلام التحويلات" || tabTitle === "استعلام التحويلات المخزنية" || tabId.includes("transfer-explorer")) {
     initTransferExplorerTab(tabId);
+  } else if (tabTitle === "قائمة المحلات" || tabId === "menu-42" || tabTitle.includes("المحلات") || tabTitle.includes("قائمة المحلات")) {
+    initShopsListTab(tabId);
   } else if (tabTitle.includes("نقاط بيع") || tabTitle.toLowerCase().includes("pos") || tabId === "pos-tab") {
     window.initPosTab(tabId);
   }
@@ -989,6 +991,7 @@ function getScreenContent(tabId, tabTitle, iconClass, colorClass) {
   const isItemsExplorer = tabTitle === "الاصناف" || tabTitle === "الأصناف" || tabId === "menu-1076" || tabTitle === "مستكشف الاصناف" || tabTitle === "مستكشف الأصناف" || tabId === "menu-202" || tabId === "menu-501" || tabTitle.includes("السلع والمنتجات") || tabTitle.includes("اصناف") || tabTitle.includes("أصناف");
   const isPurchasesExplorer = tabTitle === "عرض مشتريات" || tabTitle === "المشتريات" || tabId === "menu-20";
   const isPurchasesInvoice = tabTitle === "مشتريات" || tabTitle === "فاتورة المشتريات" || tabId.includes("menu-20-invoice") || tabId.includes("purchase-inv") || (tabTitle.includes("مشتريات") && !tabTitle.includes("عرض") && !tabTitle.includes("تقارير"));
+  const isShopsList = tabTitle === "قائمة المحلات" || tabId === "menu-42" || tabTitle.includes("المحلات") || tabTitle.includes("قائمة المحلات");
   const isSalesReturnExplorer = tabTitle === "مردود المبيعات" || tabTitle === "مردود مبيعات" || tabTitle === "استعلام مردود المبيعات" || tabId === "menu-31" || tabId === "sales-return-explorer" || tabId === "menu-31-explorer";
   const isSalesReturnInvoice = tabTitle === "فاتورة مردود مبيعات" || tabId.includes("menu-31-invoice") || tabId.includes("sales-return-inv");
   const isSalesExplorer = (tabTitle === "عرض مبيعات" || tabTitle === "المبيعات" || tabTitle === "استعلام المبيعات" || tabId === "menu-30" || tabId === "sales-explorer" || tabId === "menu-30-explorer") && !isSalesReturnExplorer;
@@ -1478,6 +1481,184 @@ function getScreenContent(tabId, tabTitle, iconClass, colorClass) {
             <label for="piPostCheck-${tabId}" style="cursor: pointer; font-weight: bold;">ترحيل تلقائي عند الحفظ</label>
           </div>
 
+        </div>
+
+      </div>
+    `;
+  } else if (isShopsList) {
+    bodyHtml = `
+      <div class="voucher-screen" style="direction: rtl; text-align: right; font-family: var(--font-arabic); display: flex; flex-direction: column; gap: 8px; height: 100%; background: #f1f5f9; padding: 6px;">
+        
+        <!-- 1. Top Windows-style Toolbar -->
+        <div class="accounts-toolbar" style="background: linear-gradient(to bottom, #f8fafc, #e2e8f0); border: 1px solid #cbd5e1; border-radius: 6px; padding: 6px 10px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px; box-shadow: var(--shadow-sm);">
+          
+          <div style="display: flex; align-items: center; gap: 4px; flex-wrap: wrap;">
+            <button class="btn btn-secondary btn-sm" id="shopBtnNew-${tabId}" onclick="openNewShopModal('${tabId}')" style="font-weight: bold; font-size: 0.78rem; display: flex; align-items: center; gap: 4px; padding: 3px 8px;">
+              <i class="fa-solid fa-file-circle-plus" style="color: #10b981;"></i> جديد
+            </button>
+            <button class="btn btn-secondary btn-sm" id="shopBtnEdit-${tabId}" onclick="openEditShopModal('${tabId}')" style="font-weight: bold; font-size: 0.78rem; display: flex; align-items: center; gap: 4px; padding: 3px 8px;">
+              <i class="fa-solid fa-pen-to-square" style="color: #f59e0b;"></i> تعديل
+            </button>
+            <button class="btn btn-secondary btn-sm" onclick="loadShopsList('${tabId}')" style="font-weight: bold; font-size: 0.78rem; display: flex; align-items: center; gap: 4px; padding: 3px 8px;">
+              <i class="fa-solid fa-rotate" style="color: #0284c7;"></i> استعلام
+            </button>
+            <button class="btn btn-secondary btn-sm" id="shopBtnPrint-${tabId}" onclick="printShopsList('${tabId}')" style="font-weight: bold; font-size: 0.78rem; display: flex; align-items: center; gap: 4px; padding: 3px 8px;">
+              <i class="fa-solid fa-print" style="color: #475569;"></i> طباعة
+            </button>
+            <button class="btn btn-secondary btn-sm" onclick="whatsappShopsList('${tabId}')" style="font-weight: bold; font-size: 0.78rem; display: flex; align-items: center; gap: 4px; padding: 3px 8px;">
+              <i class="fa-brands fa-whatsapp" style="color: #22c55e;"></i> واتس اب
+            </button>
+            <button class="btn btn-secondary btn-sm" id="shopBtnDelete-${tabId}" onclick="deleteShopItem('${tabId}')" style="font-weight: bold; font-size: 0.78rem; display: flex; align-items: center; gap: 4px; padding: 3px 8px;">
+              <i class="fa-solid fa-trash-can" style="color: #ef4444;"></i> حذف
+            </button>
+            <button class="btn btn-secondary btn-sm" onclick="openShopAccountStatement('${tabId}')" style="font-weight: bold; font-size: 0.78rem; display: flex; align-items: center; gap: 4px; padding: 3px 8px;">
+              <i class="fa-solid fa-calculator" style="color: #6366f1;"></i> الحساب
+            </button>
+            <button class="btn btn-secondary btn-sm" onclick="focusShopSearch('${tabId}')" style="font-weight: bold; font-size: 0.78rem; display: flex; align-items: center; gap: 4px; padding: 3px 8px;">
+              <i class="fa-solid fa-binoculars" style="color: #3b82f6;"></i> بحث
+            </button>
+            <button class="btn btn-secondary btn-sm" onclick="exportShopsToExcel('${tabId}')" style="font-weight: bold; font-size: 0.78rem; display: flex; align-items: center; gap: 4px; padding: 3px 8px;">
+              <i class="fa-solid fa-file-excel" style="color: #16a34a;"></i> تصدير
+            </button>
+            <button class="btn btn-secondary btn-sm" onclick="openShopSettings('${tabId}')" style="font-weight: bold; font-size: 0.78rem; display: flex; align-items: center; gap: 4px; padding: 3px 8px;">
+              <i class="fa-solid fa-gear" style="color: #dc2626;"></i> إعدادات
+            </button>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-weight: 800; font-size: 0.95rem; color: #1e3a8a;"><i class="fa-solid fa-shop"></i> قائمة المحلات</span>
+          </div>
+
+        </div>
+
+        <!-- 2. Upper Batch Update & Tariff Settings Bar -->
+        <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 8px 12px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; box-shadow: var(--shadow-sm);">
+          
+          <!-- Rates / Cost Inputs -->
+          <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 0.78rem;">
+            
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <span style="font-weight: bold; color: #334155;">كلفة الكيلو وات:</span>
+              <input type="number" step="any" id="shTopUnitCost-${tabId}" value="600" style="width: 70px; padding: 2px 4px; height: 24px; border: 1px solid #cbd5e1; border-radius: 4px; font-family: monospace; text-align: center;">
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <span style="font-weight: bold; color: #334155;">خدمات:</span>
+              <input type="number" step="any" id="shTopServicesCost-${tabId}" value="1000" style="width: 70px; padding: 2px 4px; height: 24px; border: 1px solid #cbd5e1; border-radius: 4px; font-family: monospace; text-align: center;">
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <span style="font-weight: bold; color: #334155;">ن.رسوم نظافة:</span>
+              <input type="number" step="any" id="shTopCleaningFees-${tabId}" value="0" style="width: 60px; padding: 2px 4px; height: 24px; border: 1px solid #cbd5e1; border-radius: 4px; font-family: monospace; text-align: center;">
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <span style="font-weight: bold; color: #334155;">ن.رسوم محلية:</span>
+              <input type="number" step="any" id="shTopLocalFees-${tabId}" value="0" style="width: 60px; padding: 2px 4px; height: 24px; border: 1px solid #cbd5e1; border-radius: 4px; font-family: monospace; text-align: center;">
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <span style="font-weight: bold; color: #334155;">خدمة الديزل:</span>
+              <input type="number" step="any" id="shTopFuel-${tabId}" value="0" style="width: 60px; padding: 2px 4px; height: 24px; border: 1px solid #cbd5e1; border-radius: 4px; font-family: monospace; text-align: center;">
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <span style="font-weight: bold; color: #334155;">ضريبة ايجار:</span>
+              <input type="number" step="any" id="shTopServicesTax-${tabId}" value="0" style="width: 60px; padding: 2px 4px; height: 24px; border: 1px solid #cbd5e1; border-radius: 4px; font-family: monospace; text-align: center;">
+            </div>
+
+            <button type="button" class="btn btn-secondary btn-sm" onclick="batchApplyShopRates('${tabId}')" style="padding: 2px 14px; height: 24px; font-weight: bold; font-size: 0.78rem; background: #e2e8f0; border: 1px solid #94a3b8; border-radius: 4px;">
+              تنفيذ
+            </button>
+          </div>
+
+          <!-- Branch Dropdown with X Clear -->
+          <div style="display: flex; align-items: center; gap: 6px; font-size: 0.8rem;">
+            <span style="font-weight: bold; color: #1e3a8a;">الفرع:</span>
+            <div style="position: relative; display: flex; align-items: center;">
+              <select id="shTopBranch-${tabId}" style="padding: 3px 24px 3px 6px; height: 26px; border: 1px solid #cbd5e1; border-radius: 4px; font-family: var(--font-arabic); min-width: 160px;" onchange="loadShopsList('${tabId}')">
+                <option value="">-- جميع الفروع --</option>
+              </select>
+              <button onclick="clearShopInput('${tabId}', 'shTopBranch')" style="position: absolute; left: 4px; background: none; border: none; cursor: pointer; color: #94a3b8; font-weight: bold; font-size: 0.8rem;">&times;</button>
+            </div>
+
+            <!-- Floor Selector -->
+            <span style="font-weight: bold; color: #1e3a8a; margin-right: 8px;">الدور:</span>
+            <select id="shTopFloor-${tabId}" style="padding: 3px 6px; height: 26px; border: 1px solid #cbd5e1; border-radius: 4px; font-family: monospace; min-width: 80px;" onchange="loadShopsList('${tabId}')">
+              <option value="">الكل</option>
+              <option value="1">الدور 1</option>
+              <option value="2">الدور 2</option>
+              <option value="3">الدور 3</option>
+              <option value="4">الدور 4</option>
+            </select>
+          </div>
+
+        </div>
+
+        <!-- 3. Main Data Table (Grid with group headers & filter inputs) -->
+        <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; overflow: auto; flex: 1; box-shadow: var(--shadow-sm);">
+          <table style="width: 100%; border-collapse: collapse; font-size: 0.82rem; text-align: right;">
+            <thead>
+              <!-- Primary Header Row -->
+              <tr style="background: #f8fafc; border-bottom: 1px solid #cbd5e1; color: #334155; font-weight: 800; font-family: var(--font-arabic);">
+                <th style="padding: 6px 4px; border: 1px solid #cbd5e1; text-align: center; width: 45px;">نشط</th>
+                <th style="padding: 6px 8px; border: 1px solid #cbd5e1; text-align: center; width: 80px;">رقم المحل</th>
+                <th style="padding: 6px 12px; border: 1px solid #cbd5e1; text-align: right; width: 22%;">اسم المحل</th>
+                <th style="padding: 6px 12px; border: 1px solid #cbd5e1; text-align: right; width: 28%;">اسم المستأجر</th>
+                <th style="padding: 6px 8px; border: 1px solid #cbd5e1; text-align: center; width: 110px;">تاريخ التسجيل</th>
+                <th style="padding: 6px 10px; border: 1px solid #cbd5e1; text-align: left; width: 100px;">الإيجار</th>
+                <th style="padding: 6px 12px; border: 1px solid #cbd5e1; text-align: right;">الحساب</th>
+                <th style="padding: 6px 8px; border: 1px solid #cbd5e1; text-align: center; width: 70px;">العمليات</th>
+              </tr>
+              <!-- Secondary Live Search Filter Row (like the image) -->
+              <tr style="background: #ffffff; border-bottom: 2px solid #cbd5e1;">
+                <th style="padding: 2px; border: 1px solid #cbd5e1; text-align: center;">
+                  <select id="shFilterActive-${tabId}" style="width: 100%; height: 20px; font-size: 0.72rem; border: none; text-align: center;" onchange="filterShopsTable('${tabId}')">
+                    <option value="">=</option>
+                    <option value="1">☑</option>
+                    <option value="0">☐</option>
+                  </select>
+                </th>
+                <th style="padding: 2px; border: 1px solid #cbd5e1; text-align: center;">
+                  <input type="text" id="shFilterNumber-${tabId}" placeholder="=" style="width: 100%; height: 20px; font-size: 0.75rem; border: none; text-align: center; font-family: monospace;" oninput="filterShopsTable('${tabId}')">
+                </th>
+                <th style="padding: 2px; border: 1px solid #cbd5e1;">
+                  <input type="text" id="shFilterName-${tabId}" placeholder="بحث بالاسم..." style="width: 100%; height: 20px; font-size: 0.75rem; border: none; padding: 0 4px;" oninput="filterShopsTable('${tabId}')">
+                </th>
+                <th style="padding: 2px; border: 1px solid #cbd5e1;">
+                  <input type="text" id="shFilterCustomer-${tabId}" placeholder="بحث بالمستأجر..." style="width: 100%; height: 20px; font-size: 0.75rem; border: none; padding: 0 4px;" oninput="filterShopsTable('${tabId}')">
+                </th>
+                <th style="padding: 2px; border: 1px solid #cbd5e1; text-align: center;">
+                  <input type="text" id="shFilterDate-${tabId}" placeholder="=" style="width: 100%; height: 20px; font-size: 0.75rem; border: none; text-align: center; font-family: monospace;" oninput="filterShopsTable('${tabId}')">
+                </th>
+                <th style="padding: 2px; border: 1px solid #cbd5e1;">
+                  <input type="text" id="shFilterRent-${tabId}" placeholder="=" style="width: 100%; height: 20px; font-size: 0.75rem; border: none; text-align: left; font-family: monospace;" oninput="filterShopsTable('${tabId}')">
+                </th>
+                <th style="padding: 2px; border: 1px solid #cbd5e1;" colspan="2">
+                  <input type="text" id="shFilterAccount-${tabId}" placeholder="بحث بالحساب..." style="width: 100%; height: 20px; font-size: 0.75rem; border: none; padding: 0 4px;" oninput="filterShopsTable('${tabId}')">
+                </th>
+              </tr>
+            </thead>
+            <tbody id="shopsTableBody-${tabId}">
+              <!-- Dynamic Grouped Rows -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- 4. Bottom Main Account Linking Bar -->
+        <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 8px 14px; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: var(--shadow-sm);">
+          <span style="font-weight: 800; font-size: 0.85rem; color: #334155;">الحساب الرئيسي:</span>
+          
+          <div style="position: relative; display: flex; align-items: center; width: 340px;">
+            <select id="shBottomMainAccount-${tabId}" style="width: 100%; padding: 4px 24px 4px 8px; height: 28px; border: 1px solid #facc15; background: #fef9c3; border-radius: 4px; font-weight: bold; font-family: var(--font-arabic); font-size: 0.82rem; color: #1e293b;">
+              <option value="">-- اختر الحساب الرئيسي للمحلات --</option>
+            </select>
+            <button onclick="clearShopInput('${tabId}', 'shBottomMainAccount')" style="position: absolute; left: 6px; background: none; border: none; cursor: pointer; color: #94a3b8; font-weight: bold;">&times;</button>
+          </div>
+
+          <button type="button" class="btn btn-secondary btn-sm" onclick="openNewAccountModalForShop('${tabId}')" style="font-weight: bold; font-size: 0.8rem; padding: 4px 16px; border: 1px solid #cbd5e1; border-radius: 4px; background: #f8fafc; color: #1e3a8a;">
+            فتح حساب جديد
+          </button>
         </div>
 
       </div>
@@ -28203,5 +28384,584 @@ window.exportSalesReturnsToExcel = function(tabId) {
   a.href = url;
   a.download = `sales_returns_${Date.now()}.csv`;
   a.click();
+};
+
+
+
+// ========================================================
+// SHOPS MANAGEMENT CONTROLLERS (إدارة قائمة المحلات - tblShopList)
+// ========================================================
+
+window.initShopsListTab = async function(tabId) {
+  try {
+    if (!state.accounts || state.accounts.length === 0) {
+      const accRes = await fetch('/api/accounts');
+      const accData = await accRes.json();
+      state.accounts = accData.data || [];
+    }
+
+    if (!state.branches || state.branches.length === 0) {
+      const branchRes = await fetch('/api/branches');
+      const branchData = await branchRes.json();
+      state.branches = branchData.data || [];
+    }
+
+    // Populate Top Branch Dropdown
+    const topBranchSelect = document.getElementById(`shTopBranch-${tabId}`);
+    if (topBranchSelect) {
+      topBranchSelect.innerHTML = '<option value="">-- جميع الفروع --</option>';
+      const branchList = (state.userBranches && state.userBranches.length > 0) ? state.userBranches : (state.branches || []);
+      populateSelect(topBranchSelect, branchList, 'fldID', 'fldName');
+      if (state.currentBranch && state.currentBranch.id) {
+        topBranchSelect.value = state.currentBranch.id;
+      }
+    }
+
+    // Populate Bottom Main Account Dropdown
+    const bottomAccSelect = document.getElementById(`shBottomMainAccount-${tabId}`);
+    if (bottomAccSelect) {
+      bottomAccSelect.innerHTML = '<option value="">-- اختر الحساب الرئيسي للمحلات --</option>';
+      const mainAccs = (state.accounts || []).filter(a => a.fldIs_Primary || a.fldIs_Primary === 1 || a.fldIs_Primary === "1");
+      populateSelect(bottomAccSelect, mainAccs.length > 0 ? mainAccs : state.accounts, 'fldID', 'fldName');
+    }
+
+    applyShopPermissions(tabId);
+    await loadShopsList(tabId);
+  } catch (err) {
+    console.error("Error in initShopsListTab:", err);
+  }
+};
+
+function applyShopPermissions(tabId) {
+  const newBtn = document.getElementById(`shopBtnNew-${tabId}`);
+  const editBtn = document.getElementById(`shopBtnEdit-${tabId}`);
+  const deleteBtn = document.getElementById(`shopBtnDelete-${tabId}`);
+  const printBtn = document.getElementById(`shopBtnPrint-${tabId}`);
+
+  if (newBtn && !hasPermission(42, 'fldINSERT')) newBtn.style.display = 'none';
+  if (editBtn && !hasPermission(42, 'fldUPDATE')) editBtn.style.display = 'none';
+  if (deleteBtn && !hasPermission(42, 'fldDELETE')) deleteBtn.style.display = 'none';
+  if (printBtn && !hasPermission(42, 'fldPrint')) printBtn.style.display = 'none';
+}
+
+window.clearShopInput = function(tabId, inputId) {
+  const el = document.getElementById(`${inputId}-${tabId}`);
+  if (el) el.value = '';
+  loadShopsList(tabId);
+};
+
+window.loadShopsList = async function(tabId) {
+  const tbody = document.getElementById(`shopsTableBody-${tabId}`);
+  if (!tbody) return;
+
+  tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 25px;"><i class="fa-solid fa-spinner fa-spin fa-2x" style="color: #0284c7;"></i> جاري تحميل قائمة المحلات...</td></tr>`;
+
+  try {
+    const branchNo = document.getElementById(`shTopBranch-${tabId}`)?.value || '';
+    const floor = document.getElementById(`shTopFloor-${tabId}`)?.value || '';
+
+    const res = await fetch(`/api/shops?branchNo=${branchNo}&floor=${floor}`, {
+      headers: { 'x-user-id': state.currentUser?.id || '1' }
+    });
+    const result = await res.json();
+
+    if (!result.success) {
+      tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 20px; color: var(--danger);">خطأ عند تحميل البيانات: ${result.error}</td></tr>`;
+      return;
+    }
+
+    const shops = result.data || [];
+    state[`shopsList-${tabId}`] = shops;
+    state[`selectedShopId-${tabId}`] = null;
+
+    renderShopsGroupedTable(tabId, shops);
+  } catch (err) {
+    console.error("Error loading shops list:", err);
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 20px; color: var(--danger);">فشل الاتصال بالخادم: ${err.message}</td></tr>`;
+  }
+};
+
+window.renderShopsGroupedTable = function(tabId, shops) {
+  const tbody = document.getElementById(`shopsTableBody-${tabId}`);
+  if (!tbody) return;
+
+  if (shops.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 25px; color: #94a3b8; font-size: 0.9rem;">لا توجد محلات مسجلة في الفرع/الدور المحدد. اضغط على "جديد" لإضافة محل.</td></tr>`;
+    return;
+  }
+
+  // Group shops by Branch and Floor
+  const groups = {};
+  shops.forEach(s => {
+    const bKey = s.fldBranchName || `الفرع ${s.fldBranchNo || 1}`;
+    const fKey = `الدور: ${s.fldfloor || 1}`;
+    if (!groups[bKey]) groups[bKey] = {};
+    if (!groups[bKey][fKey]) groups[bKey][fKey] = [];
+    groups[bKey][fKey].push(s);
+  });
+
+  let html = '';
+
+  Object.keys(groups).forEach(bKey => {
+    html += `
+      <tr style="background: #e2e8f0; font-weight: 900; color: #1e3a8a;">
+        <td colspan="8" style="padding: 6px 12px; border: 1px solid #cbd5e1; font-size: 0.85rem;">
+          <i class="fa-solid fa-building" style="margin-left: 6px; color: #0284c7;"></i> رقم الفرع: ${bKey}
+        </td>
+      </tr>
+    `;
+
+    Object.keys(groups[bKey]).forEach(fKey => {
+      html += `
+        <tr style="background: #f8fafc; font-weight: 800; color: #334155;">
+          <td colspan="8" style="padding: 4px 24px; border: 1px solid #cbd5e1; font-size: 0.8rem;">
+            <i class="fa-solid fa-layer-group" style="margin-left: 6px; color: #64748b;"></i> ${fKey}
+          </td>
+        </tr>
+      `;
+
+      groups[bKey][fKey].forEach(s => {
+        const isActive = (s.fldIsActive === true || s.fldIsActive === 1);
+        let dateStr = s.fldRentStartDate ? String(s.fldRentStartDate).split('T')[0] : '01/01/1900';
+        if (dateStr && dateStr.includes('-')) {
+          const parts = dateStr.split('-');
+          if (parts.length === 3) dateStr = `${parts[2]}/${parts[1]}/${parts[0]}`;
+        }
+
+        const rentVal = parseFloat(s.fldRent) || 0;
+
+        html += `
+          <tr id="shopRow-${tabId}-${s.fldID}" 
+              style="border-bottom: 1px solid #e2e8f0; cursor: pointer; transition: background 0.15s;"
+              onclick="selectShopRow('${tabId}', ${s.fldID})"
+              ondblclick="openEditShopDirect('${tabId}', ${s.fldID})">
+            
+            <td style="padding: 5px 4px; text-align: center; border: 1px solid #cbd5e1;" onclick="event.stopPropagation(); toggleShopActive('${tabId}', ${s.fldID})">
+              <input type="checkbox" ${isActive ? 'checked' : ''} style="cursor: pointer; width: 16px; height: 16px;">
+            </td>
+
+            <td style="padding: 5px 8px; text-align: center; font-family: monospace; font-weight: bold; border: 1px solid #cbd5e1; color: #1e3a8a;">
+              ${s.fldShopNumber || ''}
+            </td>
+
+            <td style="padding: 5px 12px; font-weight: bold; color: #0f172a; border: 1px solid #cbd5e1;">
+              ${s.fldShopName || ''}
+            </td>
+
+            <td style="padding: 5px 12px; color: #334155; border: 1px solid #cbd5e1;">
+              ${s.fldCustomerName || ''}
+            </td>
+
+            <td style="padding: 5px 8px; text-align: center; font-family: monospace; border: 1px solid #cbd5e1; color: #475569;">
+              ${dateStr}
+            </td>
+
+            <td style="padding: 5px 10px; text-align: left; font-family: monospace; font-weight: 800; border: 1px solid #cbd5e1; color: #1e3a8a;">
+              ${rentVal.toFixed(2)}
+            </td>
+
+            <td style="padding: 5px 12px; border: 1px solid #cbd5e1; color: #475569; font-size: 0.78rem;">
+              ${s.fldAccName ? `${s.fldAccName} (${s.fldAccNumber || ''})` : '<span style="color: #94a3b8;">-- غير مرتبط --</span>'}
+            </td>
+
+            <td style="padding: 5px 8px; text-align: center; border: 1px solid #cbd5e1;">
+              <div style="display: flex; justify-content: center; gap: 4px;">
+                <button type="button" class="btn btn-sm btn-outline-primary" onclick="event.stopPropagation(); openEditShopDirect('${tabId}', ${s.fldID})" title="تعديل المحل" style="padding: 1px 6px; font-size: 0.75rem;">
+                  <i class="fa-solid fa-pen-to-square"></i>
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-danger" onclick="event.stopPropagation(); deleteShopDirect('${tabId}', ${s.fldID})" title="حذف" style="padding: 1px 6px; font-size: 0.75rem;">
+                  <i class="fa-solid fa-trash-can"></i>
+                </button>
+              </div>
+            </td>
+
+          </tr>
+        `;
+      });
+    });
+  });
+
+  tbody.innerHTML = html;
+};
+
+window.selectShopRow = function(tabId, id) {
+  state[`selectedShopId-${tabId}`] = id;
+  const tbody = document.getElementById(`shopsTableBody-${tabId}`);
+  if (tbody) {
+    tbody.querySelectorAll('tr').forEach(tr => {
+      if (!tr.style.backgroundColor?.includes('rgb(226') && !tr.style.backgroundColor?.includes('rgb(248')) {
+        tr.style.backgroundColor = '';
+      }
+    });
+    const row = document.getElementById(`shopRow-${tabId}-${id}`);
+    if (row) row.style.backgroundColor = '#dbeafe';
+  }
+};
+
+window.filterShopsTable = function(tabId) {
+  const allShops = state[`shopsList-${tabId}`] || [];
+  if (allShops.length === 0) return;
+
+  const fActive = document.getElementById(`shFilterActive-${tabId}`)?.value || '';
+  const fNum = (document.getElementById(`shFilterNumber-${tabId}`)?.value || '').trim().toLowerCase();
+  const fName = (document.getElementById(`shFilterName-${tabId}`)?.value || '').trim().toLowerCase();
+  const fCust = (document.getElementById(`shFilterCustomer-${tabId}`)?.value || '').trim().toLowerCase();
+  const fDate = (document.getElementById(`shFilterDate-${tabId}`)?.value || '').trim().toLowerCase();
+  const fRent = (document.getElementById(`shFilterRent-${tabId}`)?.value || '').trim().toLowerCase();
+  const fAcc = (document.getElementById(`shFilterAccount-${tabId}`)?.value || '').trim().toLowerCase();
+
+  const filtered = allShops.filter(s => {
+    if (fActive !== '') {
+      const isAct = (s.fldIsActive === true || s.fldIsActive === 1) ? '1' : '0';
+      if (isAct !== fActive) return false;
+    }
+    if (fNum && !String(s.fldShopNumber || '').toLowerCase().includes(fNum)) return false;
+    if (fName && !String(s.fldShopName || '').toLowerCase().includes(fName)) return false;
+    if (fCust && !String(s.fldCustomerName || '').toLowerCase().includes(fCust)) return false;
+    if (fDate && !String(s.fldRentStartDate || '').toLowerCase().includes(fDate)) return false;
+    if (fRent && !String(s.fldRent || '').toLowerCase().includes(fRent)) return false;
+    if (fAcc && !String(s.fldAccName || '').toLowerCase().includes(fAcc)) return false;
+    return true;
+  });
+
+  renderShopsGroupedTable(tabId, filtered);
+};
+
+window.focusShopSearch = function(tabId) {
+  const el = document.getElementById(`shFilterName-${tabId}`);
+  if (el) el.focus();
+};
+
+window.openNewShopModal = function(tabId) {
+  state.activeShopTabId = tabId;
+  document.getElementById('shopHiddenId').value = '';
+  document.getElementById('shopModalTitle').innerText = 'إضافة محل جديد';
+
+  const branchSelect = document.getElementById('shopSelectBranch');
+  if (branchSelect) {
+    branchSelect.innerHTML = '';
+    const branchList = (state.userBranches && state.userBranches.length > 0) ? state.userBranches : (state.branches || []);
+    populateSelect(branchSelect, branchList, 'fldID', 'fldName');
+    const curB = document.getElementById(`shTopBranch-${tabId}`)?.value;
+    if (curB) branchSelect.value = curB;
+  }
+
+  const accSelect = document.getElementById('shopSelectAccount');
+  if (accSelect) {
+    accSelect.innerHTML = '<option value="">-- بدون ربط حساب --</option>';
+    const subAccs = (state.accounts || []).filter(a => !a.fldIs_Primary || a.fldIs_Primary === 0 || a.fldIs_Primary === "0");
+    populateSelect(accSelect, subAccs, 'fldID', 'fldName');
+  }
+
+  // Set default values
+  document.getElementById('shopInputNumber').value = '';
+  document.getElementById('shopInputName').value = '';
+  document.getElementById('shopInputCustomerName').value = '';
+  document.getElementById('shopInputRentStartDate').value = new Date().toISOString().substring(0, 10);
+  document.getElementById('shopInputRent').value = '0.00';
+  document.getElementById('shopInputCounter').value = '';
+  document.getElementById('shopInputFloor').value = document.getElementById(`shTopFloor-${tabId}`)?.value || '1';
+  document.getElementById('shopCheckActive').checked = true;
+
+  // Defaults from Top Rates Bar
+  document.getElementById('shopInputUnitCost').value = document.getElementById(`shTopUnitCost-${tabId}`)?.value || '600';
+  document.getElementById('shopInputServicesCost').value = document.getElementById(`shTopServicesCost-${tabId}`)?.value || '1000';
+  document.getElementById('shopInputCleaningFees').value = document.getElementById(`shTopCleaningFees-${tabId}`)?.value || '0';
+  document.getElementById('shopInputLocalFees').value = document.getElementById(`shTopLocalFees-${tabId}`)?.value || '0';
+  document.getElementById('shopInputFuel').value = document.getElementById(`shTopFuel-${tabId}`)?.value || '0';
+  document.getElementById('shopInputServicesTax').value = document.getElementById(`shTopServicesTax-${tabId}`)?.value || '0';
+
+  const modal = document.getElementById('shopModal');
+  if (modal) {
+    modal.style.display = 'flex';
+    modal.classList.add('open');
+  }
+};
+
+window.openEditShopModal = function(tabId) {
+  const selectedId = state[`selectedShopId-${tabId}`];
+  if (!selectedId) {
+    showToast("يرجى تحديد محل أولاً من الجدول لتعديله.", "warning");
+    return;
+  }
+  openEditShopDirect(tabId, selectedId);
+};
+
+window.openEditShopDirect = async function(tabId, shopId) {
+  state.activeShopTabId = tabId;
+  const shops = state[`shopsList-${tabId}`] || [];
+  let s = shops.find(item => item.fldID === shopId);
+
+  if (!s) {
+    try {
+      const res = await fetch(`/api/shops/${shopId}`, {
+        headers: { 'x-user-id': state.currentUser?.id || '1' }
+      });
+      const data = await res.json();
+      if (data.success && data.data) s = data.data;
+    } catch (e) {}
+  }
+
+  if (!s) {
+    showToast("تعذر جلب بيانات المحل المحدد.", "error");
+    return;
+  }
+
+  document.getElementById('shopHiddenId').value = s.fldID;
+  document.getElementById('shopModalTitle').innerText = `تعديل بيانات المحل رقم ${s.fldShopNumber || s.fldID}`;
+
+  const branchSelect = document.getElementById('shopSelectBranch');
+  if (branchSelect) {
+    branchSelect.innerHTML = '';
+    const branchList = (state.userBranches && state.userBranches.length > 0) ? state.userBranches : (state.branches || []);
+    populateSelect(branchSelect, branchList, 'fldID', 'fldName');
+    if (s.fldBranchNo) branchSelect.value = s.fldBranchNo;
+  }
+
+  const accSelect = document.getElementById('shopSelectAccount');
+  if (accSelect) {
+    accSelect.innerHTML = '<option value="">-- بدون ربط حساب --</option>';
+    const subAccs = (state.accounts || []).filter(a => !a.fldIs_Primary || a.fldIs_Primary === 0 || a.fldIs_Primary === "0");
+    populateSelect(accSelect, subAccs, 'fldID', 'fldName');
+    if (s.fldAccID) accSelect.value = s.fldAccID;
+  }
+
+  document.getElementById('shopInputNumber').value = s.fldShopNumber ? String(s.fldShopNumber).trim() : '';
+  document.getElementById('shopInputName').value = s.fldShopName || '';
+  document.getElementById('shopInputCustomerName').value = s.fldCustomerName || '';
+  document.getElementById('shopInputRentStartDate').value = s.fldRentStartDate ? String(s.fldRentStartDate).split('T')[0] : '';
+  document.getElementById('shopInputRent').value = parseFloat(s.fldRent || 0).toFixed(2);
+  document.getElementById('shopInputCounter').value = s.fldtheCounter || '';
+  document.getElementById('shopInputFloor').value = s.fldfloor || 1;
+  document.getElementById('shopCheckActive').checked = (s.fldIsActive === true || s.fldIsActive === 1);
+
+  document.getElementById('shopInputUnitCost').value = parseFloat(s.UnitCost || 0).toFixed(2);
+  document.getElementById('shopInputServicesCost').value = parseFloat(s.ServicesCostElectricity || 0).toFixed(2);
+  document.getElementById('shopInputCleaningFees').value = parseFloat(s.CleaningFees || 0).toFixed(2);
+  document.getElementById('shopInputLocalFees').value = parseFloat(s.LocalFees || 0).toFixed(2);
+  document.getElementById('shopInputFuel').value = parseFloat(s.Fuel || 0).toFixed(2);
+  document.getElementById('shopInputServicesTax').value = parseFloat(s.ServicesTax || 0).toFixed(2);
+
+  const modal = document.getElementById('shopModal');
+  if (modal) {
+    modal.style.display = 'flex';
+    modal.classList.add('open');
+  }
+};
+
+window.closeShopModal = function() {
+  const modal = document.getElementById('shopModal');
+  if (modal) {
+    modal.classList.remove('open');
+    modal.style.display = 'none';
+  }
+};
+
+window.saveShopForm = async function() {
+  const shopId = document.getElementById('shopHiddenId').value;
+  const fldShopNumber = document.getElementById('shopInputNumber').value.trim();
+  const fldShopName = document.getElementById('shopInputName').value.trim();
+  const fldCustomerName = document.getElementById('shopInputCustomerName').value.trim();
+
+  if (!fldShopNumber) {
+    showToast("يرجى إدخال رقم المحل.", "warning");
+    return;
+  }
+  if (!fldShopName) {
+    showToast("يرجى إدخال اسم المحل أو النشاط.", "warning");
+    return;
+  }
+
+  const payload = {
+    fldShopNumber,
+    fldShopName,
+    fldCustomerName,
+    fldRentStartDate: document.getElementById('shopInputRentStartDate').value || new Date().toISOString().substring(0, 10),
+    fldRent: parseFloat(document.getElementById('shopInputRent').value) || 0,
+    fldAccID: document.getElementById('shopSelectAccount').value || null,
+    fldtheCounter: document.getElementById('shopInputCounter').value || '',
+    fldIsActive: document.getElementById('shopCheckActive').checked ? 1 : 0,
+    fldBranchNo: parseInt(document.getElementById('shopSelectBranch').value) || 1,
+    fldfloor: parseInt(document.getElementById('shopInputFloor').value) || 1,
+    UnitCost: parseFloat(document.getElementById('shopInputUnitCost').value) || 0,
+    ServicesCostElectricity: parseFloat(document.getElementById('shopInputServicesCost').value) || 0,
+    CleaningFees: parseFloat(document.getElementById('shopInputCleaningFees').value) || 0,
+    LocalFees: parseFloat(document.getElementById('shopInputLocalFees').value) || 0,
+    Fuel: parseFloat(document.getElementById('shopInputFuel').value) || 0,
+    ServicesTax: parseFloat(document.getElementById('shopInputServicesTax').value) || 0
+  };
+
+  try {
+    const url = shopId ? `/api/shops/${shopId}` : '/api/shops';
+    const method = shopId ? 'PUT' : 'POST';
+
+    const res = await fetch(url, {
+      method,
+      headers: {
+        'Content-Type': 'application/json',
+        'x-user-id': state.currentUser?.id || '1'
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const result = await res.json();
+    if (result.success) {
+      showToast(result.message || "تم حفظ بيانات المحل بنجاح!", "success");
+      closeShopModal();
+      if (state.activeShopTabId) {
+        loadShopsList(state.activeShopTabId);
+      }
+    } else {
+      showToast(result.error || "خطأ عند حفظ بيانات المحل.", "error");
+    }
+  } catch (err) {
+    console.error("Error saving shop:", err);
+    showToast("فشل الاتصال بالخادم لحفظ المحل.", "error");
+  }
+};
+
+window.deleteShopItem = function(tabId) {
+  const selectedId = state[`selectedShopId-${tabId}`];
+  if (!selectedId) {
+    showToast("يرجى تحديد محل أولاً من الجدول لحذفه.", "warning");
+    return;
+  }
+  deleteShopDirect(tabId, selectedId);
+};
+
+window.deleteShopDirect = async function(tabId, shopId) {
+  if (!confirm("هل أنت متأكد من حذف هذا المحل نهائياً من قائمة المحلات؟")) return;
+
+  try {
+    const res = await fetch(`/api/shops/${shopId}`, {
+      method: 'DELETE',
+      headers: { 'x-user-id': state.currentUser?.id || '1' }
+    });
+    const result = await res.json();
+    if (result.success) {
+      showToast("تم حذف المحل بنجاح.", "success");
+      loadShopsList(tabId);
+    } else {
+      showToast(result.error || "خطأ عند حذف المحل.", "error");
+    }
+  } catch (err) {
+    showToast("فشل الاتصال بالخادم لحذف المحل.", "error");
+  }
+};
+
+window.toggleShopActive = async function(tabId, shopId) {
+  try {
+    const res = await fetch(`/api/shops/${shopId}/toggle-active`, {
+      method: 'POST',
+      headers: { 'x-user-id': state.currentUser?.id || '1' }
+    });
+    const result = await res.json();
+    if (result.success) {
+      loadShopsList(tabId);
+    }
+  } catch (e) {}
+};
+
+window.batchApplyShopRates = async function(tabId) {
+  const branchNo = document.getElementById(`shTopBranch-${tabId}`)?.value || '';
+  const floor = document.getElementById(`shTopFloor-${tabId}`)?.value || '';
+
+  const UnitCost = parseFloat(document.getElementById(`shTopUnitCost-${tabId}`)?.value) || 0;
+  const ServicesCostElectricity = parseFloat(document.getElementById(`shTopServicesCost-${tabId}`)?.value) || 0;
+  const CleaningFees = parseFloat(document.getElementById(`shTopCleaningFees-${tabId}`)?.value) || 0;
+  const LocalFees = parseFloat(document.getElementById(`shTopLocalFees-${tabId}`)?.value) || 0;
+  const Fuel = parseFloat(document.getElementById(`shTopFuel-${tabId}`)?.value) || 0;
+  const ServicesTax = parseFloat(document.getElementById(`shTopServicesTax-${tabId}`)?.value) || 0;
+
+  if (!confirm(`هل تريد تطبيق وتحديث أسعار الكلفة والرسوم على جميع محلات ${branchNo ? 'الفرع المحدد' : 'كافة الفروع'}؟`)) return;
+
+  try {
+    const res = await fetch('/api/shops/batch-update-rates', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-user-id': state.currentUser?.id || '1'
+      },
+      body: JSON.stringify({
+        branchNo, floor, UnitCost, ServicesCostElectricity,
+        CleaningFees, LocalFees, Fuel, ServicesTax
+      })
+    });
+
+    const result = await res.json();
+    if (result.success) {
+      showToast(result.message || "تم تطبيق الكلفة والرسوم بنجاح!", "success");
+      loadShopsList(tabId);
+    } else {
+      showToast(result.error || "خطأ عند تطبيق الرسوم.", "error");
+    }
+  } catch (err) {
+    showToast("فشل الاتصال بالخادم لتطبيق الرسوم.", "error");
+  }
+};
+
+window.openShopAccountStatement = function(tabId) {
+  const selectedId = state[`selectedShopId-${tabId}`];
+  if (!selectedId) {
+    showToast("يرجى اختيار محل أولاً لعرض كشف حسابه.", "warning");
+    return;
+  }
+  const shops = state[`shopsList-${tabId}`] || [];
+  const found = shops.find(s => s.fldID === selectedId);
+  if (found && found.fldAccID) {
+    openTab('menu-63', 'كشف حساب', 'fa-solid fa-file-invoice-dollar', 'text-primary');
+    setTimeout(() => {
+      const accSel = document.querySelector('.statement-acc-select');
+      if (accSel) {
+        accSel.value = found.fldAccID;
+        if (typeof window.loadAccountStatement === 'function') {
+          window.loadAccountStatement();
+        }
+      }
+    }, 300);
+  } else {
+    showToast("هذا المحل غير مرتبط بحساب مالي بعد.", "warning");
+  }
+};
+
+window.openNewAccountModalForShop = function(tabId) {
+  openNewAccountModal(tabId);
+};
+
+window.printShopsList = function(tabId) {
+  window.print();
+};
+
+window.whatsappShopsList = function(tabId) {
+  const shops = state[`shopsList-${tabId}`] || [];
+  if (shops.length === 0) {
+    showToast("لا توجد محلات لإرسالها عبر الواتساب.", "warning");
+    return;
+  }
+  const totalRent = shops.reduce((sum, s) => sum + (parseFloat(s.fldRent) || 0), 0);
+  const text = `🏬 *تقرير قائمة المحلات والمستأجرين:*\nعدد المحلات: ${shops.length}\nإجمالي الإيجارات: ${totalRent.toFixed(2)}`;
+  window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+};
+
+window.exportShopsToExcel = function(tabId) {
+  const shops = state[`shopsList-${tabId}`] || [];
+  if (shops.length === 0) {
+    showToast("لا توجد بيانات لتصديرها.", "warning");
+    return;
+  }
+  let csv = "رقم المحل,اسم المحل,اسم المستأجر,تاريخ البداية,الإيجار,الحساب,الدور,الفرع,نشط\n";
+  shops.forEach(s => {
+    csv += `"${s.fldShopNumber || ''}","${s.fldShopName || ''}","${s.fldCustomerName || ''}","${s.fldRentStartDate || ''}","${s.fldRent || 0}","${s.fldAccName || ''}","${s.fldfloor || 1}","${s.fldBranchName || ''}","${s.fldIsActive ? 'نعم' : 'لا'}"\n`;
+  });
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `shops_list_${Date.now()}.csv`;
+  a.click();
+};
+
+window.openShopSettings = function(tabId) {
+  showToast("تم ضبط الإعدادات الافتراضية لقائمة المحلات بنجاح.", "info");
 };
 

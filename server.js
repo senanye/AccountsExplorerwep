@@ -822,7 +822,6 @@ app.get('/api/branches', async (req, res) => {
     let result;
     if (userId) {
       const request = globalPool.request();
-    request.input('transType', sql.Int, transType);
       request.input('userId', sql.Int, parseInt(userId));
       const query = `
         SELECT dbo.tblBranchList.fldName, dbo.tblBranchUser.fldBranchID AS fldID, dbo.tblBranchUser.fldUserID
@@ -16308,6 +16307,308 @@ app.post('/api/journal/generate-closing-entries', async (req, res) => {
 });
 
 // For any other path, redirect to home page
+
+
+// ========================================================
+// SHOPS MANAGEMENT ENDPOINTS (إدارة قائمة المحلات - tblShopList)
+// ========================================================
+
+// GET /api/shops - Retrieve shops list with filters
+app.get('/api/shops', async (req, res) => {
+  if (!(await authorizeAction(req, res, 42, 'fldSELECT'))) return;
+
+  const { branchNo, floor, isActive, search } = req.query;
+  const isConnected = globalPool !== null && globalPool.connected;
+  if (!isConnected) {
+    return res.json({ success: true, source: "mock", data: [] });
+  }
+
+  try {
+    const request = globalPool.request();
+    let query = `
+      SELECT s.[fldID]
+            ,s.[fldShopNumber]
+            ,s.[fldShopName]
+            ,s.[fldCustomerName]
+            ,s.[fldRentStartDate]
+            ,s.[fldRent]
+            ,s.[fldAccID]
+            ,s.[fldtheCounter]
+            ,s.[fldIsActive]
+            ,s.[UnitCost]
+            ,s.[ServicesCostElectricity]
+            ,s.[CleaningFees]
+            ,s.[LocalFees]
+            ,s.[Fuel]
+            ,s.[ServicesTax]
+            ,s.[fldfloor]
+            ,s.[fldBranchNo]
+            ,b.fldName AS fldBranchName
+            ,a.fldName AS fldAccName
+            ,a.fldNumber AS fldAccNumber
+      FROM dbo.tblShopList s
+      LEFT JOIN dbo.tblBranchList b ON s.fldBranchNo = b.fldID
+      LEFT JOIN dbo.tblAccount a ON s.fldAccID = a.fldID
+      WHERE 1=1
+    `;
+
+    if (branchNo && branchNo !== '') {
+      request.input('branchNo', sql.TinyInt, parseInt(branchNo));
+      query += ` AND s.fldBranchNo = @branchNo`;
+    }
+    if (floor && floor !== '') {
+      request.input('floor', sql.Int, parseInt(floor));
+      query += ` AND s.fldfloor = @floor`;
+    }
+    if (isActive !== undefined && isActive !== '') {
+      request.input('isActive', sql.Bit, isActive === 'true' || isActive === '1' ? 1 : 0);
+      query += ` AND s.fldIsActive = @isActive`;
+    }
+    if (search && search.trim() !== '') {
+      request.input('search', sql.NVarChar, `%${search.trim()}%`);
+      query += ` AND (s.fldShopNumber LIKE @search OR s.fldShopName LIKE @search OR s.fldCustomerName LIKE @search OR a.fldName LIKE @search)`;
+    }
+
+    query += ` ORDER BY s.fldBranchNo ASC, s.fldfloor ASC, s.fldShopNumber ASC, s.fldID ASC`;
+
+    const result = await request.query(query);
+    res.json({ success: true, source: "database", data: result.recordset });
+  } catch (err) {
+    console.error("Error in GET /api/shops:", err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// GET /api/shops/:id - Retrieve single shop
+app.get('/api/shops/:id', async (req, res) => {
+  if (!(await authorizeAction(req, res, 42, 'fldSELECT'))) return;
+  const { id } = req.params;
+  const isConnected = globalPool !== null && globalPool.connected;
+  if (!isConnected) return res.status(404).json({ success: false, error: "قاعدة البيانات غير متصلة." });
+
+  try {
+    const request = globalPool.request();
+    request.input('id', sql.Int, parseInt(id));
+    const result = await request.query(`
+      SELECT s.*, b.fldName AS fldBranchName, a.fldName AS fldAccName, a.fldNumber AS fldAccNumber
+      FROM dbo.tblShopList s
+      LEFT JOIN dbo.tblBranchList b ON s.fldBranchNo = b.fldID
+      LEFT JOIN dbo.tblAccount a ON s.fldAccID = a.fldID
+      WHERE s.fldID = @id
+    `);
+    if (result.recordset.length === 0) {
+      return res.status(404).json({ success: false, error: "المحل غير موجود." });
+    }
+    res.json({ success: true, data: result.recordset[0] });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /api/shops - Create new shop
+app.post('/api/shops', async (req, res) => {
+  if (!(await authorizeAction(req, res, 42, 'fldINSERT'))) return;
+  const isConnected = globalPool !== null && globalPool.connected;
+  if (!isConnected) return res.status(500).json({ success: false, error: "قاعدة البيانات غير متصلة." });
+
+  const {
+    fldShopNumber, fldShopName, fldCustomerName, fldRentStartDate, fldRent,
+    fldAccID, fldtheCounter, fldIsActive, UnitCost, ServicesCostElectricity,
+    CleaningFees, LocalFees, Fuel, ServicesTax, fldfloor, fldBranchNo
+  } = req.body;
+
+  try {
+    const request = globalPool.request();
+    request.input('shopNumber', sql.NChar(10), String(fldShopNumber || '1'));
+    request.input('shopName', sql.NVarChar(sql.MAX), fldShopName || '');
+    request.input('customerName', sql.NVarChar(sql.MAX), fldCustomerName || '');
+    request.input('rentStartDate', sql.Date, fldRentStartDate || new Date());
+    request.input('rent', sql.Float, parseFloat(fldRent) || 0);
+    request.input('accId', sql.Int, fldAccID ? parseInt(fldAccID) : null);
+    request.input('theCounter', sql.NVarChar(sql.MAX), fldtheCounter || '');
+    request.input('isActive', sql.Bit, fldIsActive !== false && fldIsActive !== 0 ? 1 : 0);
+    request.input('unitCost', sql.Float, parseFloat(UnitCost) || 0);
+    request.input('servicesCostElectricity', sql.Float, parseFloat(ServicesCostElectricity) || 0);
+    request.input('cleaningFees', sql.Float, parseFloat(CleaningFees) || 0);
+    request.input('localFees', sql.Float, parseFloat(LocalFees) || 0);
+    request.input('fuel', sql.Float, parseFloat(Fuel) || 0);
+    request.input('servicesTax', sql.Float, parseFloat(ServicesTax) || 0);
+    request.input('floor', sql.Int, parseInt(fldfloor) || 1);
+    request.input('branchNo', sql.TinyInt, parseInt(fldBranchNo) || 1);
+
+    const result = await request.query(`
+      INSERT INTO dbo.tblShopList (
+        fldShopNumber, fldShopName, fldCustomerName, fldRentStartDate, fldRent,
+        fldAccID, fldtheCounter, fldIsActive, UnitCost, ServicesCostElectricity,
+        CleaningFees, LocalFees, Fuel, ServicesTax, fldfloor, fldBranchNo
+      ) VALUES (
+        @shopNumber, @shopName, @customerName, @rentStartDate, @rent,
+        @accId, @theCounter, @isActive, @unitCost, @servicesCostElectricity,
+        @cleaningFees, @localFees, @fuel, @servicesTax, @floor, @branchNo
+      );
+      SELECT SCOPE_IDENTITY() AS newId;
+    `);
+
+    const newId = result.recordset[0].newId;
+    res.json({ success: true, message: "تمت إضافة المحل بنجاح!", id: newId });
+  } catch (err) {
+    console.error("Error in POST /api/shops:", err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// PUT /api/shops/:id - Update shop
+app.put('/api/shops/:id', async (req, res) => {
+  if (!(await authorizeAction(req, res, 42, 'fldUPDATE'))) return;
+  const { id } = req.params;
+  const isConnected = globalPool !== null && globalPool.connected;
+  if (!isConnected) return res.status(500).json({ success: false, error: "قاعدة البيانات غير متصلة." });
+
+  const {
+    fldShopNumber, fldShopName, fldCustomerName, fldRentStartDate, fldRent,
+    fldAccID, fldtheCounter, fldIsActive, UnitCost, ServicesCostElectricity,
+    CleaningFees, LocalFees, Fuel, ServicesTax, fldfloor, fldBranchNo
+  } = req.body;
+
+  try {
+    const request = globalPool.request();
+    request.input('id', sql.Int, parseInt(id));
+    request.input('shopNumber', sql.NChar(10), String(fldShopNumber || '1'));
+    request.input('shopName', sql.NVarChar(sql.MAX), fldShopName || '');
+    request.input('customerName', sql.NVarChar(sql.MAX), fldCustomerName || '');
+    request.input('rentStartDate', sql.Date, fldRentStartDate || new Date());
+    request.input('rent', sql.Float, parseFloat(fldRent) || 0);
+    request.input('accId', sql.Int, fldAccID ? parseInt(fldAccID) : null);
+    request.input('theCounter', sql.NVarChar(sql.MAX), fldtheCounter || '');
+    request.input('isActive', sql.Bit, fldIsActive !== false && fldIsActive !== 0 ? 1 : 0);
+    request.input('unitCost', sql.Float, parseFloat(UnitCost) || 0);
+    request.input('servicesCostElectricity', sql.Float, parseFloat(ServicesCostElectricity) || 0);
+    request.input('cleaningFees', sql.Float, parseFloat(CleaningFees) || 0);
+    request.input('localFees', sql.Float, parseFloat(LocalFees) || 0);
+    request.input('fuel', sql.Float, parseFloat(Fuel) || 0);
+    request.input('servicesTax', sql.Float, parseFloat(ServicesTax) || 0);
+    request.input('floor', sql.Int, parseInt(fldfloor) || 1);
+    request.input('branchNo', sql.TinyInt, parseInt(fldBranchNo) || 1);
+
+    await request.query(`
+      UPDATE dbo.tblShopList SET
+        fldShopNumber = @shopNumber,
+        fldShopName = @shopName,
+        fldCustomerName = @customerName,
+        fldRentStartDate = @rentStartDate,
+        fldRent = @rent,
+        fldAccID = @accId,
+        fldtheCounter = @theCounter,
+        fldIsActive = @isActive,
+        UnitCost = @unitCost,
+        ServicesCostElectricity = @servicesCostElectricity,
+        CleaningFees = @cleaningFees,
+        LocalFees = @localFees,
+        Fuel = @fuel,
+        ServicesTax = @servicesTax,
+        fldfloor = @floor,
+        fldBranchNo = @branchNo
+      WHERE fldID = @id
+    `);
+
+    res.json({ success: true, message: "تم تعديل بيانات المحل بنجاح!" });
+  } catch (err) {
+    console.error("Error in PUT /api/shops/:id:", err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// DELETE /api/shops/:id - Delete shop
+app.delete('/api/shops/:id', async (req, res) => {
+  if (!(await authorizeAction(req, res, 42, 'fldDELETE'))) return;
+  const { id } = req.params;
+  const isConnected = globalPool !== null && globalPool.connected;
+  if (!isConnected) return res.status(500).json({ success: false, error: "قاعدة البيانات غير متصلة." });
+
+  try {
+    const request = globalPool.request();
+    request.input('id', sql.Int, parseInt(id));
+    await request.query("DELETE FROM dbo.tblShopList WHERE fldID = @id");
+    res.json({ success: true, message: "تم حذف المحل بنجاح!" });
+  } catch (err) {
+    console.error("Error in DELETE /api/shops/:id:", err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /api/shops/batch-update-rates - Batch update rates and costs for branch/floor
+app.post('/api/shops/batch-update-rates', async (req, res) => {
+  if (!(await authorizeAction(req, res, 42, 'fldUPDATE'))) return;
+  const isConnected = globalPool !== null && globalPool.connected;
+  if (!isConnected) return res.status(500).json({ success: false, error: "قاعدة البيانات غير متصلة." });
+
+  const {
+    branchNo, floor, UnitCost, ServicesCostElectricity,
+    CleaningFees, LocalFees, Fuel, ServicesTax
+  } = req.body;
+
+  try {
+    const request = globalPool.request();
+    request.input('unitCost', sql.Float, parseFloat(UnitCost) || 0);
+    request.input('servicesCostElectricity', sql.Float, parseFloat(ServicesCostElectricity) || 0);
+    request.input('cleaningFees', sql.Float, parseFloat(CleaningFees) || 0);
+    request.input('localFees', sql.Float, parseFloat(LocalFees) || 0);
+    request.input('fuel', sql.Float, parseFloat(Fuel) || 0);
+    request.input('servicesTax', sql.Float, parseFloat(ServicesTax) || 0);
+
+    let whereClause = "WHERE 1=1";
+    if (branchNo && branchNo !== '') {
+      request.input('branchNo', sql.TinyInt, parseInt(branchNo));
+      whereClause += " AND fldBranchNo = @branchNo";
+    }
+    if (floor && floor !== '') {
+      request.input('floor', sql.Int, parseInt(floor));
+      whereClause += " AND fldfloor = @floor";
+    }
+
+    const query = `
+      UPDATE dbo.tblShopList SET
+        UnitCost = @unitCost,
+        ServicesCostElectricity = @servicesCostElectricity,
+        CleaningFees = @cleaningFees,
+        LocalFees = @localFees,
+        Fuel = @fuel,
+        ServicesTax = @servicesTax
+      ${whereClause}
+    `;
+
+    const result = await request.query(query);
+    res.json({ 
+      success: true, 
+      message: `تم تطبيق وتحديث الكلفة والرسوم على ${result.rowsAffected[0] || 0} محل بنجاح!`,
+      count: result.rowsAffected[0] || 0
+    });
+  } catch (err) {
+    console.error("Error in POST /api/shops/batch-update-rates:", err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /api/shops/:id/toggle-active - Toggle shop active state
+app.post('/api/shops/:id/toggle-active', async (req, res) => {
+  if (!(await authorizeAction(req, res, 42, 'fldUPDATE'))) return;
+  const { id } = req.params;
+  const isConnected = globalPool !== null && globalPool.connected;
+  if (!isConnected) return res.status(500).json({ success: false, error: "قاعدة البيانات غير متصلة." });
+
+  try {
+    const request = globalPool.request();
+    request.input('id', sql.Int, parseInt(id));
+    await request.query(`
+      UPDATE dbo.tblShopList 
+      SET fldIsActive = CASE WHEN fldIsActive = 1 THEN 0 ELSE 1 END
+      WHERE fldID = @id
+    `);
+    res.json({ success: true, message: "تم تغيير حالة المحل بنجاح!" });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
 
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));

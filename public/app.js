@@ -6099,27 +6099,31 @@ function updateClock() {
   DOM.loginTime.value = formatter.format(now);
 }
 
-// 2. Fetch branches and users from backend API
-async function loadLoginLists() {
+// 2. Fetch branches and users from backend API (tblBranchList & tblBranchUser)
+window.loadLoginLists = async function() {
   try {
-    // Fetch branches list
+    // Fetch branches list from tblBranchList
     const branchRes = await fetch('/api/branches');
     const branchResult = await branchRes.json();
-    populateDropdown(DOM.loginBranchSelect, branchResult.data, 'fldID', 'fldName');
+    populateDropdown(DOM.loginBranchSelect, branchResult.data || branchResult.branches, 'fldID', 'fldName');
 
     // Get initially selected branch ID
-    const activeBranchOpt = DOM.loginBranchSelect.options[DOM.loginBranchSelect.selectedIndex];
+    const activeBranchOpt = DOM.loginBranchSelect?.options[DOM.loginBranchSelect.selectedIndex];
     const activeBranchId = activeBranchOpt ? activeBranchOpt.getAttribute('data-id') : null;
 
-    // Fetch users allowed for this branch
+    // Fetch users allowed for this branch from tblBranchUser
     const url = activeBranchId ? `/api/users?branchId=${activeBranchId}` : '/api/users';
     const userRes = await fetch(url);
     const userResult = await userRes.json();
     populateDropdown(DOM.loginUserSelect, userResult.data, 'fldID', 'fldName');
   } catch (err) {
-    console.error("Error loading dropdown data:", err.message);
+    console.error("Error loading login branches/users data:", err.message);
   }
-}
+};
+
+window.fetchBranchesAndUsers = function() {
+  window.loadLoginLists();
+};
 
 // Helper to fill select dropdown list
 function populateDropdown(selectEl, data, valueKey, textKey) {

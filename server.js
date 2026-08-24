@@ -797,7 +797,7 @@ app.get('/api/menus', async (req, res) => {
   }
 });
 
-// 5. Retrieve branches
+// 5. Retrieve branches from tblBranchList
 app.get('/api/branches', async (req, res) => {
   const isConnected = globalPool !== null && globalPool.connected;
   const { userId } = req.query;
@@ -824,18 +824,19 @@ app.get('/api/branches', async (req, res) => {
       const request = globalPool.request();
       request.input('userId', sql.Int, parseInt(userId));
       const query = `
-        SELECT dbo.tblBranchList.fldName, dbo.tblBranchUser.fldBranchID AS fldID, dbo.tblBranchUser.fldUserID
+        SELECT dbo.tblBranchList.fldID, dbo.tblBranchList.fldName, dbo.tblBranchList.fldok, dbo.tblBranchUser.fldUserID
         FROM dbo.tblBranchUser 
         INNER JOIN dbo.tblBranchList ON dbo.tblBranchUser.fldBranchID = dbo.tblBranchList.fldID
         WHERE (dbo.tblBranchUser.fldUserID = @userId)
+        ORDER BY dbo.tblBranchList.fldID
       `;
       result = await request.query(query);
     } else {
-      result = await globalPool.request().query('SELECT fldID, fldName FROM dbo.tblBranchList ORDER BY fldID');
+      result = await globalPool.request().query('SELECT [fldID], [fldName], [fldok] FROM [dbo].[tblBranchList] ORDER BY [fldID]');
     }
 
     if (result.recordset.length === 0) {
-      const allBranches = await globalPool.request().query('SELECT fldID, fldName FROM dbo.tblBranchList ORDER BY fldID');
+      const allBranches = await globalPool.request().query('SELECT [fldID], [fldName], [fldok] FROM [dbo].[tblBranchList] ORDER BY [fldID]');
       return res.json({ success: true, source: "database-empty-fallback", branches: allBranches.recordset, data: allBranches.recordset });
     }
     res.json({ success: true, source: "database", branches: result.recordset, data: result.recordset });
@@ -845,7 +846,7 @@ app.get('/api/branches', async (req, res) => {
   }
 });
 
-// 6. Retrieve users (exposing only fldID and fldName for selection dropdown)
+// 6. Retrieve users authorized for branch (tblBranchUser + tblUser)
 app.get('/api/users', async (req, res) => {
   const isConnected = globalPool !== null && globalPool.connected;
   const { branchId } = req.query;
@@ -855,15 +856,15 @@ app.get('/api/users', async (req, res) => {
     if (branchId) {
       const bId = parseInt(branchId);
       if (bId === 1) {
-        filteredUsers = [mockUsers[0], mockUsers[1]]; // عبدالعزيز, مدير النظام
+        filteredUsers = [mockUsers[0], mockUsers[1]];
       } else if (bId === 2) {
-        filteredUsers = [mockUsers[1]]; // مدير النظام
+        filteredUsers = [mockUsers[1]];
       } else {
-        filteredUsers = [mockUsers[0], mockUsers[2]]; // عبدالعزيز, صالح علي
+        filteredUsers = [mockUsers[0], mockUsers[2]];
       }
     }
     const safeMockUsers = filteredUsers.map(u => ({ fldID: u.fldID, fldName: u.fldName }));
-    return res.json({ source: "mock", data: safeMockUsers });
+    return res.json({ success: true, source: "mock", data: safeMockUsers });
   }
 
   try {
@@ -872,26 +873,26 @@ app.get('/api/users', async (req, res) => {
       const request = globalPool.request();
       request.input('branchId', sql.Int, parseInt(branchId));
       const query = `
-        SELECT dbo.tblUser.fldName, dbo.tblBranchUser.fldUserID AS fldID
+        SELECT dbo.tblBranchUser.fldBranchID, dbo.tblBranchUser.fldUserID, dbo.tblBranchUser.fldUserID AS fldID, dbo.tblUser.fldName
         FROM dbo.tblBranchUser 
-        INNER JOIN dbo.tblBranchList ON dbo.tblBranchUser.fldBranchID = dbo.tblBranchList.fldID 
         INNER JOIN dbo.tblUser ON dbo.tblBranchUser.fldUserID = dbo.tblUser.fldID
         WHERE (dbo.tblBranchUser.fldBranchID = @branchId)
+        ORDER BY dbo.tblUser.fldName
       `;
       result = await request.query(query);
     } else {
-      result = await globalPool.request().query('SELECT fldID, fldName FROM dbo.tblUser');
+      result = await globalPool.request().query('SELECT [fldID], [fldName] FROM [dbo].[tblUser] ORDER BY [fldName]');
     }
 
     if (result.recordset.length === 0) {
-      const allUsers = await globalPool.request().query('SELECT fldID, fldName FROM dbo.tblUser');
-      return res.json({ source: "database-empty-fallback", data: allUsers.recordset });
+      const allUsers = await globalPool.request().query('SELECT [fldID], [fldName] FROM [dbo].[tblUser] ORDER BY [fldName]');
+      return res.json({ success: true, source: "database-empty-fallback", data: allUsers.recordset });
     }
-    res.json({ source: "database", data: result.recordset });
+    res.json({ success: true, source: "database", data: result.recordset });
   } catch (err) {
     console.error("Error executing users query:", err.message);
     const safeMockUsers = mockUsers.map(u => ({ fldID: u.fldID, fldName: u.fldName }));
-    res.json({ source: "mock-fallback", error: err.message, data: safeMockUsers });
+    res.json({ success: true, source: "mock-fallback", error: err.message, data: safeMockUsers });
   }
 });
 

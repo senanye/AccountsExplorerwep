@@ -2874,8 +2874,8 @@ FROM dbo.tblMenus LEFT OUTER JOIN
   <!-- ======================================================== -->
   <!-- Auto-Updater Modal (نافذة التحديث التلقائي الشامل عبر GitHub) -->
   <!-- ======================================================== -->
-  <div class="modal" id="systemUpdateModal">
-    <div class="modal-content system-update-modal-dialog">
+  <div class="modal-overlay" id="systemUpdateModal" style="z-index: 1060; display: none;">
+    <div class="modal-container system-update-modal-dialog" style="max-width: 720px; width: 95vw;">
       
       <!-- Modal Header -->
       <div class="modal-header system-update-header">
@@ -3044,8 +3044,8 @@ FROM dbo.tblMenus LEFT OUTER JOIN
   <!-- ======================================================== -->
   <!-- Sales Invoice Print & Preview Modal (معاينة وطباعة فواتير المبيعات) -->
   <!-- ======================================================== -->
-  <div class="modal" id="saleInvoicePrintModal" style="z-index: 1070;">
-    <div class="modal-content sale-print-modal-dialog">
+  <div class="modal-overlay" id="saleInvoicePrintModal" style="z-index: 1070; display: none;">
+    <div class="modal-container sale-print-modal-dialog" style="max-width: 1000px; width: 95vw;">
       
       <!-- Modal Header -->
       <div class="modal-header" style="background: linear-gradient(135deg, #1e3a8a, #2563eb); color: white; padding: 12px 18px; display: flex; justify-content: space-between; align-items: center;">

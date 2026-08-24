@@ -6327,3 +6327,21 @@ input:checked + .dark-switch-slider:before {
     padding: 2mm !important;
   }
 }
+
+
+
+/* Ensure modal-overlay displays properly when .open is present */
+.modal-overlay.open,
+#saleInvoicePrintModal.open,
+#systemUpdateModal.open {
+  display: flex !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
+#saleInvoicePrintModal .modal-container,
+#systemUpdateModal .modal-container {
+  max-height: 94vh;
+  display: flex;
+  flex-direction: column;
+}

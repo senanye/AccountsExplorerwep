@@ -26725,14 +26725,13 @@ state.activeSalePrintPaperSize = 'A4';
 state.activeSalePrintTabId = null;
 
 window.printSingleSaleInvoice = function(tabId) {
-  if (!hasPermission(30, 'fldPrint')) {
-    showToast("ليس لديك صلاحية الطباعة لفواتير المبيعات.", "error");
-    return;
+  if (!tabId) {
+    tabId = state.activeTabId || 'sales-invoice';
   }
 
   const items = state[`saleInvoiceItems-${tabId}`] || [];
   if (items.length === 0) {
-    showToast("لا توجد أصناف في الفاتورة للطباعة.", "warning");
+    showToast("يرجى إضافة أصناف إلى الفاتورة أولاً لتتمكن من طباعتها.", "warning");
     return;
   }
 
@@ -26756,7 +26755,10 @@ window.printSingleSaleInvoice = function(tabId) {
 
   // Open the Print Preview Modal
   const modal = document.getElementById('saleInvoicePrintModal');
-  if (modal) modal.classList.add('open');
+  if (modal) {
+    modal.style.display = 'flex';
+    modal.classList.add('open');
+  }
 
   setSalePrintPaperSize(state.activeSalePrintPaperSize || 'A4');
 
@@ -26769,8 +26771,12 @@ window.printSingleSaleInvoice = function(tabId) {
 
 window.closeSaleInvoicePrintModal = function() {
   const modal = document.getElementById('saleInvoicePrintModal');
-  if (modal) modal.classList.remove('open');
+  if (modal) {
+    modal.classList.remove('open');
+    modal.style.display = 'none';
+  }
 };
+
 
 window.setSalePrintPaperSize = function(size) {
   state.activeSalePrintPaperSize = size;
@@ -27321,6 +27327,7 @@ window.clearSaleBoxAccountSearch = function(tabId) {
 window.openSystemUpdateModal = async function() {
   const modal = document.getElementById('systemUpdateModal');
   if (!modal) return;
+  modal.style.display = 'flex';
   modal.classList.add('open');
 
   // Switch to default Updates tab
@@ -27349,7 +27356,10 @@ window.openSystemUpdateModal = async function() {
 
 window.closeSystemUpdateModal = function() {
   const modal = document.getElementById('systemUpdateModal');
-  if (modal) modal.classList.remove('open');
+  if (modal) {
+    modal.classList.remove('open');
+    modal.style.display = 'none';
+  }
 };
 
 window.switchUpdaterTab = function(tabName) {

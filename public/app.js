@@ -28965,3 +28965,63 @@ window.openShopSettings = function(tabId) {
   showToast("تم ضبط الإعدادات الافتراضية لقائمة المحلات بنجاح.", "info");
 };
 
+
+
+// ========================================================
+// TOP HEADER AUTH CONTROLLERS (تسجيل الدخول والخروج من البرنامج)
+// ========================================================
+
+window.logoutApp = function() {
+  if (!confirm("هل أنت متأكد من تسجيل الخروج من البرنامج؟")) return;
+
+  // Clear current authenticated user session
+  state.currentUser = null;
+
+  // Hide main application screen
+  const appContainer = document.querySelector('.app-container');
+  if (appContainer) {
+    appContainer.classList.add('hidden');
+  }
+
+  // Reveal login overlay window
+  const overlay = document.getElementById('loginOverlay');
+  if (overlay) {
+    overlay.style.display = 'flex';
+  }
+  if (DOM.loginOverlay) {
+    DOM.loginOverlay.style.display = 'flex';
+  }
+
+  // Clear password field for security
+  if (DOM.loginPassword) {
+    DOM.loginPassword.value = '';
+    DOM.loginPassword.focus();
+  }
+
+  showToast("تم تسجيل الخروج من البرنامج بنجاح. يرجى تسجيل الدخول مجدداً للمتابعة.", "info");
+};
+
+window.openLoginOverlayModal = function() {
+  const overlay = document.getElementById('loginOverlay');
+  if (overlay) {
+    overlay.style.display = 'flex';
+  }
+  if (DOM.loginOverlay) {
+    DOM.loginOverlay.style.display = 'flex';
+  }
+
+  if (DOM.loginPassword) {
+    DOM.loginPassword.focus();
+    DOM.loginPassword.select();
+  }
+};
+
+window.closeLoginOverlayIfLoggedIn = function() {
+  if (state.currentUser && state.currentUser.id) {
+    const overlay = document.getElementById('loginOverlay');
+    if (overlay) overlay.style.display = 'none';
+    if (DOM.loginOverlay) DOM.loginOverlay.style.display = 'none';
+  } else {
+    showToast("يرجى إدخال بيانات المستخدم وكلمة السر لتسجيل الدخول.", "warning");
+  }
+};

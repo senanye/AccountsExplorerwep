@@ -6345,3 +6345,59 @@ input:checked + .dark-switch-slider:before {
   display: flex;
   flex-direction: column;
 }
+
+
+/* Top Header Auth Action Buttons (Login / Logout) */
+.top-auth-group {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+
+.top-auth-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  padding: 4px 10px !important;
+  height: 28px !important;
+  border-radius: 6px !important;
+  font-family: var(--font-arabic) !important;
+  font-size: 0.78rem !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  white-space: nowrap !important;
+  outline: none !important;
+}
+
+.top-auth-btn i {
+  font-size: 0.85rem !important;
+}
+
+.top-auth-btn.top-login-btn {
+  background: #eff6ff !important;
+  border: 1px solid #bfdbfe !important;
+  color: #1d4ed8 !important;
+}
+
+.top-auth-btn.top-login-btn:hover {
+  background: #dbeafe !important;
+  border-color: #93c5fd !important;
+  color: #1e40af !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 2px 4px rgba(37, 99, 235, 0.15) !important;
+}
+
+.top-auth-btn.top-logout-btn {
+  background: #fef2f2 !important;
+  border: 1px solid #fecaca !important;
+  color: #dc2626 !important;
+}
+
+.top-auth-btn.top-logout-btn:hover {
+  background: #fee2e2 !important;
+  border-color: #fca5a5 !important;
+  color: #b91c1c !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 2px 4px rgba(220, 38, 38, 0.15) !important;
+}

@@ -27,7 +27,7 @@
       <!-- Title Bar -->
       <div class="login-titlebar">
         <div class="login-title">تسجيل دخول 0</div>
-        <button class="login-titlebar-close" onclick="window.close()" title="إغلاق">&times;</button>
+        <button type="button" class="login-titlebar-close" onclick="closeLoginOverlayIfLoggedIn()" title="إغلاق">&times;</button>
       </div>
       
       <!-- Content Grid -->
@@ -153,6 +153,18 @@
     <!-- Top Navigation / Title Bar -->
     <header class="app-header">
       <div class="header-right">
+        <!-- Auth Action Buttons (Top Right) -->
+        <div class="top-auth-group">
+          <button type="button" class="top-auth-btn top-login-btn" onclick="openLoginOverlayModal()" title="تسجيل الدخول / تبديل المستخدم">
+            <i class="fa-solid fa-right-to-bracket"></i>
+            <span>تسجيل الدخول</span>
+          </button>
+          <button type="button" class="top-auth-btn top-logout-btn" onclick="logoutApp()" title="تسجيل الخروج من البرنامج">
+            <i class="fa-solid fa-arrow-right-from-bracket"></i>
+            <span>تسجيل الخروج</span>
+          </button>
+        </div>
+
         <div class="breadcrumbs">
           <span class="breadcrumb-item text-muted" id="providerHeaderName">عرض تجريبي</span>
           <span class="breadcrumb-separator">&gt;&gt;</span>

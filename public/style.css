@@ -6401,3 +6401,146 @@ input:checked + .dark-switch-slider:before {
   transform: translateY(-1px) !important;
   box-shadow: 0 2px 4px rgba(220, 38, 38, 0.15) !important;
 }
+
+
+/* Top Header Dedicated Account & Session Dropdown Menu (Right Side) */
+.top-menu-dropdown {
+  position: relative !important;
+  display: inline-block !important;
+  direction: rtl !important;
+  text-align: right !important;
+  z-index: 100 !important;
+}
+
+.top-menu-dropdown-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 7px !important;
+  padding: 4px 12px !important;
+  height: 30px !important;
+  border-radius: 6px !important;
+  background: linear-gradient(135deg, #1e293b, #0f172a) !important;
+  border: 1px solid #334155 !important;
+  color: #f8fafc !important;
+  font-family: var(--font-arabic) !important;
+  font-size: 0.82rem !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  white-space: nowrap !important;
+  outline: none !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) !important;
+}
+
+.top-menu-dropdown-btn:hover {
+  background: linear-gradient(135deg, #334155, #1e293b) !important;
+  border-color: #38bdf8 !important;
+  color: #38bdf8 !important;
+  box-shadow: 0 2px 6px rgba(56, 189, 248, 0.25) !important;
+}
+
+.top-menu-dropdown-btn i.fa-user-shield,
+.top-menu-dropdown-btn i.fa-user-circle {
+  color: #38bdf8 !important;
+  font-size: 0.95rem !important;
+}
+
+.top-menu-dropdown-btn .dropdown-arrow {
+  font-size: 0.68rem !important;
+  color: #94a3b8 !important;
+  transition: transform 0.2s ease !important;
+}
+
+.top-menu-dropdown.open .top-menu-dropdown-btn .dropdown-arrow {
+  transform: rotate(180deg) !important;
+}
+
+.top-menu-dropdown-content {
+  display: none;
+  position: absolute !important;
+  top: calc(100% + 5px) !important;
+  right: 0 !important;
+  min-width: 240px !important;
+  background: #0f172a !important;
+  border: 1px solid #1e3a8a !important;
+  border-radius: 8px !important;
+  box-shadow: 0 15px 30px -5px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.05) !important;
+  padding: 6px 0 !important;
+  z-index: 1050 !important;
+  overflow: hidden !important;
+}
+
+.top-menu-dropdown.open .top-menu-dropdown-content {
+  display: block !important;
+  animation: fadeInDown 0.18s ease-out !important;
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dropdown-header-info {
+  padding: 8px 14px !important;
+  background: #091122 !important;
+  border-bottom: 1px solid #1e293b !important;
+  margin-bottom: 4px !important;
+}
+
+.dropdown-header-info .user-badge-name {
+  font-size: 0.86rem !important;
+  font-weight: 800 !important;
+  color: #38bdf8 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+
+.dropdown-header-info .branch-badge-name {
+  font-size: 0.74rem !important;
+  color: #94a3b8 !important;
+  margin-top: 3px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+
+.dropdown-divider {
+  height: 1px !important;
+  background: #1e293b !important;
+  margin: 4px 0 !important;
+}
+
+.top-menu-dropdown-content .dropdown-item {
+  width: 100% !important;
+  padding: 8px 14px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  background: transparent !important;
+  border: none !important;
+  color: #f1f5f9 !important;
+  font-family: var(--font-arabic) !important;
+  font-size: 0.82rem !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  text-align: right !important;
+  transition: all 0.15s ease !important;
+}
+
+.top-menu-dropdown-content .dropdown-item:hover {
+  background: #1e293b !important;
+  color: #38bdf8 !important;
+  padding-right: 18px !important;
+}
+
+.top-menu-dropdown-content .dropdown-item.text-danger:hover {
+  background: #450a0a !important;
+  color: #f87171 !important;
+}

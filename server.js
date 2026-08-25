@@ -824,7 +824,7 @@ app.get('/api/branches', async (req, res) => {
       const request = globalPool.request();
       request.input('userId', sql.Int, parseInt(userId));
       const query = `
-        SELECT dbo.tblBranchList.fldID, dbo.tblBranchList.fldName, dbo.tblBranchList.fldok, dbo.tblBranchUser.fldUserID
+        SELECT dbo.tblBranchList.fldID, RTRIM(LTRIM(dbo.tblBranchList.fldName)) AS fldName, dbo.tblBranchList.fldok, dbo.tblBranchUser.fldUserID
         FROM dbo.tblBranchUser 
         INNER JOIN dbo.tblBranchList ON dbo.tblBranchUser.fldBranchID = dbo.tblBranchList.fldID
         WHERE (dbo.tblBranchUser.fldUserID = @userId)
@@ -832,11 +832,11 @@ app.get('/api/branches', async (req, res) => {
       `;
       result = await request.query(query);
     } else {
-      result = await globalPool.request().query('SELECT [fldID], [fldName], [fldok] FROM [dbo].[tblBranchList] ORDER BY [fldID]');
+      result = await globalPool.request().query('SELECT [fldID], RTRIM(LTRIM([fldName])) AS fldName, [fldok] FROM [dbo].[tblBranchList] ORDER BY [fldID]');
     }
 
     if (result.recordset.length === 0) {
-      const allBranches = await globalPool.request().query('SELECT [fldID], [fldName], [fldok] FROM [dbo].[tblBranchList] ORDER BY [fldID]');
+      const allBranches = await globalPool.request().query('SELECT [fldID], RTRIM(LTRIM([fldName])) AS fldName, [fldok] FROM [dbo].[tblBranchList] ORDER BY [fldID]');
       return res.json({ success: true, source: "database-empty-fallback", branches: allBranches.recordset, data: allBranches.recordset });
     }
     res.json({ success: true, source: "database", branches: result.recordset, data: result.recordset });

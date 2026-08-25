@@ -479,7 +479,16 @@ window.resetUiZoom = function() {
 // Fetch database status and menus from API
 async function loadSystemData() {
   try {
-    // 1. Get connection status
+    // 1. Populate login provider dropdown from SQLite / persistent connections
+    try {
+      if (typeof populateLoginProviderDropdown === 'function') {
+        await populateLoginProviderDropdown();
+      }
+    } catch (e) {
+      console.warn('Error pre-populating login providers:', e);
+    }
+
+    // 2. Get connection status
     try {
       const statusRes = await fetch('/api/connection-status');
       state.connectionStatus = await statusRes.json();
@@ -6382,6 +6391,14 @@ async function submitLoginForm() {
       if (DOM.loginOverlay) DOM.loginOverlay.style.display = 'none';
       const appContainer = document.querySelector('.app-container');
       if (appContainer) appContainer.classList.remove('hidden');
+
+      // Update top account menu details
+      const headerUser = document.getElementById('headerCurrentUserName');
+      if (headerUser) headerUser.textContent = username || (data.user && data.user.name) || "المستخدم";
+      const menuUserBadge = document.getElementById('menuUserBadgeName');
+      if (menuUserBadge) menuUserBadge.textContent = username || (data.user && data.user.name) || "المستخدم";
+      const menuBranchBadge = document.getElementById('menuBranchBadgeName');
+      if (menuBranchBadge) menuBranchBadge.textContent = branchName || "الفرع الرئيسي";
 
       // Determine provider name from connection status (database name) or default
       const providerName = (state.connectionStatus && state.connectionStatus.connected && state.connectionStatus.details && state.connectionStatus.details.database) 
@@ -29379,3 +29396,33 @@ window.closeLoginOverlayIfLoggedIn = function() {
     showToast("يرجى إدخال بيانات المستخدم وكلمة السر لتسجيل الدخول.", "warning");
   }
 };
+
+
+// ========================================================
+// TOP ACCOUNT & SESSION DROPDOWN CONTROLS
+// ========================================================
+window.toggleTopAccountMenu = function(e) {
+  if (e) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+  const dropdown = document.getElementById('topAccountMenuDropdown');
+  if (dropdown) {
+    dropdown.classList.toggle('open');
+  }
+};
+
+window.closeTopAccountMenu = function() {
+  const dropdown = document.getElementById('topAccountMenuDropdown');
+  if (dropdown) {
+    dropdown.classList.remove('open');
+  }
+};
+
+// Close top menu when clicking anywhere outside
+document.addEventListener('click', function(e) {
+  const dropdown = document.getElementById('topAccountMenuDropdown');
+  if (dropdown && !dropdown.contains(e.target)) {
+    dropdown.classList.remove('open');
+  }
+});

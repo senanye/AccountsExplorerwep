@@ -121,6 +121,11 @@
             <i class="fa-solid fa-database"></i>
             <span>بيانات الاتصال</span>
           </button>
+          <button type="button" class="btn-login-action" id="updaterLoginBtn" onclick="openSystemUpdateModal()" title="تحديث النظام التلقائي عبر GitHub والروابط المباشرة">
+            <i class="fa-solid fa-cloud-arrow-down" style="color: #38bdf8;"></i>
+            <span>تحديث النظام</span>
+            <span class="updater-badge-dot hidden" id="updaterLoginBadgeDot" title="يتوفر إصدار جديد!"></span>
+          </button>
           <button type="button" class="btn-login-action" onclick="showToast('شاشة الصيانة محمية بكلمة مرور خاصة بمسؤول النظام', 'warning')">
             <i class="fa-solid fa-user-gear"></i>
             <span>صيانه</span>
@@ -154,16 +159,37 @@
     <!-- Top Navigation / Title Bar -->
     <header class="app-header">
       <div class="header-right">
-        <!-- Auth Action Buttons (Top Right) -->
-        <div class="top-auth-group">
-          <button type="button" class="top-auth-btn top-login-btn" onclick="openLoginOverlayModal()" title="تسجيل الدخول / تبديل المستخدم">
-            <i class="fa-solid fa-right-to-bracket"></i>
-            <span>تسجيل الدخول</span>
+        <!-- New Dedicated Account & Session Dropdown Menu (Top Right) -->
+        <div class="top-menu-dropdown" id="topAccountMenuDropdown">
+          <button type="button" class="top-menu-dropdown-btn" id="topAccountMenuBtn" onclick="toggleTopAccountMenu(event)" title="قائمة الجلسة والمستخدم">
+            <i class="fa-solid fa-user-shield"></i>
+            <span id="headerCurrentUserName">المستخدم</span>
+            <i class="fa-solid fa-chevron-down dropdown-arrow"></i>
           </button>
-          <button type="button" class="top-auth-btn top-logout-btn" onclick="logoutApp()" title="تسجيل الخروج من البرنامج">
-            <i class="fa-solid fa-arrow-right-from-bracket"></i>
-            <span>تسجيل الخروج</span>
-          </button>
+          <div class="top-menu-dropdown-content" id="topAccountMenuContent">
+            <div class="dropdown-header-info">
+              <div class="user-badge-name"><i class="fa-solid fa-user"></i> <span id="menuUserBadgeName">المستخدم</span></div>
+              <div class="branch-badge-name"><i class="fa-solid fa-store"></i> <span id="menuBranchBadgeName">الفرع الرئيسي</span></div>
+            </div>
+            <div class="dropdown-divider"></div>
+            <button type="button" class="dropdown-item" onclick="openLoginOverlayModal(); closeTopAccountMenu();">
+              <i class="fa-solid fa-right-to-bracket" style="color: #38bdf8;"></i>
+              <span>تسجيل الدخول / تبديل المستخدم</span>
+            </button>
+            <button type="button" class="dropdown-item text-danger" onclick="logoutApp(); closeTopAccountMenu();">
+              <i class="fa-solid fa-arrow-right-from-bracket" style="color: #ef4444;"></i>
+              <span>تسجيل الخروج من البرنامج</span>
+            </button>
+            <div class="dropdown-divider"></div>
+            <button type="button" class="dropdown-item" onclick="openReportHeaderModal(); closeTopAccountMenu();">
+              <i class="fa-solid fa-stamp" style="color: #f59e0b;"></i>
+              <span>تحديد شعار وترويسة التقارير</span>
+            </button>
+            <button type="button" class="dropdown-item" onclick="openBackupModal(); closeTopAccountMenu();">
+              <i class="fa-solid fa-copy" style="color: #10b981;"></i>
+              <span>نسخة احتياطية لقاعدة البيانات</span>
+            </button>
+          </div>
         </div>
 
         <div class="breadcrumbs">
@@ -206,12 +232,7 @@
           <span>ملصق الباركود</span>
         </button>
 
-        <!-- System Auto-Update Button -->
-        <button class="pos-hdr-btn updater-hdr-btn" id="updaterHdrBtn" onclick="openSystemUpdateModal()" title="تحديث النظام التلقائي عبر GitHub والروابط المباشرة">
-          <i class="fa-solid fa-cloud-arrow-down"></i>
-          <span>تحديث النظام</span>
-          <span class="updater-badge-dot hidden" id="updaterBadgeDot" title="يتوفر إصدار جديد!"></span>
-        </button>
+        
 
         
         <!-- UI Zoom Controls -->

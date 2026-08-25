@@ -16812,6 +16812,459 @@ app.post('/api/connections/test', async (req, res) => {
   }
 });
 
+
+// ========================================================
+// 40. MONTHLY RENT INVOICES (فاتورة ايجار شهري - fldTransType = 40)
+// ========================================================
+
+// GET /api/rent-bills - List rent invoices
+app.get('/api/rent-bills', async (req, res) => {
+  const isConnected = globalPool !== null && globalPool.connected;
+  if (!isConnected) {
+    return res.json({ success: true, source: "mock", data: [] });
+  }
+
+  const { branchId, fromDate, toDate, search } = req.query;
+
+  try {
+    const request = globalPool.request();
+    let whereClauses = ["t.fldTransType = 40"];
+
+    if (branchId && parseInt(branchId) > 0) {
+      request.input('branchId', sql.Int, parseInt(branchId));
+      whereClauses.push("t.fldBranchNo = @branchId");
+    }
+
+    if (fromDate) {
+      request.input('fromDate', sql.NVarChar, fromDate);
+      whereClauses.push("CONVERT(VARCHAR(10), t.fldDate, 120) >= @fromDate");
+    }
+
+    if (toDate) {
+      request.input('toDate', sql.NVarChar, toDate);
+      whereClauses.push("CONVERT(VARCHAR(10), t.fldDate, 120) <= @toDate");
+    }
+
+    if (search && search.trim()) {
+      request.input('search', sql.NVarChar, '%' + search.trim() + '%');
+      whereClauses.push("(t.fldDescription LIKE @search OR CAST(t.fldTransNo AS VARCHAR) LIKE @search OR b.fldName LIKE @search)");
+    }
+
+    const query = `
+      SELECT 
+        t.fldID,
+        t.fldTransNo,
+        CONVERT(VARCHAR(10), t.fldDate, 120) AS fldDate,
+        CONVERT(VARCHAR(10), t.fldRefDate, 120) AS fldRefDate,
+        t.fldBranchNo,
+        ISNULL(b.fldName, N'الفرع الرئيسي') AS fldBranchName,
+        RTRIM(LTRIM(ISNULL(t.fldDescription, ''))) AS fldDescription,
+        t.fldType,
+        CASE t.fldType WHEN 1 THEN N'نقدا' WHEN 3 THEN N'اجل' ELSE N'اجل' END AS fldTypeName,
+        ISNULL(t.fldVoisherTotal, 0) AS fldVoisherTotal,
+        ISNULL(t.fldAccTotal, 0) AS fldAccTotal,
+        ISNULL(m.fldName, N'دولار امريكي') AS fldMoneyName,
+        RTRIM(LTRIM(ISNULL(m.fldsymbol, 'USD'))) AS fldsymbol,
+        ISNULL(t.fldRefNo, 0) AS fldRefNo,
+        t.fldOK,
+        t.fldClosed,
+        t.fldUserID,
+        ISNULL(u.fldName, N'المدير') AS fldUserName,
+        ISNULL(acc.fldName, N'صندوق الايجارات') AS fldAccBoxName,
+        (SELECT COUNT(*) FROM dbo.tblRentbill r WHERE r.fldTransID = t.fldID) AS fldLinesCount
+      FROM dbo.tblTransAction t
+      LEFT JOIN dbo.tblBranchList b ON t.fldBranchNo = b.fldID
+      LEFT JOIN dbo.tblMoney m ON t.fldVoisherMoneyID = m.fldID
+      LEFT JOIN dbo.tblUser u ON t.fldUserID = u.fldID
+      LEFT JOIN dbo.tblAccount acc ON t.fldVoisherAccID = acc.fldID
+      WHERE ` + whereClauses.join(' AND ') + `
+      ORDER BY t.fldTransNo DESC, t.fldDate DESC
+    `;
+
+    const result = await request.query(query);
+    res.json({ success: true, source: "database", data: result.recordset });
+  } catch (err) {
+    console.error("Error fetching rent bills:", err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// GET /api/rent-bills/shops-template - Get active shops ready for rent bill lines
+app.get('/api/rent-bills/shops-template', async (req, res) => {
+  const isConnected = globalPool !== null && globalPool.connected;
+  if (!isConnected) {
+    return res.json({ success: true, source: "mock", data: [] });
+  }
+
+  const { branchId } = req.query;
+
+  try {
+    const request = globalPool.request();
+    let whereClause = "(s.fldIsActive = 1 OR s.fldIsActive IS NULL)";
+
+    if (branchId && parseInt(branchId) > 0) {
+      request.input('branchId', sql.Int, parseInt(branchId));
+      whereClause += " AND s.fldBranchNo = @branchId";
+    }
+
+    const query = `
+      SELECT 
+        s.fldID AS fldShopID,
+        s.fldShopNumber,
+        RTRIM(LTRIM(ISNULL(s.fldShopName, ''))) AS fldShopName,
+        RTRIM(LTRIM(ISNULL(s.fldCustomerName, ''))) AS fldCustomerName,
+        1 AS fldQTY,
+        ISNULL(s.fldRent, 0) AS fldRent,
+        ISNULL(s.fldRent, 0) AS fldTotalPrice,
+        0 AS fldDebit,
+        ISNULL(s.ServicesTax, 0) AS fldlTaxTota_D,
+        s.fldAccID,
+        ISNULL(a.fldName, s.fldCustomerName) AS fldAccountName,
+        ISNULL(s.fldIsActive, 1) AS fldIsActive,
+        ISNULL(s.fldfloor, 1) AS fldfloor,
+        ISNULL(s.fldBranchNo, 1) AS fldBranchNo
+      FROM dbo.tblShopList s
+      LEFT JOIN dbo.tblAccount a ON s.fldAccID = a.fldID
+      WHERE ` + whereClause + `
+      ORDER BY s.fldfloor, s.fldShopNumber, s.fldID
+    `;
+
+    const result = await request.query(query);
+    res.json({ success: true, data: result.recordset });
+  } catch (err) {
+    console.error("Error fetching rent shops template:", err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// GET /api/rent-bills/next-no - Get next rent bill transaction number
+app.get('/api/rent-bills/next-no', async (req, res) => {
+  const isConnected = globalPool !== null && globalPool.connected;
+  if (!isConnected) {
+    return res.json({ success: true, nextNo: 1 });
+  }
+
+  try {
+    const result = await globalPool.request().query(
+      "SELECT ISNULL(MAX(fldTransNo), 0) + 1 AS nextNo FROM dbo.tblTransAction WHERE fldTransType = 40"
+    );
+    res.json({ success: true, nextNo: result.recordset[0].nextNo });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// GET /api/rent-bills/:id - Get rent invoice header and lines
+app.get('/api/rent-bills/:id', async (req, res) => {
+  const id = parseInt(req.params.id);
+  const isConnected = globalPool !== null && globalPool.connected;
+  if (!isConnected) {
+    return res.status(404).json({ success: false, error: "قاعدة البيانات غير متصلة." });
+  }
+
+  try {
+    const request = globalPool.request();
+    request.input('id', sql.Int, id);
+
+    // 1. Header
+    const hdrRes = await request.query(`
+      SELECT 
+        t.fldID,
+        t.fldTransNo,
+        CONVERT(VARCHAR(10), t.fldDate, 120) AS fldDate,
+        CONVERT(VARCHAR(10), t.fldRefDate, 120) AS fldRefDate,
+        t.fldBranchNo,
+        ISNULL(b.fldName, N'الفرع الرئيسي') AS fldBranchName,
+        RTRIM(LTRIM(ISNULL(t.fldDescription, ''))) AS fldDescription,
+        t.fldType,
+        ISNULL(t.fldVoisherTotal, 0) AS fldVoisherTotal,
+        ISNULL(t.fldAccTotal, 0) AS fldAccTotal,
+        ISNULL(t.fldVoisherMoneyID, 1) AS fldVoisherMoneyID,
+        ISNULL(t.fldVoisherMoneyValue, 1.0) AS fldVoisherMoneyValue,
+        ISNULL(m.fldName, N'دولار امريكي') AS fldMoneyName,
+        RTRIM(LTRIM(ISNULL(m.fldsymbol, '$'))) AS fldsymbol,
+        ISNULL(t.fldRefNo, 0) AS fldRefNo,
+        t.fldOK,
+        t.fldClosed,
+        t.fldUserID,
+        ISNULL(t.fldVoisherAccID, 264) AS fldVoisherAccID,
+        ISNULL(acc.fldName, N'صندوق الايجارات') AS fldAccBoxName
+      FROM dbo.tblTransAction t
+      LEFT JOIN dbo.tblBranchList b ON t.fldBranchNo = b.fldID
+      LEFT JOIN dbo.tblMoney m ON t.fldVoisherMoneyID = m.fldID
+      LEFT JOIN dbo.tblAccount acc ON t.fldVoisherAccID = acc.fldID
+      WHERE t.fldID = @id AND t.fldTransType = 40
+    `);
+
+    if (!hdrRes.recordset || hdrRes.recordset.length === 0) {
+      return res.status(404).json({ success: false, error: "فاتورة الإيجار غير موجودة." });
+    }
+
+    const header = hdrRes.recordset[0];
+
+    // 2. Detail Lines
+    const linesReq = globalPool.request();
+    linesReq.input('id', sql.Int, id);
+    const linesRes = await linesReq.query(`
+      SELECT 
+        r.fldID,
+        r.fldTransID,
+        r.fldShopID,
+        r.fldQTY,
+        r.fldRent,
+        r.fldTotalPrice,
+        r.fldDebit,
+        r.fldlTaxTota_D,
+        s.fldShopNumber,
+        RTRIM(LTRIM(ISNULL(s.fldShopName, ''))) AS fldShopName,
+        RTRIM(LTRIM(ISNULL(s.fldCustomerName, ''))) AS fldCustomerName,
+        ISNULL(s.fldfloor, 1) AS fldfloor,
+        ISNULL(s.fldIsActive, 1) AS fldIsActive,
+        s.fldAccID,
+        ISNULL(a.fldName, s.fldCustomerName) AS fldAccountName
+      FROM dbo.tblRentbill r
+      LEFT JOIN dbo.tblShopList s ON r.fldShopID = s.fldID
+      LEFT JOIN dbo.tblAccount a ON s.fldAccID = a.fldID
+      WHERE r.fldTransID = @id
+      ORDER BY s.fldfloor, s.fldShopNumber, r.fldID
+    `);
+
+    header.lines = linesRes.recordset;
+    res.json({ success: true, data: header });
+  } catch (err) {
+    console.error("Error fetching rent bill details:", err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /api/rent-bills - Create new monthly rent invoice
+app.post('/api/rent-bills', async (req, res) => {
+  const isConnected = globalPool !== null && globalPool.connected;
+  if (!isConnected) {
+    return res.status(500).json({ success: false, error: "قاعدة البيانات غير متصلة." });
+  }
+
+  const {
+    fldBranchNo,
+    fldDate,
+    fldRefDate,
+    fldDescription,
+    fldType,
+    fldRefNo,
+    fldMoneyID,
+    fldMoneyValue,
+    fldVoisherAccID,
+    fldUserID,
+    lines
+  } = req.body;
+
+  try {
+    const noRes = await globalPool.request().query(
+      "SELECT ISNULL(MAX(fldTransNo), 0) + 1 AS nextNo FROM dbo.tblTransAction WHERE fldTransType = 40"
+    );
+    const nextTransNo = req.body.fldTransNo || noRes.recordset[0].nextNo;
+
+    let totalRent = 0;
+    if (lines && Array.isArray(lines)) {
+      lines.forEach(l => {
+        totalRent += parseFloat(l.fldTotalPrice || l.fldRent || 0);
+      });
+    }
+
+    const yearVal = fldDate ? new Date(fldDate).getFullYear().toString().substr(-2) : '26';
+
+    const transReq = globalPool.request();
+    transReq.input('fldBranchNo', sql.Int, parseInt(fldBranchNo) || 1);
+    transReq.input('fldYaer', sql.NVarChar, yearVal);
+    transReq.input('fldUserID', sql.Int, parseInt(fldUserID) || 1);
+    transReq.input('fldTransType', sql.Int, 40);
+    transReq.input('fldType', sql.Int, parseInt(fldType) || 3);
+    transReq.input('fldTransNo', sql.Int, nextTransNo);
+    transReq.input('fldDate', sql.NVarChar, fldDate || new Date().toISOString().split('T')[0]);
+    transReq.input('fldRefDate', sql.NVarChar, fldRefDate || fldDate || new Date().toISOString().split('T')[0]);
+    transReq.input('fldDescription', sql.NVarChar, fldDescription || 'فاتورة ايجار شهري');
+    transReq.input('fldRefNo', sql.Int, parseInt(fldRefNo) || 0);
+    transReq.input('fldVoisherAccID', sql.Int, parseInt(fldVoisherAccID) || 264);
+    transReq.input('fldVoisherMoneyID', sql.Int, parseInt(fldMoneyID) || 1);
+    transReq.input('fldVoisherMoneyValue', sql.Float, parseFloat(fldMoneyValue) || 1.0);
+    transReq.input('fldVoisherTotal', sql.Float, totalRent);
+    transReq.input('fldAccTotal', sql.Float, totalRent);
+
+    const insertTransQ = `
+      INSERT INTO dbo.tblTransAction (
+        fldBranchNo, fldYaer, fldUserID, fldTransType, fldType, fldTransNo, fldBookNO,
+        fldDate, fldRefDate, fldDescription, fldRefNo, fldOrderNO, fldDescription2,
+        fldSalespersonID, fldCenterCostID, fldName, fldhname, fldcodeno, fldagince,
+        fldCompanyID, picID, fldVoisherAccID, fldVoisherMoneyID, fldVoisherMoneyValue,
+        fldVoisherTotal, fldCostTotal, fldAccNumberID, fldAccMoneyID, fldAccMoneyValue,
+        fldAccTotal, fldDiscountAccID, fldDiscountTotal, fldTaxAccID, fldTaxTota,
+        fldlAccTax, fldstoreID, fldstoreID2, fldDateINSERT, fldprintCount,
+        fldUPDATECount, fldOK, fldClosed, fldchanging
+      ) VALUES (
+        @fldBranchNo, @fldYaer, @fldUserID, @fldTransType, @fldType, @fldTransNo, 0,
+        @fldDate, @fldRefDate, @fldDescription, @fldRefNo, 0, '',
+        0, 0, '', '', '', '',
+        0, 0, @fldVoisherAccID, @fldVoisherMoneyID, @fldVoisherMoneyValue,
+        @fldVoisherTotal, 0, 0, @fldVoisherMoneyID, @fldVoisherMoneyValue,
+        @fldAccTotal, 0, 0, 0, 0,
+        0, 0, 0, GETDATE(), 0,
+        0, 1, 0, 0
+      );
+      SELECT SCOPE_IDENTITY() AS newID;
+    `;
+
+    const transResult = await transReq.query(insertTransQ);
+    const newTransID = transResult.recordset[0].newID;
+
+    if (lines && Array.isArray(lines) && lines.length > 0) {
+      for (const line of lines) {
+        const lineReq = globalPool.request();
+        lineReq.input('fldTransID', sql.Int, newTransID);
+        lineReq.input('fldShopID', sql.Int, parseInt(line.fldShopID) || 0);
+        lineReq.input('fldQTY', sql.Int, parseInt(line.fldQTY) || 1);
+        lineReq.input('fldRent', sql.Float, parseFloat(line.fldRent) || 0);
+        lineReq.input('fldTotalPrice', sql.Float, parseFloat(line.fldTotalPrice || line.fldRent) || 0);
+        lineReq.input('fldDebit', sql.Float, parseFloat(line.fldDebit) || 0);
+        lineReq.input('fldlTaxTota_D', sql.Float, parseFloat(line.fldlTaxTota_D) || 0);
+
+        await lineReq.query(`
+          INSERT INTO dbo.tblRentbill (
+            fldTransID, fldShopID, fldQTY, fldRent, fldTotalPrice, fldDebit, fldlTaxTota_D, fldID
+          ) VALUES (
+            @fldTransID, @fldShopID, @fldQTY, @fldRent, @fldTotalPrice, @fldDebit, @fldlTaxTota_D, 0
+          )
+        `);
+      }
+    }
+
+    res.json({ 
+      success: true, 
+      message: `تم حفظ فاتورة الإيجار الشهري رقم (${nextTransNo}) بنجاح!`,
+      data: { id: newTransID, fldTransNo: nextTransNo, fldVoisherTotal: totalRent }
+    });
+  } catch (err) {
+    console.error("Error creating rent bill:", err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// PUT /api/rent-bills/:id - Update monthly rent invoice
+app.put('/api/rent-bills/:id', async (req, res) => {
+  const id = parseInt(req.params.id);
+  const isConnected = globalPool !== null && globalPool.connected;
+  if (!isConnected) {
+    return res.status(500).json({ success: false, error: "قاعدة البيانات غير متصلة." });
+  }
+
+  const {
+    fldBranchNo,
+    fldDate,
+    fldRefDate,
+    fldDescription,
+    fldType,
+    fldRefNo,
+    fldMoneyID,
+    fldMoneyValue,
+    fldVoisherAccID,
+    lines
+  } = req.body;
+
+  try {
+    let totalRent = 0;
+    if (lines && Array.isArray(lines)) {
+      lines.forEach(l => {
+        totalRent += parseFloat(l.fldTotalPrice || l.fldRent || 0);
+      });
+    }
+
+    const transReq = globalPool.request();
+    transReq.input('id', sql.Int, id);
+    transReq.input('fldBranchNo', sql.Int, parseInt(fldBranchNo) || 1);
+    transReq.input('fldDate', sql.NVarChar, fldDate);
+    transReq.input('fldRefDate', sql.NVarChar, fldRefDate || fldDate);
+    transReq.input('fldDescription', sql.NVarChar, fldDescription || 'فاتورة ايجار شهري');
+    transReq.input('fldType', sql.Int, parseInt(fldType) || 3);
+    transReq.input('fldRefNo', sql.Int, parseInt(fldRefNo) || 0);
+    transReq.input('fldVoisherAccID', sql.Int, parseInt(fldVoisherAccID) || 264);
+    transReq.input('fldVoisherMoneyID', sql.Int, parseInt(fldMoneyID) || 1);
+    transReq.input('fldVoisherMoneyValue', sql.Float, parseFloat(fldMoneyValue) || 1.0);
+    transReq.input('fldVoisherTotal', sql.Float, totalRent);
+    transReq.input('fldAccTotal', sql.Float, totalRent);
+
+    await transReq.query(`
+      UPDATE dbo.tblTransAction SET
+        fldBranchNo = @fldBranchNo,
+        fldDate = @fldDate,
+        fldRefDate = @fldRefDate,
+        fldDescription = @fldDescription,
+        fldType = @fldType,
+        fldRefNo = @fldRefNo,
+        fldVoisherAccID = @fldVoisherAccID,
+        fldVoisherMoneyID = @fldVoisherMoneyID,
+        fldVoisherMoneyValue = @fldVoisherMoneyValue,
+        fldVoisherTotal = @fldVoisherTotal,
+        fldAccTotal = @fldAccTotal,
+        fldDateUPDATE = GETDATE(),
+        fldUPDATECount = ISNULL(fldUPDATECount, 0) + 1
+      WHERE fldID = @id AND fldTransType = 40
+    `);
+
+    const delReq = globalPool.request();
+    delReq.input('id', sql.Int, id);
+    await delReq.query("DELETE FROM dbo.tblRentbill WHERE fldTransID = @id");
+
+    if (lines && Array.isArray(lines) && lines.length > 0) {
+      for (const line of lines) {
+        const lineReq = globalPool.request();
+        lineReq.input('fldTransID', sql.Int, id);
+        lineReq.input('fldShopID', sql.Int, parseInt(line.fldShopID) || 0);
+        lineReq.input('fldQTY', sql.Int, parseInt(line.fldQTY) || 1);
+        lineReq.input('fldRent', sql.Float, parseFloat(line.fldRent) || 0);
+        lineReq.input('fldTotalPrice', sql.Float, parseFloat(line.fldTotalPrice || line.fldRent) || 0);
+        lineReq.input('fldDebit', sql.Float, parseFloat(line.fldDebit) || 0);
+        lineReq.input('fldlTaxTota_D', sql.Float, parseFloat(line.fldlTaxTota_D) || 0);
+
+        await lineReq.query(`
+          INSERT INTO dbo.tblRentbill (
+            fldTransID, fldShopID, fldQTY, fldRent, fldTotalPrice, fldDebit, fldlTaxTota_D, fldID
+          ) VALUES (
+            @fldTransID, @fldShopID, @fldQTY, @fldRent, @fldTotalPrice, @fldDebit, @fldlTaxTota_D, 0
+          )
+        `);
+      }
+    }
+
+    res.json({ success: true, message: "تم تحديث وحفظ بيانات فاتورة الإيجار الشهري بنجاح!" });
+  } catch (err) {
+    console.error("Error updating rent bill:", err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// DELETE /api/rent-bills/:id - Delete monthly rent invoice
+app.delete('/api/rent-bills/:id', async (req, res) => {
+  const id = parseInt(req.params.id);
+  const isConnected = globalPool !== null && globalPool.connected;
+  if (!isConnected) {
+    return res.status(500).json({ success: false, error: "قاعدة البيانات غير متصلة." });
+  }
+
+  try {
+    const delLinesReq = globalPool.request();
+    delLinesReq.input('id', sql.Int, id);
+    await delLinesReq.query("DELETE FROM dbo.tblRentbill WHERE fldTransID = @id");
+
+    const delHdrReq = globalPool.request();
+    delHdrReq.input('id', sql.Int, id);
+    await delHdrReq.query("DELETE FROM dbo.tblTransAction WHERE fldID = @id AND fldTransType = 40");
+
+    res.json({ success: true, message: "تم حذف فاتورة الإيجار الشهري بنجاح!" });
+  } catch (err) {
+    console.error("Error deleting rent bill:", err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });

@@ -900,6 +900,10 @@ async function openTab(tabId, tabTitle, iconClass, colorClass, bypassPermission 
     initTransferExplorerTab(tabId);
   } else if (tabTitle === "قائمة المحلات" || tabId === "menu-42" || tabTitle.includes("المحلات") || tabTitle.includes("قائمة المحلات")) {
     initShopsListTab(tabId);
+  } else if (tabTitle === "فاتورة ايجار شهري" || tabTitle === "استعلام فواتير الايجار" || tabId === "menu-40" || tabId === "rent-bills-explorer" || tabId === "menu-40-explorer" || (tabTitle.includes("ايجار") && !tabId.includes("rent-inv"))) {
+    initRentBillsExplorerTab(tabId);
+  } else if (tabTitle.startsWith("فاتورة ايجار:") || tabTitle.includes("فاتورة ايجار شهري جديدة") || tabId.includes("rent-inv-tab") || tabId.includes("menu-40-invoice")) {
+    // Already initialized in openRentInvoiceTab
   } else if (tabTitle.includes("نقاط بيع") || tabTitle.toLowerCase().includes("pos") || tabId === "pos-tab") {
     window.initPosTab(tabId);
   }
@@ -999,6 +1003,8 @@ function getScreenContent(tabId, tabTitle, iconClass, colorClass) {
   const isSalesReturnInvoice = tabTitle === "فاتورة مردود مبيعات" || tabId.includes("menu-31-invoice") || tabId.includes("sales-return-inv");
   const isSalesExplorer = (tabTitle === "عرض مبيعات" || tabTitle === "المبيعات" || tabTitle === "استعلام المبيعات" || tabId === "menu-30" || tabId === "sales-explorer" || tabId === "menu-30-explorer") && !isSalesReturnExplorer;
   const isSalesInvoice = (tabTitle === "فاتورة مبيعات" || tabTitle === "فاتورة المبيعات" || tabId.includes("menu-30-invoice") || tabId.includes("sale-inv") || (tabTitle.includes("مبيعات") && !tabTitle.includes("عرض") && !tabTitle.includes("استعلام") && !tabTitle.includes("تقارير") && !tabTitle.includes("نقاط") && !tabTitle.includes("مردود"))) || isSalesReturnInvoice;
+  const isRentBillsExplorer = (tabTitle === "فاتورة ايجار شهري" || tabTitle === "استعلام فواتير الايجار" || tabId === "menu-40" || tabId === "rent-bills-explorer" || tabId === "menu-40-explorer" || (tabTitle.includes("ايجار") && !tabId.includes("rent-inv"))) && !tabTitle.startsWith("فاتورة ايجار:") && !tabTitle.includes("جديدة");
+  const isRentBillInvoice = tabTitle.startsWith("فاتورة ايجار:") || tabTitle.includes("فاتورة ايجار شهري جديدة") || tabId.includes("rent-inv-tab") || tabId.includes("menu-40-invoice");
 
   let bodyHtml = '';
 
@@ -1486,6 +1492,250 @@ function getScreenContent(tabId, tabTitle, iconClass, colorClass) {
 
         </div>
 
+      </div>
+    `;
+  } else if (isRentBillsExplorer) {
+    bodyHtml = `
+      <div class="voucher-screen" style="direction: rtl; text-align: right; font-family: var(--font-arabic); display: flex; flex-direction: column; gap: 12px; height: 100%;">
+        <!-- Top Toolbar -->
+        <div class="accounts-toolbar" style="background-color: #f1f5f9; padding: 8px 15px; border-bottom: 2px solid #cbd5e1; display: flex; gap: 10px; align-items: center; border-radius: 6px; flex-wrap: wrap;">
+          <button class="btn btn-secondary btn-sm" onclick="openRentInvoiceTab(null)" style="font-weight: bold; display: flex; align-items: center; gap: 6px;">
+            <i class="fa-solid fa-file-circle-plus" style="color: #10b981; font-size: 1.1rem;"></i> جديد
+          </button>
+          <button class="btn btn-secondary btn-sm" onclick="openEditSelectedRentBill('${tabId}')" style="font-weight: bold; display: flex; align-items: center; gap: 6px;">
+            <i class="fa-solid fa-pen-to-square" style="color: #f59e0b; font-size: 1.1rem;"></i> تعديل
+          </button>
+          <button class="btn btn-secondary btn-sm" onclick="loadRentBillsList('${tabId}')" style="font-weight: bold; display: flex; align-items: center; gap: 6px;">
+            <i class="fa-solid fa-magnifying-glass" style="color: #0284c7; font-size: 1.1rem;"></i> استعلام
+          </button>
+          <button class="btn btn-secondary btn-sm" onclick="deleteSelectedRentBill('${tabId}')" style="font-weight: bold; display: flex; align-items: center; gap: 6px;">
+            <i class="fa-solid fa-trash-can" style="color: #ef4444; font-size: 1.1rem;"></i> حذف
+          </button>
+          <button class="btn btn-secondary btn-sm" onclick="printRentBillsList('${tabId}')" style="font-weight: bold; display: flex; align-items: center; gap: 6px;">
+            <i class="fa-solid fa-print" style="color: #475569; font-size: 1.1rem;"></i> طباعة
+          </button>
+          <button class="btn btn-secondary btn-sm" onclick="exportRentBillsListExcel('${tabId}')" style="font-weight: bold; display: flex; align-items: center; gap: 6px;">
+            <i class="fa-solid fa-file-excel" style="color: #10b981; font-size: 1.1rem;"></i> تصدير XLS
+          </button>
+        </div>
+
+        <!-- Filter Row matching Image 1 -->
+        <div style="background: #ffffff; padding: 10px 16px; border: 1px solid #cbd5e1; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; gap: 15px; flex-wrap: wrap;">
+          <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <label style="font-weight: bold; font-size: 0.85rem; color: #334155;">الفرع:</label>
+              <select id="rentBranchFilter-${tabId}" onchange="loadRentBillsList('${tabId}')" style="padding: 4px 10px; border: 1px solid #94a3b8; border-radius: 4px; font-weight: bold; font-family: var(--font-arabic);">
+              </select>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <label style="font-weight: bold; font-size: 0.85rem; color: #334155;">من تاريخ:</label>
+              <input type="date" id="rentFromDate-${tabId}" style="padding: 4px 8px; border: 1px solid #94a3b8; border-radius: 4px; font-family: monospace;">
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <label style="font-weight: bold; font-size: 0.85rem; color: #334155;">الى تاريخ:</label>
+              <input type="date" id="rentToDate-${tabId}" style="padding: 4px 8px; border: 1px solid #94a3b8; border-radius: 4px; font-family: monospace;">
+            </div>
+
+            <button type="button" onclick="loadRentBillsList('${tabId}')" class="btn btn-primary btn-sm" style="font-weight: bold;">
+              <i class="fa-solid fa-filter"></i> تطبيق الفلتر
+            </button>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <button type="button" onclick="printRentBillsList('${tabId}')" style="background: #f1f5f9; border: 1px solid #cbd5e1; padding: 4px 12px; border-radius: 4px; font-weight: bold; font-size: 0.82rem; cursor: pointer;">
+              طباعة الفواتير
+            </button>
+            <button type="button" onclick="showToast('حركة المتغيرات قيد التشغيل', 'info')" style="background: #f1f5f9; border: 1px solid #cbd5e1; padding: 4px 12px; border-radius: 4px; font-weight: bold; font-size: 0.82rem; cursor: pointer;">
+              حركة المتغيرات
+            </button>
+            <label style="font-size: 0.82rem; font-weight: bold; color: #475569; display: flex; align-items: center; gap: 4px; cursor: pointer;">
+              <input type="checkbox"> الطباعة مباشره
+            </label>
+          </div>
+        </div>
+
+        <!-- Search Filter Bar -->
+        <div style="padding: 0 5px;">
+          <input type="text" id="rentSearchInput-${tabId}" oninput="loadRentBillsList('${tabId}')" placeholder="بحث سريع عن أي فاتورة بالرقم، البيان، أو الفرع..." style="width: 100%; max-width: 400px; padding: 6px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-family: var(--font-arabic); font-size: 0.85rem;">
+        </div>
+
+        <!-- Explorer Table matching Image 1 -->
+        <div class="accounts-table-container" style="flex: 1; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; overflow: auto;">
+          <table id="rentBillsTable-${tabId}" class="accounts-table" style="width: 100%; border-collapse: collapse; font-size: 0.85rem; text-align: center;">
+            <thead>
+              <tr style="background: #f8fafc; border-bottom: 2px solid #cbd5e1; color: #334155; font-weight: 800;">
+                <th style="padding: 10px 8px; width: 60px;">الرقم</th>
+                <th style="padding: 10px 10px; width: 100px;">التاريخ</th>
+                <th style="padding: 10px 14px; width: 130px;">المركز المالي</th>
+                <th style="padding: 10px 16px; text-align: right;">البيان</th>
+                <th style="padding: 10px 10px; width: 70px;">النوع</th>
+                <th style="padding: 10px 12px; width: 120px; text-align: right;">الاجمالي</th>
+                <th style="padding: 10px 8px; width: 60px;">العملة</th>
+                <th style="padding: 10px 8px; width: 60px;">مرحل</th>
+                <th style="padding: 10px 10px; width: 100px;">تاريخ المرجع</th>
+                <th style="padding: 10px 10px; width: 100px;">اسم العملة</th>
+                <th style="padding: 10px 8px; width: 75px;">رقم المرجع</th>
+                <th style="padding: 10px 8px; width: 75px;">رقم ID</th>
+                <th style="padding: 10px 14px; text-align: right;">اسم الحساب</th>
+              </tr>
+            </thead>
+            <tbody id="rentBillsTableBody-${tabId}">
+              <!-- Loaded dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+  } else if (isRentBillInvoice) {
+    bodyHtml = `
+      <div class="voucher-screen" style="direction: rtl; text-align: right; font-family: var(--font-arabic); display: flex; flex-direction: column; gap: 12px; height: 100%;">
+        <input type="hidden" id="rentTransId-${tabId}" value="">
+
+        <!-- Top Toolbar matching Image 2 -->
+        <div class="accounts-toolbar" style="background-color: #f1f5f9; padding: 8px 15px; border-bottom: 2px solid #cbd5e1; display: flex; gap: 10px; align-items: center; border-radius: 6px; flex-wrap: wrap;">
+          <button class="btn btn-primary btn-sm" onclick="saveRentInvoice('${tabId}')" style="font-weight: bold; display: flex; align-items: center; gap: 6px;">
+            <i class="fa-solid fa-floppy-disk"></i> حفظ
+          </button>
+          <button class="btn btn-info btn-sm" onclick="saveAndPrintRentInvoice('${tabId}')" style="font-weight: bold; display: flex; align-items: center; gap: 6px;">
+            <i class="fa-solid fa-print"></i> حفظ طباعه
+          </button>
+          <button class="btn btn-secondary btn-sm" onclick="loadShopsTemplateIntoRentInvoice('${tabId}')" style="font-weight: bold; display: flex; align-items: center; gap: 6px;">
+            <i class="fa-solid fa-copy"></i> نسخه من
+          </button>
+          <button class="btn btn-danger btn-sm" onclick="clearRentInvoiceLines('${tabId}')" style="font-weight: bold; display: flex; align-items: center; gap: 6px;">
+            <i class="fa-solid fa-trash-can"></i> حذف الكشف
+          </button>
+          <button class="btn btn-secondary btn-sm" onclick="closeTab('${tabId}')" style="font-weight: bold; display: flex; align-items: center; gap: 6px;">
+            <i class="fa-solid fa-xmark"></i> إغلاق
+          </button>
+        </div>
+
+        <!-- Top Form Fields matching Image 2 -->
+        <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 14px; display: flex; flex-direction: column; gap: 10px;">
+          
+          <div style="display: grid; grid-template-columns: 200px 1fr; gap: 15px;">
+            <!-- Side Actions -->
+            <div style="display: flex; flex-direction: column; gap: 6px; border-left: 1px solid #e2e8f0; padding-left: 15px;">
+              <button type="button" onclick="clearRentInvoiceLines('${tabId}')" style="padding: 5px 10px; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 4px; font-weight: bold; font-size: 0.8rem; cursor: pointer; text-align: center;">
+                حذف الكشف
+              </button>
+              <button type="button" onclick="showToast('اصدار فاتورة فردية قيد التفعيل', 'info')" style="padding: 5px 10px; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 4px; font-weight: bold; font-size: 0.8rem; cursor: pointer; text-align: center;">
+                اصدار فاتورة فرديه
+              </button>
+              <button type="button" onclick="calculateRentInvoiceTotals('${tabId}')" style="padding: 5px 10px; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 4px; font-weight: bold; font-size: 0.8rem; cursor: pointer; text-align: center;">
+                تحديث الرصيد
+              </button>
+              <label style="font-size: 0.78rem; font-weight: bold; color: #475569; display: flex; align-items: center; gap: 5px; cursor: pointer; margin-top: 4px;">
+                <input type="checkbox"> الطباعة مباشره
+              </label>
+            </div>
+
+            <!-- Main Fields Grid -->
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+              <!-- Row 1: Branch, Pay Type, Date, Number -->
+              <div style="display: grid; grid-template-columns: 1.5fr 1fr 1.2fr 0.8fr; gap: 10px; align-items: center;">
+                <div>
+                  <label style="font-size: 0.8rem; font-weight: bold; color: #334155; display: block; margin-bottom: 3px;">الفرع:</label>
+                  <select id="rentHdrBranch-${tabId}" style="width: 100%; height: 32px; padding: 0 8px; border: 1px solid #94a3b8; border-radius: 4px; font-weight: bold; font-family: var(--font-arabic);">
+                  </select>
+                </div>
+                <div>
+                  <label style="font-size: 0.8rem; font-weight: bold; color: #334155; display: block; margin-bottom: 3px;">طريقة الدفع:</label>
+                  <select id="rentHdrType-${tabId}" style="width: 100%; height: 32px; padding: 0 8px; border: 1px solid #94a3b8; border-radius: 4px; font-weight: bold; font-family: var(--font-arabic);">
+                    <option value="3">اجل</option>
+                    <option value="1">نقدا</option>
+                  </select>
+                </div>
+                <div>
+                  <label style="font-size: 0.8rem; font-weight: bold; color: #334155; display: block; margin-bottom: 3px;">التاريخ:</label>
+                  <input type="date" id="rentHdrDate-${tabId}" style="width: 100%; height: 32px; padding: 0 8px; border: 1px solid #94a3b8; border-radius: 4px; font-family: monospace;">
+                </div>
+                <div>
+                  <label style="font-size: 0.8rem; font-weight: bold; color: #334155; display: block; margin-bottom: 3px;">الرقم:</label>
+                  <input type="number" id="rentHdrTransNo-${tabId}" value="0" readonly style="width: 100%; height: 32px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 4px; font-family: monospace; font-weight: bold; text-align: center; color: #1e3a8a;">
+                </div>
+              </div>
+
+              <!-- Row 2: Ref No, Ref Date, Currency, Exchange Rate -->
+              <div style="display: grid; grid-template-columns: 1fr 1.2fr 1.2fr 0.8fr; gap: 10px; align-items: center;">
+                <div>
+                  <label style="font-size: 0.8rem; font-weight: bold; color: #334155; display: block; margin-bottom: 3px;">رقم المرجع:</label>
+                  <input type="number" id="rentHdrRefNo-${tabId}" value="0" style="width: 100%; height: 32px; padding: 0 8px; border: 1px solid #94a3b8; border-radius: 4px; font-family: monospace; text-align: center;">
+                </div>
+                <div>
+                  <label style="font-size: 0.8rem; font-weight: bold; color: #334155; display: block; margin-bottom: 3px;">تاريخ المرجع:</label>
+                  <input type="date" id="rentHdrRefDate-${tabId}" style="width: 100%; height: 32px; padding: 0 8px; border: 1px solid #94a3b8; border-radius: 4px; font-family: monospace;">
+                </div>
+                <div>
+                  <label style="font-size: 0.8rem; font-weight: bold; color: #334155; display: block; margin-bottom: 3px;">العملة:</label>
+                  <select id="rentHdrMoney-${tabId}" style="width: 100%; height: 32px; padding: 0 8px; border: 1px solid #94a3b8; border-radius: 4px; font-weight: bold; font-family: var(--font-arabic);">
+                    <option value="1">دولار امريكي</option>
+                    <option value="2">ريال يمني</option>
+                    <option value="3">ريال سعودي</option>
+                  </select>
+                </div>
+                <div>
+                  <label style="font-size: 0.8rem; font-weight: bold; color: #334155; display: block; margin-bottom: 3px;">الصرف:</label>
+                  <input type="number" id="rentHdrRate-${tabId}" value="1.00" step="0.01" style="width: 100%; height: 32px; padding: 0 8px; border: 1px solid #94a3b8; border-radius: 4px; font-family: monospace; text-align: center;">
+                </div>
+              </div>
+
+              <!-- Row 3: Description & Insert Template Button -->
+              <div style="display: flex; gap: 10px; align-items: flex-end;">
+                <div style="flex: 1;">
+                  <label style="font-size: 0.8rem; font-weight: bold; color: #334155; display: block; margin-bottom: 3px;">البيان:</label>
+                  <input type="text" id="rentHdrDesc-${tabId}" value="فاتورة ايجار شهري" style="width: 100%; height: 32px; padding: 0 10px; border: 1px solid #94a3b8; border-radius: 4px; font-family: var(--font-arabic); font-weight: bold;">
+                </div>
+                <button type="button" onclick="loadShopsTemplateIntoRentInvoice('${tabId}')" style="height: 34px; padding: 0 16px; background: #0284c7; color: #ffffff; border: none; border-radius: 4px; font-weight: 800; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 4px rgba(2,132,199,0.2);">
+                  <i class="fa-solid fa-file-import"></i> ادراج الكشف
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Detail Lines Table matching Image 2 -->
+        <div class="accounts-table-container" style="flex: 1; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; overflow: auto;">
+          <table class="accounts-table" style="width: 100%; border-collapse: collapse; font-size: 0.82rem; text-align: center;">
+            <thead>
+              <tr style="background: #f8fafc; border-bottom: 2px solid #cbd5e1; color: #334155; font-weight: 800;">
+                <th style="padding: 8px 6px; width: 45px;">نشط</th>
+                <th style="padding: 8px 8px; width: 80px;">رقم المحل</th>
+                <th style="padding: 8px 12px; text-align: right;">اسم المحل</th>
+                <th style="padding: 8px 12px; text-align: right;">اسم المستاجر</th>
+                <th style="padding: 8px 6px; width: 65px;">العدد</th>
+                <th style="padding: 8px 8px; width: 95px;">الايجار</th>
+                <th style="padding: 8px 8px; width: 95px;">مدين</th>
+                <th style="padding: 8px 8px; width: 80px;">م ضريبه</th>
+                <th style="padding: 8px 10px; width: 110px; text-align: right;">الاجمالي</th>
+                <th style="padding: 8px 8px; width: 80px;">رقم الحساب</th>
+                <th style="padding: 8px 12px; text-align: right;">اسم الحساب</th>
+                <th style="padding: 8px 6px; width: 40px;">حذف</th>
+              </tr>
+            </thead>
+            <tbody id="rentLinesTableBody-${tabId}">
+              <!-- Populated dynamically -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Bottom Totals Bar matching Image 2 -->
+        <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; padding: 8px 16px; display: flex; justify-content: flex-end; gap: 20px; align-items: center;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <label style="font-weight: bold; font-size: 0.85rem; color: #334155;">اجمالي الايجار الشهري:</label>
+            <input type="text" id="rentTotalMonthlyRent-${tabId}" value="0.00" readonly style="width: 120px; height: 32px; padding: 0 8px; text-align: right; background: #ffffff; border: 1px solid #94a3b8; border-radius: 4px; font-family: monospace; font-weight: bold; color: #0f766e;">
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <label style="font-weight: bold; font-size: 0.85rem; color: #334155;">المديونيه السابقة:</label>
+            <input type="text" id="rentTotalPrevDebit-${tabId}" value="0.00" readonly style="width: 120px; height: 32px; padding: 0 8px; text-align: right; background: #ffffff; border: 1px solid #94a3b8; border-radius: 4px; font-family: monospace; font-weight: bold; color: #b91c1c;">
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <label style="font-weight: 800; font-size: 0.95rem; color: #1e3a8a;">الاجمالي المستحق:</label>
+            <input type="text" id="rentTotalNetDue-${tabId}" value="0.00" readonly style="width: 140px; height: 34px; padding: 0 10px; text-align: right; background: #e0f2fe; border: 2px solid #0284c7; border-radius: 4px; font-family: monospace; font-weight: 900; font-size: 1.05rem; color: #0369a1;">
+          </div>
+        </div>
       </div>
     `;
   } else if (isShopsList) {
@@ -29426,3 +29676,453 @@ document.addEventListener('click', function(e) {
     dropdown.classList.remove('open');
   }
 });
+
+
+// =============================================================================
+// MONTHLY RENT INVOICES CONTROLLERS & UI (فاتورة ايجار شهري - fldTransType = 40)
+// Matching media_1787656196244.png & media_1787656301992.png
+// =============================================================================
+
+// State storage per tab
+state.rentInvoices = state.rentInvoices || {};
+
+// 1. OPEN RENT BILLS EXPLORER TAB (شاشة استعلامات فواتير الإيجار الشهري - Image 1)
+window.openRentBillsExplorerTab = function() {
+  const tabId = 'rent-bills-explorer';
+  const tabTitle = 'فاتورة ايجار شهري';
+  
+  if (state.tabs && state.tabs.some(t => t.id === tabId)) {
+    switchTab(tabId);
+    loadRentBillsList(tabId);
+    return;
+  }
+  
+  createTab(tabId, tabTitle);
+};
+
+// 2. OPEN RENT INVOICE EDITOR TAB (شاشة إدخال/تحرير فاتورة الإيجار الشهري - Image 2)
+window.openRentInvoiceTab = function(rentId = null) {
+  const tabId = rentId ? `rent-inv-tab-${rentId}` : `rent-inv-tab-new-${Date.now()}`;
+  const tabTitle = rentId ? `فاتورة ايجار: #${rentId}` : 'فاتورة ايجار شهري جديدة';
+
+  if (state.tabs && state.tabs.some(t => t.id === tabId)) {
+    switchTab(tabId);
+    return;
+  }
+
+  createTab(tabId, tabTitle);
+  initRentInvoiceTab(tabId, rentId);
+};
+
+// 3. INITIALIZE EXPLORER TAB (Image 1)
+window.initRentBillsExplorerTab = function(tabId) {
+  // Populate branches filter
+  const branchSelect = document.getElementById(`rentBranchFilter-${tabId}`);
+  if (branchSelect && state.branches) {
+    branchSelect.innerHTML = '<option value="0">كافة الفروع</option>';
+    state.branches.forEach(b => {
+      const opt = document.createElement('option');
+      opt.value = b.fldID;
+      opt.textContent = b.fldName;
+      branchSelect.appendChild(opt);
+    });
+  }
+
+  // Set default date range: from 1 year ago to today
+  const fromEl = document.getElementById(`rentFromDate-${tabId}`);
+  const toEl = document.getElementById(`rentToDate-${tabId}`);
+  const today = new Date();
+  const oneYearAgo = new Date();
+  oneYearAgo.setFullYear(today.getFullYear() - 1);
+
+  if (fromEl && !fromEl.value) fromEl.value = oneYearAgo.toISOString().split('T')[0];
+  if (toEl && !toEl.value) toEl.value = today.toISOString().split('T')[0];
+
+  loadRentBillsList(tabId);
+};
+
+// 4. LOAD RENT BILLS LIST FOR EXPLORER (Image 1)
+window.loadRentBillsList = async function(tabId) {
+  const tbody = document.getElementById(`rentBillsTableBody-${tabId}`);
+  if (!tbody) return;
+
+  tbody.innerHTML = '<tr><td colspan="13" style="text-align: center; padding: 25px; color: #64748b;"><i class="fa-solid fa-spinner fa-spin"></i> جاري استعلام فواتير الإيجار الشهري...</td></tr>';
+
+  const branchId = document.getElementById(`rentBranchFilter-${tabId}`)?.value || 0;
+  const fromDate = document.getElementById(`rentFromDate-${tabId}`)?.value || '';
+  const toDate = document.getElementById(`rentToDate-${tabId}`)?.value || '';
+  const search = document.getElementById(`rentSearchInput-${tabId}`)?.value || '';
+
+  try {
+    let url = `/api/rent-bills?branchId=${branchId}&fromDate=${fromDate}&toDate=${toDate}&search=${encodeURIComponent(search)}`;
+    const res = await fetch(url);
+    const result = await res.json();
+
+    if (!result.success || !result.data || result.data.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="13" style="text-align: center; padding: 25px; color: #94a3b8;"><i class="fa-solid fa-folder-open"></i> لا توجد فواتير إيجار مسجلة تطابق معايير البحث.</td></tr>';
+      return;
+    }
+
+    state.rentBillsList = result.data;
+    renderRentBillsTable(tabId, result.data);
+  } catch (err) {
+    console.error("Error loading rent bills:", err);
+    tbody.innerHTML = `<tr><td colspan="13" style="text-align: center; padding: 20px; color: #ef4444;">حدث خطأ أثناء تحميل فواتير الإيجار: ${err.message}</td></tr>`;
+  }
+};
+
+window.renderRentBillsTable = function(tabId, list) {
+  const tbody = document.getElementById(`rentBillsTableBody-${tabId}`);
+  if (!tbody) return;
+
+  let html = '';
+  list.forEach((item, idx) => {
+    const formattedDate = item.fldDate ? item.fldDate.split('T')[0] : '';
+    const formattedTotal = parseFloat(item.fldVoisherTotal || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    
+    html += `
+      <tr class="rent-bill-row" data-id="${item.fldID}" onclick="selectRentBillRow('${tabId}', ${item.fldID}, this)" ondblclick="openRentInvoiceTab(${item.fldID})" style="cursor: pointer; border-bottom: 1px solid #e2e8f0; transition: background 0.15s;">
+        <td style="padding: 8px 10px; font-weight: bold; font-family: monospace; color: #1e3a8a;">${item.fldTransNo}</td>
+        <td style="padding: 8px 10px; font-family: monospace;">${formattedDate}</td>
+        <td style="padding: 8px 12px; font-weight: 600; color: #334155;">${item.fldBranchName || 'الفرع الرئيسي'}</td>
+        <td style="padding: 8px 14px; text-align: right; font-weight: bold; color: #0f172a;">${item.fldDescription || ''}</td>
+        <td style="padding: 8px 10px; text-align: center;"><span class="badge" style="background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 4px; font-weight: bold;">${item.fldTypeName || 'اجل'}</span></td>
+        <td style="padding: 8px 12px; text-align: right; font-weight: 900; font-family: monospace; color: #059669; font-size: 0.95rem;">${item.fldsymbol || '$'} ${formattedTotal}</td>
+        <td style="padding: 8px 8px; text-align: center; color: #64748b;">${item.fldsymbol || '$'}</td>
+        <td style="padding: 8px 8px; text-align: center;"><input type="checkbox" ${item.fldOK ? 'checked' : ''} disabled></td>
+        <td style="padding: 8px 10px; font-family: monospace; color: #64748b;">${item.fldRefDate || formattedDate}</td>
+        <td style="padding: 8px 10px; color: #475569;">${item.fldMoneyName || 'دولار امريكي'}</td>
+        <td style="padding: 8px 8px; font-family: monospace; color: #64748b;">${item.fldRefNo || 0}</td>
+        <td style="padding: 8px 8px; font-family: monospace; font-weight: bold; color: #475569;">${item.fldID}</td>
+        <td style="padding: 8px 12px; text-align: right; color: #334155;">${item.fldAccBoxName || 'صندوق الايجارات'}</td>
+      </tr>
+    `;
+  });
+
+  tbody.innerHTML = html;
+};
+
+window.selectRentBillRow = function(tabId, id, rowEl) {
+  state.selectedRentBillId = id;
+  const tbody = document.getElementById(`rentBillsTableBody-${tabId}`);
+  if (tbody) {
+    tbody.querySelectorAll('tr').forEach(r => r.style.background = 'transparent');
+  }
+  if (rowEl) rowEl.style.background = '#e2e8f0';
+};
+
+window.openEditSelectedRentBill = function(tabId) {
+  if (!state.selectedRentBillId) {
+    showToast("يرجى تحديد فاتورة إيجار من الجدول للتعديل.", "warning");
+    return;
+  }
+  openRentInvoiceTab(state.selectedRentBillId);
+};
+
+window.deleteSelectedRentBill = async function(tabId) {
+  if (!state.selectedRentBillId) {
+    showToast("يرجى تحديد فاتورة إيجار لحذفها.", "warning");
+    return;
+  }
+
+  if (!confirm(`هل أنت متأكد من حذف فاتورة الإيجار رقم (${state.selectedRentBillId})؟ سيتم حذف كافة السطور المرتبطة بها.`)) return;
+
+  try {
+    const res = await fetch(`/api/rent-bills/${state.selectedRentBillId}`, { method: 'DELETE' });
+    const result = await res.json();
+    if (result.success) {
+      showToast(result.message, "success");
+      state.selectedRentBillId = null;
+      loadRentBillsList(tabId);
+    } else {
+      showToast(result.error || "فشل حذف الفاتورة.", "error");
+    }
+  } catch (err) {
+    showToast("خطأ عند حذف الفاتورة: " + err.message, "error");
+  }
+};
+
+window.printRentBillsList = function(tabId) {
+  window.print();
+};
+
+window.exportRentBillsListExcel = function(tabId) {
+  const table = document.getElementById(`rentBillsTable-${tabId}`);
+  if (!table) return;
+  exportTableToCSV(table, `فواتير_الايجار_الشهري_${new Date().toISOString().split('T')[0]}.csv`);
+};
+
+// =============================================================================
+// 5. INVOICE EDITOR TAB CONTROLLERS (Image 2)
+// =============================================================================
+
+window.initRentInvoiceTab = async function(tabId, rentId = null) {
+  state.rentInvoices[tabId] = {
+    rentId,
+    lines: []
+  };
+
+  // Populate branches
+  const branchSelect = document.getElementById(`rentHdrBranch-${tabId}`);
+  if (branchSelect && state.branches) {
+    branchSelect.innerHTML = '';
+    state.branches.forEach(b => {
+      const opt = document.createElement('option');
+      opt.value = b.fldID;
+      opt.textContent = b.fldName;
+      branchSelect.appendChild(opt);
+    });
+  }
+
+  const today = new Date().toISOString().split('T')[0];
+  const dateEl = document.getElementById(`rentHdrDate-${tabId}`);
+  const refDateEl = document.getElementById(`rentHdrRefDate-${tabId}`);
+  if (dateEl && !dateEl.value) dateEl.value = today;
+  if (refDateEl && !refDateEl.value) refDateEl.value = today;
+
+  if (rentId) {
+    // Load existing invoice
+    await loadExistingRentInvoiceData(tabId, rentId);
+  } else {
+    // Generate new next trans number and default description with month name
+    try {
+      const res = await fetch('/api/rent-bills/next-no');
+      const data = await res.json();
+      const numEl = document.getElementById(`rentHdrTransNo-${tabId}`);
+      if (numEl) numEl.value = data.nextNo || 1;
+
+      const monthNames = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
+      const currentMonth = monthNames[new Date().getMonth()];
+      const currentYear = new Date().getFullYear();
+      const descEl = document.getElementById(`rentHdrDesc-${tabId}`);
+      if (descEl) descEl.value = `فاتورة ايجار شهري ${currentMonth} ${currentYear} م`;
+    } catch (e) {
+      console.warn("Could not fetch next rent trans no:", e);
+    }
+  }
+};
+
+window.loadExistingRentInvoiceData = async function(tabId, rentId) {
+  try {
+    const res = await fetch(`/api/rent-bills/${rentId}`);
+    const result = await res.json();
+    if (!result.success || !result.data) {
+      showToast("فشل تحميل بيانات فاتورة الإيجار.", "error");
+      return;
+    }
+
+    const data = result.data;
+    document.getElementById(`rentTransId-${tabId}`).value = data.fldID;
+    document.getElementById(`rentHdrTransNo-${tabId}`).value = data.fldTransNo;
+    document.getElementById(`rentHdrDate-${tabId}`).value = data.fldDate;
+    document.getElementById(`rentHdrRefDate-${tabId}`).value = data.fldRefDate || data.fldDate;
+    document.getElementById(`rentHdrRefNo-${tabId}`).value = data.fldRefNo || 0;
+    document.getElementById(`rentHdrDesc-${tabId}`).value = data.fldDescription || '';
+    document.getElementById(`rentHdrType-${tabId}`).value = data.fldType || 3;
+    document.getElementById(`rentHdrMoney-${tabId}`).value = data.fldVoisherMoneyID || 1;
+    document.getElementById(`rentHdrRate-${tabId}`).value = data.fldVoisherMoneyValue || 1.0;
+    document.getElementById(`rentHdrBranch-${tabId}`).value = data.fldBranchNo || 1;
+
+    state.rentInvoices[tabId].lines = data.lines || [];
+    renderRentInvoiceLinesTable(tabId);
+  } catch (err) {
+    console.error("Error loading rent invoice details:", err);
+    showToast("خطأ عند تحميل الفاتورة: " + err.message, "error");
+  }
+};
+
+// LOAD SHOPS TEMPLATE (ادراج الكشف - زر إدراج المحلات تلقائياً)
+window.loadShopsTemplateIntoRentInvoice = async function(tabId) {
+  const branchId = document.getElementById(`rentHdrBranch-${tabId}`)?.value || 1;
+  showToast("جاري إدراج كشف المحلات والمستأجرين للفرع المحدد...", "info");
+
+  try {
+    const res = await fetch(`/api/rent-bills/shops-template?branchId=${branchId}`);
+    const result = await res.json();
+    if (!result.success || !result.data || result.data.length === 0) {
+      showToast("لا توجد محلات مسجلة في قائمة المحلات لهذا الفرع.", "warning");
+      return;
+    }
+
+    state.rentInvoices[tabId].lines = result.data.map(s => ({
+      fldShopID: s.fldShopID,
+      fldShopNumber: s.fldShopNumber,
+      fldShopName: s.fldShopName,
+      fldCustomerName: s.fldCustomerName,
+      fldQTY: 1,
+      fldRent: parseFloat(s.fldRent || 0),
+      fldDebit: parseFloat(s.fldDebit || 0),
+      fldlTaxTota_D: parseFloat(s.fldlTaxTota_D || 0),
+      fldTotalPrice: parseFloat(s.fldRent || 0) + parseFloat(s.fldlTaxTota_D || 0),
+      fldAccID: s.fldAccID,
+      fldAccountName: s.fldAccountName,
+      fldIsActive: s.fldIsActive !== false
+    }));
+
+    renderRentInvoiceLinesTable(tabId);
+    showToast(`تم إدراج كشف (${result.data.length}) محل بنجاح!`, "success");
+  } catch (err) {
+    console.error("Error loading shops template:", err);
+    showToast("فشل إدراج كشف المحلات: " + err.message, "error");
+  }
+};
+
+window.renderRentInvoiceLinesTable = function(tabId) {
+  const tbody = document.getElementById(`rentLinesTableBody-${tabId}`);
+  if (!tbody) return;
+
+  const lines = state.rentInvoices[tabId]?.lines || [];
+  if (lines.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="12" style="text-align: center; padding: 25px; color: #94a3b8;">اضغط على زر "ادراج الكشف" لتحميل كافة المحلات والمستأجرين تلقائياً.</td></tr>';
+    calculateRentInvoiceTotals(tabId);
+    return;
+  }
+
+  let html = '';
+  lines.forEach((line, idx) => {
+    html += `
+      <tr id="rentLineRow-${tabId}-${idx}" style="border-bottom: 1px solid #e2e8f0; text-align: center; vertical-align: middle;">
+        <td style="padding: 6px 8px;"><input type="checkbox" ${line.fldIsActive !== false ? 'checked' : ''} onchange="updateRentLineField('${tabId}', ${idx}, 'fldIsActive', this.checked)"></td>
+        <td style="padding: 6px 8px; font-weight: bold; font-family: monospace; color: #1e3a8a;">#${line.fldShopNumber || ''}</td>
+        <td style="padding: 6px 12px; text-align: right; font-weight: bold; color: #1e293b;">${line.fldShopName || ''}</td>
+        <td style="padding: 6px 12px; text-align: right; color: #334155;">${line.fldCustomerName || ''}</td>
+        <td style="padding: 6px 6px;"><input type="number" value="${line.fldQTY || 1}" min="1" oninput="updateRentLineField('${tabId}', ${idx}, 'fldQTY', this.value)" style="width: 55px; padding: 4px; text-align: center; border: 1px solid #cbd5e1; border-radius: 4px; font-family: monospace; font-weight: bold;"></td>
+        <td style="padding: 6px 6px;"><input type="number" step="any" value="${line.fldRent || 0}" oninput="updateRentLineField('${tabId}', ${idx}, 'fldRent', this.value)" style="width: 85px; padding: 4px; text-align: right; border: 1px solid #cbd5e1; border-radius: 4px; font-family: monospace; font-weight: bold; color: #0f766e;"></td>
+        <td style="padding: 6px 6px;"><input type="number" step="any" value="${line.fldDebit || 0}" oninput="updateRentLineField('${tabId}', ${idx}, 'fldDebit', this.value)" style="width: 85px; padding: 4px; text-align: right; border: 1px solid #cbd5e1; border-radius: 4px; font-family: monospace; color: #b91c1c;"></td>
+        <td style="padding: 6px 6px;"><input type="number" step="any" value="${line.fldlTaxTota_D || 0}" oninput="updateRentLineField('${tabId}', ${idx}, 'fldlTaxTota_D', this.value)" style="width: 70px; padding: 4px; text-align: right; border: 1px solid #cbd5e1; border-radius: 4px; font-family: monospace;"></td>
+        <td style="padding: 6px 10px; text-align: right; font-weight: 900; font-family: monospace; color: #059669; font-size: 0.92rem;" id="rentLineTotal-${tabId}-${idx}">${parseFloat(line.fldTotalPrice || line.fldRent || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+        <td style="padding: 6px 8px; font-family: monospace; color: #64748b;">${line.fldAccID || ''}</td>
+        <td style="padding: 6px 12px; text-align: right; font-size: 0.8rem; color: #475569;">${line.fldAccountName || ''}</td>
+        <td style="padding: 6px 6px;"><button type="button" onclick="removeRentInvoiceLine('${tabId}', ${idx})" style="background: none; border: none; color: #ef4444; cursor: pointer;"><i class="fa-solid fa-trash-can"></i></button></td>
+      </tr>
+    `;
+  });
+
+  tbody.innerHTML = html;
+  calculateRentInvoiceTotals(tabId);
+};
+
+window.updateRentLineField = function(tabId, idx, field, value) {
+  const line = state.rentInvoices[tabId]?.lines[idx];
+  if (!line) return;
+
+  if (field === 'fldIsActive') {
+    line.fldIsActive = value;
+  } else {
+    line[field] = parseFloat(value) || 0;
+  }
+
+  // Recalculate line total
+  const qty = parseFloat(line.fldQTY || 1);
+  const rent = parseFloat(line.fldRent || 0);
+  const tax = parseFloat(line.fldlTaxTota_D || 0);
+  line.fldTotalPrice = (rent * qty) + tax;
+
+  const totalEl = document.getElementById(`rentLineTotal-${tabId}-${idx}`);
+  if (totalEl) totalEl.innerText = line.fldTotalPrice.toLocaleString('en-US', { minimumFractionDigits: 2 });
+
+  calculateRentInvoiceTotals(tabId);
+};
+
+window.removeRentInvoiceLine = function(tabId, idx) {
+  state.rentInvoices[tabId]?.lines.splice(idx, 1);
+  renderRentInvoiceLinesTable(tabId);
+};
+
+window.clearRentInvoiceLines = function(tabId) {
+  if (!confirm("هل أنت متأكد من حذف كافة سطور الكشف؟")) return;
+  state.rentInvoices[tabId].lines = [];
+  renderRentInvoiceLinesTable(tabId);
+};
+
+window.calculateRentInvoiceTotals = function(tabId) {
+  const lines = state.rentInvoices[tabId]?.lines || [];
+  let totalMonthlyRent = 0;
+  let totalPrevDebit = 0;
+  let totalNetDue = 0;
+
+  lines.forEach(l => {
+    if (l.fldIsActive !== false) {
+      const price = parseFloat(l.fldTotalPrice || l.fldRent || 0);
+      const debit = parseFloat(l.fldDebit || 0);
+      totalMonthlyRent += price;
+      totalPrevDebit += debit;
+      totalNetDue += (price + debit);
+    }
+  });
+
+  const rentEl = document.getElementById(`rentTotalMonthlyRent-${tabId}`);
+  const debitEl = document.getElementById(`rentTotalPrevDebit-${tabId}`);
+  const netDueEl = document.getElementById(`rentTotalNetDue-${tabId}`);
+
+  if (rentEl) rentEl.value = totalMonthlyRent.toLocaleString('en-US', { minimumFractionDigits: 2 });
+  if (debitEl) debitEl.value = totalPrevDebit.toLocaleString('en-US', { minimumFractionDigits: 2 });
+  if (netDueEl) netDueEl.value = totalNetDue.toLocaleString('en-US', { minimumFractionDigits: 2 });
+};
+
+window.saveRentInvoice = async function(tabId, andPrint = false) {
+  const rentId = document.getElementById(`rentTransId-${tabId}`)?.value;
+  const fldBranchNo = document.getElementById(`rentHdrBranch-${tabId}`)?.value || 1;
+  const fldDate = document.getElementById(`rentHdrDate-${tabId}`)?.value;
+  const fldRefDate = document.getElementById(`rentHdrRefDate-${tabId}`)?.value;
+  const fldDescription = document.getElementById(`rentHdrDesc-${tabId}`)?.value;
+  const fldType = document.getElementById(`rentHdrType-${tabId}`)?.value || 3;
+  const fldRefNo = document.getElementById(`rentHdrRefNo-${tabId}`)?.value || 0;
+  const fldMoneyID = document.getElementById(`rentHdrMoney-${tabId}`)?.value || 1;
+  const fldMoneyValue = document.getElementById(`rentHdrRate-${tabId}`)?.value || 1.0;
+  const lines = state.rentInvoices[tabId]?.lines || [];
+
+  if (!fldDate) {
+    showToast("يرجى تحديد تاريخ الفاتورة.", "warning");
+    return;
+  }
+  if (lines.length === 0) {
+    showToast("لا يمكن حفظ فاتورة إيجار فارغة بدون سطور محلات.", "warning");
+    return;
+  }
+
+  const payload = {
+    fldBranchNo,
+    fldDate,
+    fldRefDate,
+    fldDescription,
+    fldType,
+    fldRefNo,
+    fldMoneyID,
+    fldMoneyValue,
+    fldUserID: (state.currentUser && state.currentUser.id) ? state.currentUser.id : 1,
+    lines
+  };
+
+  try {
+    const url = rentId ? `/api/rent-bills/${rentId}` : '/api/rent-bills';
+    const method = rentId ? 'PUT' : 'POST';
+
+    const res = await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    const result = await res.json();
+    if (result.success) {
+      showToast(result.message, "success");
+      if (result.data && result.data.id) {
+        document.getElementById(`rentTransId-${tabId}`).value = result.data.id;
+        document.getElementById(`rentHdrTransNo-${tabId}`).value = result.data.fldTransNo;
+      }
+      if (andPrint) {
+        window.print();
+      }
+    } else {
+      showToast(result.error || "فشل حفظ فاتورة الإيجار.", "error");
+    }
+  } catch (err) {
+    console.error("Error saving rent invoice:", err);
+    showToast("خطأ عند حفظ الفاتورة: " + err.message, "error");
+  }
+};
+
+window.saveAndPrintRentInvoice = function(tabId) {
+  saveRentInvoice(tabId, true);
+};

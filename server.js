@@ -17269,6 +17269,544 @@ app.delete('/api/rent-bills/:id', async (req, res) => {
   }
 });
 
+
+// ========================================================
+// 41. ELECTRICITY CONSUMPTION INVOICES (فاتورة استهلاك كهرباء - fldTransType = 41)
+// ========================================================
+
+// GET /api/electricity-bills - List electricity invoices
+app.get('/api/electricity-bills', async (req, res) => {
+  const isConnected = globalPool !== null && globalPool.connected;
+  if (!isConnected) {
+    return res.json({ success: true, source: "mock", data: [] });
+  }
+
+  const { branchId, fromDate, toDate, search } = req.query;
+
+  try {
+    const request = globalPool.request();
+    let whereClauses = ["t.fldTransType = 41"];
+
+    if (branchId && parseInt(branchId) > 0) {
+      request.input('branchId', sql.Int, parseInt(branchId));
+      whereClauses.push("t.fldBranchNo = @branchId");
+    }
+
+    if (fromDate) {
+      request.input('fromDate', sql.NVarChar, fromDate);
+      whereClauses.push("CONVERT(VARCHAR(10), t.fldDate, 120) >= @fromDate");
+    }
+
+    if (toDate) {
+      request.input('toDate', sql.NVarChar, toDate);
+      whereClauses.push("CONVERT(VARCHAR(10), t.fldDate, 120) <= @toDate");
+    }
+
+    if (search && search.trim()) {
+      request.input('search', sql.NVarChar, '%' + search.trim() + '%');
+      whereClauses.push("(t.fldDescription LIKE @search OR CAST(t.fldTransNo AS VARCHAR) LIKE @search OR b.fldName LIKE @search)");
+    }
+
+    const query = `
+      SELECT 
+        t.fldID,
+        t.fldTransNo,
+        CONVERT(VARCHAR(10), t.fldDate, 120) AS fldDate,
+        CONVERT(VARCHAR(10), t.fldRefDate, 120) AS fldRefDate,
+        t.fldBranchNo,
+        ISNULL(b.fldName, N'الفرع الرئيسي') AS fldBranchName,
+        RTRIM(LTRIM(ISNULL(t.fldDescription, ''))) AS fldDescription,
+        t.fldType,
+        CASE t.fldType WHEN 1 THEN N'نقدا' WHEN 3 THEN N'اجل' ELSE N'اجل' END AS fldTypeName,
+        ISNULL(t.fldVoisherTotal, 0) AS fldVoisherTotal,
+        ISNULL(t.fldAccTotal, 0) AS fldAccTotal,
+        ISNULL(m.fldName, N'ريال يمني1') AS fldMoneyName,
+        RTRIM(LTRIM(ISNULL(m.fldsymbol, 'YR'))) AS fldsymbol,
+        ISNULL(t.fldVoisherMoneyID, 3) AS fldVoisherMoneyID,
+        ISNULL(t.fldVoisherMoneyValue, 1.0) AS fldVoisherMoneyValue,
+        ISNULL(t.fldRefNo, 0) AS fldRefNo,
+        t.fldOK,
+        t.fldClosed,
+        t.fldUserID,
+        ISNULL(u.fldName, N'المدير') AS fldUserName,
+        ISNULL(acc.fldName, N'ايراد خدمة الكهرباء') AS fldAccBoxName,
+        ISNULL((SELECT SUM(e.fldCleaningFees) FROM dbo.tblElectricitybill e WHERE e.fldTransID = t.fldID), 0) AS fldTotalCleaningFees,
+        ISNULL((SELECT SUM(e.fldLocalFees) FROM dbo.tblElectricitybill e WHERE e.fldTransID = t.fldID), 0) AS fldTotalLocalFees,
+        ISNULL((SELECT SUM(e.fldServicesCostElectricity) FROM dbo.tblElectricitybill e WHERE e.fldTransID = t.fldID), 0) AS fldTotalServicesCost,
+        ISNULL((SELECT SUM(e.fldFuel) FROM dbo.tblElectricitybill e WHERE e.fldTransID = t.fldID), 0) AS fldTotalFuel,
+        ISNULL((SELECT SUM(e.fldlTaxTota_D) FROM dbo.tblElectricitybill e WHERE e.fldTransID = t.fldID), 0) AS fldTotalTax,
+        (SELECT COUNT(*) FROM dbo.tblElectricitybill e WHERE e.fldTransID = t.fldID) AS fldLinesCount
+      FROM dbo.tblTransAction t
+      LEFT JOIN dbo.tblBranchList b ON t.fldBranchNo = b.fldID
+      LEFT JOIN dbo.tblMoney m ON t.fldVoisherMoneyID = m.fldID
+      LEFT JOIN dbo.tblUser u ON t.fldUserID = u.fldID
+      LEFT JOIN dbo.tblAccount acc ON t.fldVoisherAccID = acc.fldID
+      WHERE ` + whereClauses.join(' AND ') + `
+      ORDER BY t.fldTransNo DESC, t.fldDate DESC
+    `;
+
+    const result = await request.query(query);
+    res.json({ success: true, source: "database", data: result.recordset });
+  } catch (err) {
+    console.error("Error fetching electricity bills:", err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// GET /api/electricity-bills/shops-template - Get active shops ready with last meter readings
+app.get('/api/electricity-bills/shops-template', async (req, res) => {
+  const isConnected = globalPool !== null && globalPool.connected;
+  if (!isConnected) {
+    return res.json({ success: true, source: "mock", data: [] });
+  }
+
+  const { branchId } = req.query;
+
+  try {
+    const request = globalPool.request();
+    let whereClause = "(s.fldIsActive = 1 OR s.fldIsActive IS NULL)";
+
+    if (branchId && parseInt(branchId) > 0) {
+      request.input('branchId', sql.Int, parseInt(branchId));
+      whereClause += " AND s.fldBranchNo = @branchId";
+    }
+
+    const query = `
+      SELECT 
+        s.fldID AS fldShopID,
+        s.fldShopNumber,
+        RTRIM(LTRIM(ISNULL(s.fldShopName, ''))) AS fldShopName,
+        RTRIM(LTRIM(ISNULL(s.fldCustomerName, ''))) AS fldCustomerName,
+        RTRIM(LTRIM(ISNULL(s.fldtheCounter, ''))) AS fldtheCounter,
+        ISNULL(s.UnitCost, 600) AS fldUnitCost,
+        ISNULL((
+          SELECT TOP 1 ISNULL(prev.fldCurrentreading, 0)
+          FROM dbo.tblElectricitybill prev
+          JOIN dbo.tblTransAction t ON prev.fldTransID = t.fldID
+          WHERE prev.fldShopID = s.fldID AND t.fldTransType = 41
+          ORDER BY t.fldDate DESC, t.fldTransNo DESC, prev.fldID DESC
+        ), 0) AS fldPreviousReading,
+        ISNULL((
+          SELECT TOP 1 ISNULL(prev.fldCurrentreading, 0)
+          FROM dbo.tblElectricitybill prev
+          JOIN dbo.tblTransAction t ON prev.fldTransID = t.fldID
+          WHERE prev.fldShopID = s.fldID AND t.fldTransType = 41
+          ORDER BY t.fldDate DESC, t.fldTransNo DESC, prev.fldID DESC
+        ), 0) AS fldCurrentreading,
+        0 AS fldUnits,
+        0 AS fldTotalPrice,
+        ISNULL(s.ServicesCostElectricity, 1000) AS fldServicesCostElectricity,
+        ISNULL(s.CleaningFees, 0) AS fldCleaningFees,
+        ISNULL(s.LocalFees, 0) AS fldLocalFees,
+        ISNULL(s.Fuel, 0) AS fldFuel,
+        ISNULL(s.ServicesTax, 0) AS fldlTaxTota_D,
+        0 AS fldDebit,
+        ISNULL(s.fldIsActive, 1) AS fldIsActive,
+        ISNULL(s.fldfloor, 1) AS fldfloor,
+        ISNULL(s.fldBranchNo, 1) AS fldBranchNo,
+        s.fldAccID,
+        ISNULL(a.fldName, s.fldCustomerName) AS fldAccountName
+      FROM dbo.tblShopList s
+      LEFT JOIN dbo.tblAccount a ON s.fldAccID = a.fldID
+      WHERE ` + whereClause + `
+      ORDER BY s.fldfloor, s.fldShopNumber, s.fldID
+    `;
+
+    const result = await request.query(query);
+    res.json({ success: true, data: result.recordset });
+  } catch (err) {
+    console.error("Error fetching electricity shops template:", err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// GET /api/electricity-bills/next-no - Get next electricity bill transaction number
+app.get('/api/electricity-bills/next-no', async (req, res) => {
+  const isConnected = globalPool !== null && globalPool.connected;
+  if (!isConnected) {
+    return res.json({ success: true, nextNo: 1 });
+  }
+
+  try {
+    const result = await globalPool.request().query(
+      "SELECT ISNULL(MAX(fldTransNo), 0) + 1 AS nextNo FROM dbo.tblTransAction WHERE fldTransType = 41"
+    );
+    res.json({ success: true, nextNo: result.recordset[0].nextNo });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// GET /api/electricity-bills/:id - Get electricity invoice header and lines
+app.get('/api/electricity-bills/:id', async (req, res) => {
+  const id = parseInt(req.params.id);
+  const isConnected = globalPool !== null && globalPool.connected;
+  if (!isConnected) {
+    return res.status(404).json({ success: false, error: "قاعدة البيانات غير متصلة." });
+  }
+
+  try {
+    const request = globalPool.request();
+    request.input('id', sql.Int, id);
+
+    // 1. Header
+    const hdrRes = await request.query(`
+      SELECT 
+        t.fldID,
+        t.fldTransNo,
+        CONVERT(VARCHAR(10), t.fldDate, 120) AS fldDate,
+        CONVERT(VARCHAR(10), t.fldRefDate, 120) AS fldRefDate,
+        t.fldBranchNo,
+        ISNULL(b.fldName, N'الفرع الرئيسي') AS fldBranchName,
+        RTRIM(LTRIM(ISNULL(t.fldDescription, ''))) AS fldDescription,
+        t.fldType,
+        ISNULL(t.fldVoisherTotal, 0) AS fldVoisherTotal,
+        ISNULL(t.fldAccTotal, 0) AS fldAccTotal,
+        ISNULL(t.fldVoisherMoneyID, 3) AS fldVoisherMoneyID,
+        ISNULL(t.fldVoisherMoneyValue, 1.0) AS fldVoisherMoneyValue,
+        ISNULL(m.fldName, N'ريال يمني1') AS fldMoneyName,
+        RTRIM(LTRIM(ISNULL(m.fldsymbol, 'YR'))) AS fldsymbol,
+        ISNULL(t.fldRefNo, 0) AS fldRefNo,
+        t.fldOK,
+        t.fldClosed,
+        t.fldUserID,
+        ISNULL(t.fldVoisherAccID, 265) AS fldVoisherAccID,
+        ISNULL(acc.fldName, N'ايراد خدمة الكهرباء') AS fldAccBoxName
+      FROM dbo.tblTransAction t
+      LEFT JOIN dbo.tblBranchList b ON t.fldBranchNo = b.fldID
+      LEFT JOIN dbo.tblMoney m ON t.fldVoisherMoneyID = m.fldID
+      LEFT JOIN dbo.tblAccount acc ON t.fldVoisherAccID = acc.fldID
+      WHERE t.fldID = @id AND t.fldTransType = 41
+    `);
+
+    if (!hdrRes.recordset || hdrRes.recordset.length === 0) {
+      return res.status(404).json({ success: false, error: "فاتورة الكهرباء غير موجودة." });
+    }
+
+    const header = hdrRes.recordset[0];
+
+    // 2. Detail Lines
+    const linesReq = globalPool.request();
+    linesReq.input('id', sql.Int, id);
+    const linesRes = await linesReq.query(`
+      SELECT 
+        e.fldID,
+        e.fldTransID,
+        e.fldShopID,
+        s.fldShopNumber,
+        RTRIM(LTRIM(ISNULL(s.fldShopName, ''))) AS fldShopName,
+        RTRIM(LTRIM(ISNULL(s.fldCustomerName, ''))) AS fldCustomerName,
+        RTRIM(LTRIM(ISNULL(s.fldtheCounter, ''))) AS fldtheCounter,
+        ISNULL(e.fldUnitCost, 600) AS fldUnitCost,
+        ISNULL(e.fldPreviousReading, 0) AS fldPreviousReading,
+        ISNULL(e.fldCurrentreading, 0) AS fldCurrentreading,
+        ISNULL(e.fldUnits, 0) AS fldUnits,
+        ISNULL(e.fldTotalPrice, 0) AS fldTotalPrice,
+        ISNULL(e.fldServicesCostElectricity, 1000) AS fldServicesCostElectricity,
+        ISNULL(e.fldCleaningFees, 0) AS fldCleaningFees,
+        ISNULL(e.fldLocalFees, 0) AS fldLocalFees,
+        ISNULL(e.fldFuel, 0) AS fldFuel,
+        ISNULL(e.fldlTaxTota_D, 0) AS fldlTaxTota_D,
+        ISNULL(e.fldDebit, 0) AS fldDebit,
+        ISNULL(s.fldfloor, 1) AS fldfloor,
+        ISNULL(s.fldIsActive, 1) AS fldIsActive,
+        s.fldAccID,
+        ISNULL(a.fldName, s.fldCustomerName) AS fldAccountName
+      FROM dbo.tblElectricitybill e
+      LEFT JOIN dbo.tblShopList s ON e.fldShopID = s.fldID
+      LEFT JOIN dbo.tblAccount a ON s.fldAccID = a.fldID
+      WHERE e.fldTransID = @id
+      ORDER BY s.fldfloor, s.fldShopNumber, e.fldID
+    `);
+
+    header.lines = linesRes.recordset;
+    res.json({ success: true, data: header });
+  } catch (err) {
+    console.error("Error fetching electricity bill details:", err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /api/electricity-bills - Create new electricity invoice
+app.post('/api/electricity-bills', async (req, res) => {
+  const isConnected = globalPool !== null && globalPool.connected;
+  if (!isConnected) {
+    return res.status(500).json({ success: false, error: "قاعدة البيانات غير متصلة." });
+  }
+
+  const {
+    fldBranchNo,
+    fldDate,
+    fldRefDate,
+    fldDescription,
+    fldType,
+    fldRefNo,
+    fldMoneyID,
+    fldMoneyValue,
+    fldVoisherAccID,
+    fldUserID,
+    lines
+  } = req.body;
+
+  try {
+    const noRes = await globalPool.request().query(
+      "SELECT ISNULL(MAX(fldTransNo), 0) + 1 AS nextNo FROM dbo.tblTransAction WHERE fldTransType = 41"
+    );
+    const nextTransNo = req.body.fldTransNo || noRes.recordset[0].nextNo;
+
+    const idRes = await globalPool.request().query(
+      "SELECT ISNULL(MAX(fldID), 0) + 1 AS nextId FROM dbo.tblTransAction"
+    );
+    const newTransID = idRes.recordset[0].nextId;
+
+    let totalAmount = 0;
+    if (lines && Array.isArray(lines)) {
+      lines.forEach(l => {
+        const units = Math.max(0, (parseFloat(l.fldCurrentreading) || 0) - (parseFloat(l.fldPreviousReading) || 0));
+        const unitCost = parseFloat(l.fldUnitCost) || 0;
+        const total = (units * unitCost) + 
+                      (parseFloat(l.fldServicesCostElectricity) || 0) + 
+                      (parseFloat(l.fldCleaningFees) || 0) + 
+                      (parseFloat(l.fldLocalFees) || 0) + 
+                      (parseFloat(l.fldFuel) || 0) + 
+                      (parseFloat(l.fldlTaxTota_D) || 0);
+        totalAmount += total;
+      });
+    }
+
+    const yearVal = fldDate ? new Date(fldDate).getFullYear().toString().substr(-2) : '26';
+
+    const transReq = globalPool.request();
+    transReq.input('fldID', sql.Int, newTransID);
+    transReq.input('fldBranchNo', sql.Int, parseInt(fldBranchNo) || 1);
+    transReq.input('fldYaer', sql.NVarChar, yearVal);
+    transReq.input('fldUserID', sql.Int, parseInt(fldUserID) || 1);
+    transReq.input('fldTransType', sql.Int, 41);
+    transReq.input('fldType', sql.Int, parseInt(fldType) || 3);
+    transReq.input('fldTransNo', sql.Int, nextTransNo);
+    transReq.input('fldDate', sql.NVarChar, fldDate || new Date().toISOString().split('T')[0]);
+    transReq.input('fldRefDate', sql.NVarChar, fldRefDate || fldDate || new Date().toISOString().split('T')[0]);
+    transReq.input('fldDescription', sql.NVarChar, fldDescription || 'فاتورة استهلاك كهرباء');
+    transReq.input('fldRefNo', sql.Int, parseInt(fldRefNo) || 0);
+    transReq.input('fldVoisherAccID', sql.Int, parseInt(fldVoisherAccID) || 265);
+    transReq.input('fldVoisherMoneyID', sql.Int, parseInt(fldMoneyID) || 3);
+    transReq.input('fldVoisherMoneyValue', sql.Float, parseFloat(fldMoneyValue) || 1.0);
+    transReq.input('fldVoisherTotal', sql.Float, totalAmount);
+    transReq.input('fldAccTotal', sql.Float, totalAmount);
+
+    const insertTransQ = `
+      INSERT INTO dbo.tblTransAction (
+        fldID, fldBranchNo, fldYaer, fldUserID, fldTransType, fldType, fldTransNo, fldBookNO,
+        fldDate, fldRefDate, fldDescription, fldRefNo, fldOrderNO, fldDescription2,
+        fldSalespersonID, fldCenterCostID, fldName, fldhname, fldcodeno, fldagince,
+        fldCompanyID, picID, fldVoisherAccID, fldVoisherMoneyID, fldVoisherMoneyValue,
+        fldVoisherTotal, fldCostTotal, fldAccNumberID, fldAccMoneyID, fldAccMoneyValue,
+        fldAccTotal, fldDiscountAccID, fldDiscountTotal, fldTaxAccID, fldTaxTota,
+        fldlAccTax, fldstoreID, fldstoreID2, fldDateINSERT, fldprintCount,
+        fldUPDATECount, fldOK, fldClosed, fldchanging
+      ) VALUES (
+        @fldID, @fldBranchNo, @fldYaer, @fldUserID, @fldTransType, @fldType, @fldTransNo, 0,
+        @fldDate, @fldRefDate, @fldDescription, @fldRefNo, 0, '',
+        0, 0, '', '', '', '',
+        0, 0, @fldVoisherAccID, @fldVoisherMoneyID, @fldVoisherMoneyValue,
+        @fldVoisherTotal, 0, 0, @fldVoisherMoneyID, @fldVoisherMoneyValue,
+        @fldAccTotal, 0, 0, 0, 0,
+        0, 0, 0, GETDATE(), 0,
+        0, 1, 0, 0
+      );
+    `;
+
+    await transReq.query(insertTransQ);
+
+    if (lines && Array.isArray(lines) && lines.length > 0) {
+      for (const line of lines) {
+        const lineReq = globalPool.request();
+        const prev = parseFloat(line.fldPreviousReading) || 0;
+        const curr = parseFloat(line.fldCurrentreading) || 0;
+        const units = Math.max(0, curr - prev);
+        const unitCost = parseFloat(line.fldUnitCost) || 600;
+        const totalPrice = units * unitCost;
+
+        lineReq.input('fldTransID', sql.Int, newTransID);
+        lineReq.input('fldShopID', sql.Int, parseInt(line.fldShopID) || 0);
+        lineReq.input('fldPreviousReading', sql.Float, prev);
+        lineReq.input('fldCurrentreading', sql.Float, curr);
+        lineReq.input('fldUnits', sql.Float, units);
+        lineReq.input('fldUnitCost', sql.Int, parseInt(unitCost));
+        lineReq.input('fldTotalPrice', sql.Float, totalPrice);
+        lineReq.input('fldServicesCostElectricity', sql.Float, parseFloat(line.fldServicesCostElectricity) || 0);
+        lineReq.input('fldCleaningFees', sql.Float, parseFloat(line.fldCleaningFees) || 0);
+        lineReq.input('fldLocalFees', sql.Float, parseFloat(line.fldLocalFees) || 0);
+        lineReq.input('fldFuel', sql.Float, parseFloat(line.fldFuel) || 0);
+        lineReq.input('fldlTaxTota_D', sql.Float, parseFloat(line.fldlTaxTota_D) || 0);
+        lineReq.input('fldDebit', sql.Float, parseFloat(line.fldDebit) || 0);
+
+        await lineReq.query(`
+          INSERT INTO dbo.tblElectricitybill (
+            fldTransID, fldShopID, fldPreviousReading, fldCurrentreading, fldUnits,
+            fldUnitCost, fldTotalPrice, fldServicesCostElectricity, fldCleaningFees,
+            fldLocalFees, fldFuel, fldlTaxTota_D, fldDebit
+          ) VALUES (
+            @fldTransID, @fldShopID, @fldPreviousReading, @fldCurrentreading, @fldUnits,
+            @fldUnitCost, @fldTotalPrice, @fldServicesCostElectricity, @fldCleaningFees,
+            @fldLocalFees, @fldFuel, @fldlTaxTota_D, @fldDebit
+          )
+        `);
+      }
+    }
+
+    res.json({ 
+      success: true, 
+      message: `تم حفظ فاتورة استهلاك الكهرباء رقم (${nextTransNo}) بنجاح!`,
+      data: { id: newTransID, fldTransNo: nextTransNo, fldVoisherTotal: totalAmount }
+    });
+  } catch (err) {
+    console.error("Error creating electricity bill:", err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// PUT /api/electricity-bills/:id - Update electricity invoice
+app.put('/api/electricity-bills/:id', async (req, res) => {
+  const id = parseInt(req.params.id);
+  const isConnected = globalPool !== null && globalPool.connected;
+  if (!isConnected) {
+    return res.status(500).json({ success: false, error: "قاعدة البيانات غير متصلة." });
+  }
+
+  const {
+    fldBranchNo,
+    fldDate,
+    fldRefDate,
+    fldDescription,
+    fldType,
+    fldRefNo,
+    fldMoneyID,
+    fldMoneyValue,
+    fldVoisherAccID,
+    lines
+  } = req.body;
+
+  try {
+    let totalAmount = 0;
+    if (lines && Array.isArray(lines)) {
+      lines.forEach(l => {
+        const units = Math.max(0, (parseFloat(l.fldCurrentreading) || 0) - (parseFloat(l.fldPreviousReading) || 0));
+        const unitCost = parseFloat(l.fldUnitCost) || 0;
+        const total = (units * unitCost) + 
+                      (parseFloat(l.fldServicesCostElectricity) || 0) + 
+                      (parseFloat(l.fldCleaningFees) || 0) + 
+                      (parseFloat(l.fldLocalFees) || 0) + 
+                      (parseFloat(l.fldFuel) || 0) + 
+                      (parseFloat(l.fldlTaxTota_D) || 0);
+        totalAmount += total;
+      });
+    }
+
+    const transReq = globalPool.request();
+    transReq.input('id', sql.Int, id);
+    transReq.input('fldBranchNo', sql.Int, parseInt(fldBranchNo) || 1);
+    transReq.input('fldDate', sql.NVarChar, fldDate);
+    transReq.input('fldRefDate', sql.NVarChar, fldRefDate || fldDate);
+    transReq.input('fldDescription', sql.NVarChar, fldDescription || 'فاتورة استهلاك كهرباء');
+    transReq.input('fldType', sql.Int, parseInt(fldType) || 3);
+    transReq.input('fldRefNo', sql.Int, parseInt(fldRefNo) || 0);
+    transReq.input('fldVoisherAccID', sql.Int, parseInt(fldVoisherAccID) || 265);
+    transReq.input('fldVoisherMoneyID', sql.Int, parseInt(fldMoneyID) || 3);
+    transReq.input('fldVoisherMoneyValue', sql.Float, parseFloat(fldMoneyValue) || 1.0);
+    transReq.input('fldVoisherTotal', sql.Float, totalAmount);
+    transReq.input('fldAccTotal', sql.Float, totalAmount);
+
+    await transReq.query(`
+      UPDATE dbo.tblTransAction SET
+        fldBranchNo = @fldBranchNo,
+        fldDate = @fldDate,
+        fldRefDate = @fldRefDate,
+        fldDescription = @fldDescription,
+        fldType = @fldType,
+        fldRefNo = @fldRefNo,
+        fldVoisherAccID = @fldVoisherAccID,
+        fldVoisherMoneyID = @fldVoisherMoneyID,
+        fldVoisherMoneyValue = @fldVoisherMoneyValue,
+        fldVoisherTotal = @fldVoisherTotal,
+        fldAccTotal = @fldAccTotal,
+        fldDateUPDATE = GETDATE(),
+        fldUPDATECount = ISNULL(fldUPDATECount, 0) + 1
+      WHERE fldID = @id AND fldTransType = 41
+    `);
+
+    const delReq = globalPool.request();
+    delReq.input('id', sql.Int, id);
+    await delReq.query("DELETE FROM dbo.tblElectricitybill WHERE fldTransID = @id");
+
+    if (lines && Array.isArray(lines) && lines.length > 0) {
+      for (const line of lines) {
+        const lineReq = globalPool.request();
+        const prev = parseFloat(line.fldPreviousReading) || 0;
+        const curr = parseFloat(line.fldCurrentreading) || 0;
+        const units = Math.max(0, curr - prev);
+        const unitCost = parseFloat(line.fldUnitCost) || 600;
+        const totalPrice = units * unitCost;
+
+        lineReq.input('fldTransID', sql.Int, id);
+        lineReq.input('fldShopID', sql.Int, parseInt(line.fldShopID) || 0);
+        lineReq.input('fldPreviousReading', sql.Float, prev);
+        lineReq.input('fldCurrentreading', sql.Float, curr);
+        lineReq.input('fldUnits', sql.Float, units);
+        lineReq.input('fldUnitCost', sql.Int, parseInt(unitCost));
+        lineReq.input('fldTotalPrice', sql.Float, totalPrice);
+        lineReq.input('fldServicesCostElectricity', sql.Float, parseFloat(line.fldServicesCostElectricity) || 0);
+        lineReq.input('fldCleaningFees', sql.Float, parseFloat(line.fldCleaningFees) || 0);
+        lineReq.input('fldLocalFees', sql.Float, parseFloat(line.fldLocalFees) || 0);
+        lineReq.input('fldFuel', sql.Float, parseFloat(line.fldFuel) || 0);
+        lineReq.input('fldlTaxTota_D', sql.Float, parseFloat(line.fldlTaxTota_D) || 0);
+        lineReq.input('fldDebit', sql.Float, parseFloat(line.fldDebit) || 0);
+
+        await lineReq.query(`
+          INSERT INTO dbo.tblElectricitybill (
+            fldTransID, fldShopID, fldPreviousReading, fldCurrentreading, fldUnits,
+            fldUnitCost, fldTotalPrice, fldServicesCostElectricity, fldCleaningFees,
+            fldLocalFees, fldFuel, fldlTaxTota_D, fldDebit
+          ) VALUES (
+            @fldTransID, @fldShopID, @fldPreviousReading, @fldCurrentreading, @fldUnits,
+            @fldUnitCost, @fldTotalPrice, @fldServicesCostElectricity, @fldCleaningFees,
+            @fldLocalFees, @fldFuel, @fldlTaxTota_D, @fldDebit
+          )
+        `);
+      }
+    }
+
+    res.json({ success: true, message: "تم تحديث وحفظ بيانات فاتورة استهلاك الكهرباء بنجاح!" });
+  } catch (err) {
+    console.error("Error updating electricity bill:", err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// DELETE /api/electricity-bills/:id - Delete electricity invoice
+app.delete('/api/electricity-bills/:id', async (req, res) => {
+  const id = parseInt(req.params.id);
+  const isConnected = globalPool !== null && globalPool.connected;
+  if (!isConnected) {
+    return res.status(500).json({ success: false, error: "قاعدة البيانات غير متصلة." });
+  }
+
+  try {
+    const delLinesReq = globalPool.request();
+    delLinesReq.input('id', sql.Int, id);
+    await delLinesReq.query("DELETE FROM dbo.tblElectricitybill WHERE fldTransID = @id");
+
+    const delHdrReq = globalPool.request();
+    delHdrReq.input('id', sql.Int, id);
+    await delHdrReq.query("DELETE FROM dbo.tblTransAction WHERE fldID = @id AND fldTransType = 41");
+
+    res.json({ success: true, message: "تم حذف فاتورة استهلاك الكهرباء بنجاح!" });
+  } catch (err) {
+    console.error("Error deleting electricity bill:", err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });

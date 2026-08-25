@@ -904,6 +904,10 @@ async function openTab(tabId, tabTitle, iconClass, colorClass, bypassPermission 
     initRentBillsExplorerTab(tabId);
   } else if (tabTitle.startsWith("فاتورة ايجار:") || tabTitle.includes("فاتورة ايجار شهري جديدة") || tabId.includes("rent-inv-tab") || tabId.includes("menu-40-invoice")) {
     // Already initialized in openRentInvoiceTab
+  } else if (tabTitle === "فاتورة استهلاك كهرباء" || tabTitle === "استعلام فواتير الكهرباء" || tabId === "menu-41" || tabId === "electricity-bills-explorer" || tabId === "menu-41-explorer" || (tabTitle.includes("كهرباء") && !tabId.includes("elec-inv"))) {
+    initElectricityBillsExplorerTab(tabId);
+  } else if (tabTitle.startsWith("فاتورة كهرباء:") || tabTitle.includes("فاتورة استهلاك كهرباء جديدة") || tabId.includes("elec-inv-tab") || tabId.includes("menu-41-invoice")) {
+    // Already initialized in openElectricityInvoiceTab
   } else if (tabTitle.includes("نقاط بيع") || tabTitle.toLowerCase().includes("pos") || tabId === "pos-tab") {
     window.initPosTab(tabId);
   }
@@ -1005,6 +1009,8 @@ function getScreenContent(tabId, tabTitle, iconClass, colorClass) {
   const isSalesInvoice = (tabTitle === "فاتورة مبيعات" || tabTitle === "فاتورة المبيعات" || tabId.includes("menu-30-invoice") || tabId.includes("sale-inv") || (tabTitle.includes("مبيعات") && !tabTitle.includes("عرض") && !tabTitle.includes("استعلام") && !tabTitle.includes("تقارير") && !tabTitle.includes("نقاط") && !tabTitle.includes("مردود"))) || isSalesReturnInvoice;
   const isRentBillsExplorer = (tabTitle === "فاتورة ايجار شهري" || tabTitle === "استعلام فواتير الايجار" || tabId === "menu-40" || tabId === "rent-bills-explorer" || tabId === "menu-40-explorer" || (tabTitle.includes("ايجار") && !tabId.includes("rent-inv"))) && !tabTitle.startsWith("فاتورة ايجار:") && !tabTitle.includes("جديدة");
   const isRentBillInvoice = tabTitle.startsWith("فاتورة ايجار:") || tabTitle.includes("فاتورة ايجار شهري جديدة") || tabId.includes("rent-inv-tab") || tabId.includes("menu-40-invoice");
+  const isElectricityBillsExplorer = (tabTitle === "فاتورة استهلاك كهرباء" || tabTitle === "استعلام فواتير الكهرباء" || tabId === "menu-41" || tabId === "electricity-bills-explorer" || tabId === "menu-41-explorer" || (tabTitle.includes("كهرباء") && !tabId.includes("elec-inv"))) && !tabTitle.startsWith("فاتورة كهرباء:") && !tabTitle.includes("جديدة");
+  const isElectricityBillInvoice = tabTitle.startsWith("فاتورة كهرباء:") || tabTitle.includes("فاتورة استهلاك كهرباء جديدة") || tabId.includes("elec-inv-tab") || tabId.includes("menu-41-invoice");
 
   let bodyHtml = '';
 
@@ -1734,6 +1740,273 @@ function getScreenContent(tabId, tabTitle, iconClass, colorClass) {
           <div style="display: flex; align-items: center; gap: 8px;">
             <label style="font-weight: 800; font-size: 0.95rem; color: #1e3a8a;">الاجمالي المستحق:</label>
             <input type="text" id="rentTotalNetDue-${tabId}" value="0.00" readonly style="width: 140px; height: 34px; padding: 0 10px; text-align: right; background: #e0f2fe; border: 2px solid #0284c7; border-radius: 4px; font-family: monospace; font-weight: 900; font-size: 1.05rem; color: #0369a1;">
+          </div>
+        </div>
+      </div>
+    `;
+  } else if (isElectricityBillsExplorer) {
+    bodyHtml = `
+      <div class="voucher-screen" style="direction: rtl; text-align: right; font-family: var(--font-arabic); display: flex; flex-direction: column; gap: 12px; height: 100%;">
+        <!-- Top Toolbar matching Image 1 -->
+        <div class="accounts-toolbar" style="background-color: #f1f5f9; padding: 8px 15px; border-bottom: 2px solid #cbd5e1; display: flex; gap: 10px; align-items: center; border-radius: 6px; flex-wrap: wrap;">
+          <button class="btn btn-secondary btn-sm" onclick="openElectricityInvoiceTab(null)" style="font-weight: bold; display: flex; align-items: center; gap: 6px;">
+            <i class="fa-solid fa-file-circle-plus" style="color: #10b981; font-size: 1.1rem;"></i> جديد
+          </button>
+          <button class="btn btn-secondary btn-sm" onclick="openEditSelectedElectricityBill('${tabId}')" style="font-weight: bold; display: flex; align-items: center; gap: 6px;">
+            <i class="fa-solid fa-pen-to-square" style="color: #f59e0b; font-size: 1.1rem;"></i> تعديل
+          </button>
+          <button class="btn btn-secondary btn-sm" onclick="loadElectricityBillsList('${tabId}')" style="font-weight: bold; display: flex; align-items: center; gap: 6px;">
+            <i class="fa-solid fa-magnifying-glass" style="color: #0284c7; font-size: 1.1rem;"></i> استعلام
+          </button>
+          <button class="btn btn-secondary btn-sm" onclick="deleteSelectedElectricityBill('${tabId}')" style="font-weight: bold; display: flex; align-items: center; gap: 6px;">
+            <i class="fa-solid fa-trash-can" style="color: #ef4444; font-size: 1.1rem;"></i> حذف
+          </button>
+          <button class="btn btn-secondary btn-sm" onclick="printElectricityBillsList('${tabId}')" style="font-weight: bold; display: flex; align-items: center; gap: 6px;">
+            <i class="fa-solid fa-print" style="color: #475569; font-size: 1.1rem;"></i> طباعة
+          </button>
+          <button class="btn btn-secondary btn-sm" onclick="exportElectricityBillsListExcel('${tabId}')" style="font-weight: bold; display: flex; align-items: center; gap: 6px;">
+            <i class="fa-solid fa-file-excel" style="color: #10b981; font-size: 1.1rem;"></i> تصدير XLS
+          </button>
+        </div>
+
+        <!-- Filter Row matching Image 1 -->
+        <div style="background: #ffffff; padding: 10px 16px; border: 1px solid #cbd5e1; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; gap: 15px; flex-wrap: wrap;">
+          <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <label style="font-weight: bold; font-size: 0.85rem; color: #334155;">الفرع:</label>
+              <select id="elecBranchFilter-${tabId}" onchange="loadElectricityBillsList('${tabId}')" style="padding: 4px 10px; border: 1px solid #94a3b8; border-radius: 4px; font-weight: bold; font-family: var(--font-arabic);">
+              </select>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <label style="font-weight: bold; font-size: 0.85rem; color: #334155;">من تاريخ:</label>
+              <input type="date" id="elecFromDate-${tabId}" style="padding: 4px 8px; border: 1px solid #94a3b8; border-radius: 4px; font-family: monospace;">
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <label style="font-weight: bold; font-size: 0.85rem; color: #334155;">الى تاريخ:</label>
+              <input type="date" id="elecToDate-${tabId}" style="padding: 4px 8px; border: 1px solid #94a3b8; border-radius: 4px; font-family: monospace;">
+            </div>
+
+            <button type="button" onclick="loadElectricityBillsList('${tabId}')" class="btn btn-primary btn-sm" style="font-weight: bold;">
+              <i class="fa-solid fa-filter"></i> تطبيق الفلتر
+            </button>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <button type="button" onclick="printElectricityBillsList('${tabId}')" style="background: #f1f5f9; border: 1px solid #cbd5e1; padding: 4px 12px; border-radius: 4px; font-weight: bold; font-size: 0.82rem; cursor: pointer;">
+              طباعة الفواتير
+            </button>
+            <button type="button" onclick="showToast('حركة المتغيرات قيد التشغيل', 'info')" style="background: #f1f5f9; border: 1px solid #cbd5e1; padding: 4px 12px; border-radius: 4px; font-weight: bold; font-size: 0.82rem; cursor: pointer;">
+              حركة المتغيرات
+            </button>
+            <label style="font-size: 0.82rem; font-weight: bold; color: #475569; display: flex; align-items: center; gap: 4px; cursor: pointer;">
+              <input type="checkbox"> الطباعة مباشره
+            </label>
+          </div>
+        </div>
+
+        <!-- Search Input -->
+        <div style="padding: 0 5px;">
+          <input type="text" id="elecSearchInput-${tabId}" oninput="loadElectricityBillsList('${tabId}')" placeholder="بحث سريع برقم الفاتورة، البيان، أو الفرع..." style="width: 100%; max-width: 400px; padding: 6px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-family: var(--font-arabic); font-size: 0.85rem;">
+        </div>
+
+        <!-- Explorer Table matching Image 1 -->
+        <div class="accounts-table-container" style="flex: 1; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; overflow: auto;">
+          <table id="elecBillsTable-${tabId}" class="accounts-table" style="width: 100%; border-collapse: collapse; font-size: 0.82rem; text-align: center;">
+            <thead>
+              <tr style="background: #f8fafc; border-bottom: 2px solid #cbd5e1; color: #334155; font-weight: 800;">
+                <th style="padding: 8px 6px; width: 55px;">الرقم</th>
+                <th style="padding: 8px 8px; width: 95px;">التاريخ</th>
+                <th style="padding: 8px 12px; width: 120px;">المركز المالي</th>
+                <th style="padding: 8px 14px; text-align: right;">البيان</th>
+                <th style="padding: 8px 6px; width: 50px;">مرحل</th>
+                <th style="padding: 8px 10px; width: 120px; text-align: right;">الاجمالي</th>
+                <th style="padding: 8px 6px; width: 50px;">العملة</th>
+                <th style="padding: 8px 8px; width: 70px;">نظافة</th>
+                <th style="padding: 8px 8px; width: 70px;">محلي</th>
+                <th style="padding: 8px 8px; width: 75px;">خدمات</th>
+                <th style="padding: 8px 8px; width: 70px;">محروقات</th>
+                <th style="padding: 8px 8px; width: 70px;">م ضريبه</th>
+                <th style="padding: 8px 6px; width: 60px;">النوع</th>
+                <th style="padding: 8px 6px; width: 65px;">رقم ID</th>
+                <th style="padding: 8px 12px; text-align: right;">نوع الحركة</th>
+                <th style="padding: 8px 8px; width: 80px;">اسم العملة</th>
+                <th style="padding: 8px 6px; width: 50px;">مغلق</th>
+              </tr>
+            </thead>
+            <tbody id="elecBillsTableBody-${tabId}">
+              <!-- Loaded dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+  } else if (isElectricityBillInvoice) {
+    bodyHtml = `
+      <div class="voucher-screen" style="direction: rtl; text-align: right; font-family: var(--font-arabic); display: flex; flex-direction: column; gap: 12px; height: 100%;">
+        <input type="hidden" id="elecTransId-${tabId}" value="">
+
+        <!-- Top Toolbar matching Image 2 -->
+        <div class="accounts-toolbar" style="background-color: #f1f5f9; padding: 8px 15px; border-bottom: 2px solid #cbd5e1; display: flex; gap: 10px; align-items: center; border-radius: 6px; flex-wrap: wrap;">
+          <button class="btn btn-primary btn-sm" onclick="saveElectricityInvoice('${tabId}')" style="font-weight: bold; display: flex; align-items: center; gap: 6px;">
+            <i class="fa-solid fa-floppy-disk"></i> حفظ
+          </button>
+          <button class="btn btn-info btn-sm" onclick="saveAndPrintElectricityInvoice('${tabId}')" style="font-weight: bold; display: flex; align-items: center; gap: 6px;">
+            <i class="fa-solid fa-print"></i> حفظ طباعه
+          </button>
+          <button class="btn btn-secondary btn-sm" onclick="loadShopsTemplateIntoElecInvoice('${tabId}')" style="font-weight: bold; display: flex; align-items: center; gap: 6px;">
+            <i class="fa-solid fa-copy"></i> نسخه من
+          </button>
+          <button class="btn btn-danger btn-sm" onclick="clearElectricityInvoiceLines('${tabId}')" style="font-weight: bold; display: flex; align-items: center; gap: 6px;">
+            <i class="fa-solid fa-trash-can"></i> حذف الكشف
+          </button>
+          <button class="btn btn-secondary btn-sm" onclick="closeTab('${tabId}')" style="font-weight: bold; display: flex; align-items: center; gap: 6px;">
+            <i class="fa-solid fa-xmark"></i> إغلاق
+          </button>
+        </div>
+
+        <!-- Top Form Fields matching Image 2 -->
+        <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 14px; display: flex; flex-direction: column; gap: 10px;">
+          
+          <div style="display: grid; grid-template-columns: 200px 1fr; gap: 15px;">
+            <!-- Side Actions -->
+            <div style="display: flex; flex-direction: column; gap: 6px; border-left: 1px solid #e2e8f0; padding-left: 15px;">
+              <button type="button" onclick="clearElectricityInvoiceLines('${tabId}')" style="padding: 5px 10px; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 4px; font-weight: bold; font-size: 0.8rem; cursor: pointer; text-align: center;">
+                حذف الكشف
+              </button>
+              <button type="button" onclick="showToast('اصدار كشف استهلاك قيد التفعيل', 'info')" style="padding: 5px 10px; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 4px; font-weight: bold; font-size: 0.8rem; cursor: pointer; text-align: center;">
+                اصدار كشف استهلاك
+              </button>
+              <button type="button" onclick="showToast('اصدار فاتورة فردية قيد التفعيل', 'info')" style="padding: 5px 10px; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 4px; font-weight: bold; font-size: 0.8rem; cursor: pointer; text-align: center;">
+                اصدار فاتورة فرديه
+              </button>
+              <button type="button" onclick="calculateElectricityInvoiceTotals('${tabId}')" style="padding: 5px 10px; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 4px; font-weight: bold; font-size: 0.8rem; cursor: pointer; text-align: center;">
+                تحديث الرصيد
+              </button>
+              <label style="font-size: 0.78rem; font-weight: bold; color: #475569; display: flex; align-items: center; gap: 5px; cursor: pointer; margin-top: 4px;">
+                <input type="checkbox"> الطباعة مباشره
+              </label>
+            </div>
+
+            <!-- Main Fields Grid -->
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+              <!-- Row 1: Branch, Pay Type, Date, Number, Money, Rate -->
+              <div style="display: grid; grid-template-columns: 1.3fr 0.9fr 1.1fr 0.7fr 1.1fr 0.9fr; gap: 8px; align-items: center;">
+                <div>
+                  <label style="font-size: 0.78rem; font-weight: bold; color: #334155; display: block; margin-bottom: 2px;">الفرع:</label>
+                  <select id="elecHdrBranch-${tabId}" style="width: 100%; height: 30px; padding: 0 6px; border: 1px solid #94a3b8; border-radius: 4px; font-weight: bold; font-family: var(--font-arabic); font-size: 0.85rem;">
+                  </select>
+                </div>
+                <div>
+                  <label style="font-size: 0.78rem; font-weight: bold; color: #334155; display: block; margin-bottom: 2px;">طريقة الدفع:</label>
+                  <select id="elecHdrType-${tabId}" style="width: 100%; height: 30px; padding: 0 6px; border: 1px solid #94a3b8; border-radius: 4px; font-weight: bold; font-family: var(--font-arabic); font-size: 0.85rem;">
+                    <option value="3">اجل</option>
+                    <option value="1">نقدا</option>
+                  </select>
+                </div>
+                <div>
+                  <label style="font-size: 0.78rem; font-weight: bold; color: #334155; display: block; margin-bottom: 2px;">التاريخ:</label>
+                  <input type="date" id="elecHdrDate-${tabId}" style="width: 100%; height: 30px; padding: 0 6px; border: 1px solid #94a3b8; border-radius: 4px; font-family: monospace; font-size: 0.85rem;">
+                </div>
+                <div>
+                  <label style="font-size: 0.78rem; font-weight: bold; color: #334155; display: block; margin-bottom: 2px;">الرقم:</label>
+                  <input type="number" id="elecHdrTransNo-${tabId}" value="0" readonly style="width: 100%; height: 30px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 4px; font-family: monospace; font-weight: bold; text-align: center; color: #1e3a8a;">
+                </div>
+                <div>
+                  <label style="font-size: 0.78rem; font-weight: bold; color: #334155; display: block; margin-bottom: 2px;">العملة:</label>
+                  <select id="elecHdrMoney-${tabId}" style="width: 100%; height: 30px; padding: 0 6px; border: 1px solid #94a3b8; border-radius: 4px; font-weight: bold; font-family: var(--font-arabic); font-size: 0.85rem;">
+                    <option value="3">ريال يمني1</option>
+                    <option value="1">دولار امريكي</option>
+                    <option value="2">ريال سعودي</option>
+                  </select>
+                </div>
+                <div>
+                  <label style="font-size: 0.78rem; font-weight: bold; color: #334155; display: block; margin-bottom: 2px;">الصرف:</label>
+                  <input type="number" id="elecHdrRate-${tabId}" value="1560.00" step="0.01" style="width: 100%; height: 30px; padding: 0 6px; border: 1px solid #94a3b8; border-radius: 4px; font-family: monospace; text-align: center; font-size: 0.85rem;">
+                </div>
+              </div>
+
+              <!-- Row 2: Ref No, Ref Date, Cost Center, Revenue Acc -->
+              <div style="display: grid; grid-template-columns: 1fr 1.2fr 1.4fr 1.4fr; gap: 8px; align-items: center;">
+                <div>
+                  <label style="font-size: 0.78rem; font-weight: bold; color: #334155; display: block; margin-bottom: 2px;">رقم المرجع:</label>
+                  <input type="number" id="elecHdrRefNo-${tabId}" value="0" style="width: 100%; height: 30px; padding: 0 6px; border: 1px solid #94a3b8; border-radius: 4px; font-family: monospace; text-align: center; font-size: 0.85rem;">
+                </div>
+                <div>
+                  <label style="font-size: 0.78rem; font-weight: bold; color: #334155; display: block; margin-bottom: 2px;">تاريخ المرجع:</label>
+                  <input type="date" id="elecHdrRefDate-${tabId}" style="width: 100%; height: 30px; padding: 0 6px; border: 1px solid #94a3b8; border-radius: 4px; font-family: monospace; font-size: 0.85rem;">
+                </div>
+                <div>
+                  <label style="font-size: 0.78rem; font-weight: bold; color: #334155; display: block; margin-bottom: 2px;">م. الكلفة:</label>
+                  <select id="elecHdrCenterCost-${tabId}" style="width: 100%; height: 30px; padding: 0 6px; border: 1px solid #94a3b8; border-radius: 4px; font-weight: bold; font-family: var(--font-arabic); font-size: 0.85rem;">
+                    <option value="0">عام</option>
+                  </select>
+                </div>
+                <div>
+                  <label style="font-size: 0.78rem; font-weight: bold; color: #334155; display: block; margin-bottom: 2px;">حساب الايراد:</label>
+                  <select id="elecHdrAccBox-${tabId}" style="width: 100%; height: 30px; padding: 0 6px; border: 1px solid #94a3b8; border-radius: 4px; font-weight: bold; font-family: var(--font-arabic); font-size: 0.85rem;">
+                    <option value="265">ايراد خدمة الكهرباء</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Row 3: Description & Insert Template Button -->
+              <div style="display: flex; gap: 8px; align-items: flex-end;">
+                <div style="flex: 1;">
+                  <label style="font-size: 0.78rem; font-weight: bold; color: #334155; display: block; margin-bottom: 2px;">البيان:</label>
+                  <input type="text" id="elecHdrDesc-${tabId}" value="فاتورة استهلاك كهرباء" style="width: 100%; height: 30px; padding: 0 8px; border: 1px solid #94a3b8; border-radius: 4px; font-family: var(--font-arabic); font-weight: bold; font-size: 0.85rem;">
+                </div>
+                <button type="button" onclick="loadShopsTemplateIntoElecInvoice('${tabId}')" style="height: 32px; padding: 0 14px; background: #0284c7; color: #ffffff; border: none; border-radius: 4px; font-weight: 800; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 4px rgba(2,132,199,0.2);">
+                  <i class="fa-solid fa-file-import"></i> ادراج الكشف
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Detail Lines Table matching Image 2 -->
+        <div class="accounts-table-container" style="flex: 1; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; overflow: auto;">
+          <table class="accounts-table" style="width: 100%; border-collapse: collapse; font-size: 0.8rem; text-align: center;">
+            <thead>
+              <tr style="background: #f8fafc; border-bottom: 2px solid #cbd5e1; color: #334155; font-weight: 800;">
+                <th style="padding: 6px 4px; width: 35px;">نشط</th>
+                <th style="padding: 6px 6px; width: 65px;">رقم المحل</th>
+                <th style="padding: 6px 10px; text-align: right;">اسم المحل</th>
+                <th style="padding: 6px 10px; text-align: right;">اسم المستاجر</th>
+                <th style="padding: 6px 6px; width: 95px;">العداد</th>
+                <th style="padding: 6px 6px; width: 75px;">كلفه الكيلو</th>
+                <th style="padding: 6px 6px; width: 80px;">السابقة</th>
+                <th style="padding: 6px 6px; width: 80px;">الحالية</th>
+                <th style="padding: 6px 6px; width: 75px;">الاستهلاك</th>
+                <th style="padding: 6px 8px; width: 100px; text-align: right;">اجمالي الاستهلاك</th>
+                <th style="padding: 6px 6px; width: 70px;">خدمات</th>
+                <th style="padding: 6px 6px; width: 60px;">نظافة</th>
+                <th style="padding: 6px 6px; width: 60px;">محلي</th>
+                <th style="padding: 6px 6px; width: 60px;">محروقات</th>
+                <th style="padding: 6px 6px; width: 60px;">م ضريبه</th>
+                <th style="padding: 6px 4px; width: 35px;">حذف</th>
+              </tr>
+            </thead>
+            <tbody id="elecLinesTableBody-${tabId}">
+              <!-- Populated dynamically -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Bottom Totals Bar matching Image 2 -->
+        <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; padding: 6px 16px; display: flex; justify-content: flex-end; gap: 20px; align-items: center;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <label style="font-weight: bold; font-size: 0.82rem; color: #334155;">اجمالي الاستهلاك:</label>
+            <input type="text" id="elecTotalUsage-${tabId}" value="0.00" readonly style="width: 120px; height: 30px; padding: 0 8px; text-align: right; background: #ffffff; border: 1px solid #94a3b8; border-radius: 4px; font-family: monospace; font-weight: bold; color: #0f766e;">
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <label style="font-weight: bold; font-size: 0.82rem; color: #334155;">اجمالي الرسوم والخدمات:</label>
+            <input type="text" id="elecTotalFees-${tabId}" value="0.00" readonly style="width: 110px; height: 30px; padding: 0 8px; text-align: right; background: #ffffff; border: 1px solid #94a3b8; border-radius: 4px; font-family: monospace; font-weight: bold; color: #b91c1c;">
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <label style="font-weight: 800; font-size: 0.92rem; color: #1e3a8a;">الاجمالي المستحق (YR):</label>
+            <input type="text" id="elecTotalNetDue-${tabId}" value="0.00" readonly style="width: 150px; height: 32px; padding: 0 10px; text-align: right; background: #e0f2fe; border: 2px solid #0284c7; border-radius: 4px; font-family: monospace; font-weight: 900; font-size: 1rem; color: #0369a1;">
           </div>
         </div>
       </div>
@@ -30219,4 +30492,581 @@ window.saveRentInvoice = async function(tabId, andPrint = false) {
 
 window.saveAndPrintRentInvoice = function(tabId) {
   saveRentInvoice(tabId, true);
+};
+
+
+// =============================================================================
+// MONTHLY ELECTRICITY INVOICES CONTROLLERS & UI (فاتورة استهلاك كهرباء - fldTransType = 41)
+// Matching media_1787680908959.png & media_1787681045229.png
+// =============================================================================
+
+state.elecInvoices = state.elecInvoices || {};
+
+// 1. OPEN ELECTRICITY BILLS EXPLORER TAB (Image 1)
+window.openElectricityBillsExplorerTab = function() {
+  const isAdmin = state.currentUser && (state.currentUser.fldAdmin || state.currentUser.isAdmin || state.currentUser.id === 1);
+  if (!isAdmin && state.permissions && state.permissions.length > 0) {
+    if (typeof hasPermission === 'function' && !hasPermission(41, 'fldSELECT')) {
+      showToast("عذراً، ليس لديك صلاحية استعلام (عرض) لفواتير استهلاك الكهرباء.", "error");
+      return;
+    }
+  }
+  
+  openTab('electricity-bills-explorer', 'فاتورة استهلاك كهرباء', 'fa-solid fa-bolt', 'text-amber', true);
+};
+
+// 2. OPEN ELECTRICITY INVOICE EDITOR TAB (Image 2)
+window.openElectricityInvoiceTab = function(elecId = null) {
+  const isAdmin = state.currentUser && (state.currentUser.fldAdmin || state.currentUser.isAdmin || state.currentUser.id === 1);
+  if (!isAdmin && state.permissions && state.permissions.length > 0) {
+    if (elecId && typeof hasPermission === 'function' && !hasPermission(41, 'fldUPDATE') && !hasPermission(41, 'fldSELECT')) {
+      showToast("عذراً، ليس لديك صلاحية تعديل أو عرض فاتورة الكهرباء.", "error");
+      return;
+    }
+    if (!elecId && typeof hasPermission === 'function' && !hasPermission(41, 'fldINSERT')) {
+      showToast("عذراً، ليس لديك صلاحية إضافة فاتورة كهرباء جديدة.", "error");
+      return;
+    }
+  }
+
+  const tabId = elecId ? `elec-inv-tab-${elecId}` : `elec-inv-tab-new-${Date.now()}`;
+  const tabTitle = elecId ? `فاتورة كهرباء: #${elecId}` : 'فاتورة استهلاك كهرباء جديدة';
+
+  openTab(tabId, tabTitle, 'fa-solid fa-bolt', 'text-amber', true);
+
+  setTimeout(() => {
+    if (typeof window.initElectricityInvoiceTab === 'function') {
+      window.initElectricityInvoiceTab(tabId, elecId);
+    }
+  }, 200);
+};
+
+// 3. INITIALIZE EXPLORER TAB (Image 1)
+window.initElectricityBillsExplorerTab = async function(tabId) {
+  if (!state.branches || state.branches.length === 0) {
+    try {
+      const res = await fetch('/api/branches');
+      const branchData = await res.json();
+      state.branches = branchData.data || [];
+    } catch (e) {
+      console.warn("Could not fetch branches for electricity explorer:", e);
+    }
+  }
+
+  const branchList = (state.userBranches && state.userBranches.length > 0) ? state.userBranches : (state.branches || []);
+  const branchSelect = document.getElementById(`elecBranchFilter-${tabId}`);
+  if (branchSelect) {
+    branchSelect.innerHTML = '';
+    const isAdmin = state.currentUser && (state.currentUser.fldAdmin || state.currentUser.isAdmin || state.currentUser.id === 1);
+    if (isAdmin || branchList.length > 1) {
+      const allOpt = document.createElement('option');
+      allOpt.value = '0';
+      allOpt.textContent = 'كافة الفروع';
+      branchSelect.appendChild(allOpt);
+    }
+    branchList.forEach(b => {
+      const opt = document.createElement('option');
+      opt.value = b.fldID;
+      opt.textContent = b.fldName;
+      if (state.currentBranch && String(b.fldID) === String(state.currentBranch.id)) {
+        opt.selected = true;
+      }
+      branchSelect.appendChild(opt);
+    });
+  }
+
+  const fromEl = document.getElementById(`elecFromDate-${tabId}`);
+  const toEl = document.getElementById(`elecToDate-${tabId}`);
+  const today = new Date();
+  const oneYearAgo = new Date();
+  oneYearAgo.setFullYear(today.getFullYear() - 1);
+
+  if (fromEl && !fromEl.value) fromEl.value = oneYearAgo.toISOString().split('T')[0];
+  if (toEl && !toEl.value) toEl.value = today.toISOString().split('T')[0];
+
+  loadElectricityBillsList(tabId);
+};
+
+// 4. LOAD ELECTRICITY BILLS LIST FOR EXPLORER (Image 1)
+window.loadElectricityBillsList = async function(tabId) {
+  const tbody = document.getElementById(`elecBillsTableBody-${tabId}`);
+  if (!tbody) return;
+
+  tbody.innerHTML = '<tr><td colspan="17" style="text-align: center; padding: 25px; color: #64748b;"><i class="fa-solid fa-spinner fa-spin"></i> جاري استعلام فواتير استهلاك الكهرباء...</td></tr>';
+
+  let branchId = document.getElementById(`elecBranchFilter-${tabId}`)?.value || 0;
+  const isAdmin = state.currentUser && (state.currentUser.fldAdmin || state.currentUser.isAdmin || state.currentUser.id === 1);
+  if (!isAdmin && state.currentUser && state.currentUser.branchId && (!branchId || branchId === '0')) {
+    branchId = state.currentUser.branchId;
+  }
+
+  const fromDate = document.getElementById(`elecFromDate-${tabId}`)?.value || '';
+  const toDate = document.getElementById(`elecToDate-${tabId}`)?.value || '';
+  const search = document.getElementById(`elecSearchInput-${tabId}`)?.value || '';
+
+  try {
+    let url = `/api/electricity-bills?branchId=${branchId}&fromDate=${fromDate}&toDate=${toDate}&search=${encodeURIComponent(search)}`;
+    const res = await fetch(url);
+    const result = await res.json();
+
+    if (!result.success || !result.data || result.data.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="17" style="text-align: center; padding: 25px; color: #94a3b8;"><i class="fa-solid fa-folder-open"></i> لا توجد فواتير كهرباء مسجلة تطابق معايير البحث.</td></tr>';
+      return;
+    }
+
+    state.electricityBillsList = result.data;
+    renderElectricityBillsTable(tabId, result.data);
+  } catch (err) {
+    console.error("Error loading electricity bills:", err);
+    tbody.innerHTML = `<tr><td colspan="17" style="text-align: center; padding: 20px; color: #ef4444;">حدث خطأ أثناء تحميل فواتير الكهرباء: ${err.message}</td></tr>`;
+  }
+};
+
+window.renderElectricityBillsTable = function(tabId, list) {
+  const tbody = document.getElementById(`elecBillsTableBody-${tabId}`);
+  if (!tbody) return;
+
+  let html = '';
+  list.forEach((item) => {
+    const formattedDate = item.fldDate ? item.fldDate.split('T')[0] : '';
+    const formattedTotal = parseFloat(item.fldVoisherTotal || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    
+    html += `
+      <tr class="elec-bill-row" data-id="${item.fldID}" onclick="selectElectricityBillRow('${tabId}', ${item.fldID}, this)" ondblclick="openElectricityInvoiceTab(${item.fldID})" style="cursor: pointer; border-bottom: 1px solid #e2e8f0; transition: background 0.15s;">
+        <td style="padding: 6px 8px; font-weight: bold; font-family: monospace; color: #1e3a8a;">${item.fldTransNo}</td>
+        <td style="padding: 6px 8px; font-family: monospace;">${formattedDate}</td>
+        <td style="padding: 6px 12px; font-weight: 600; color: #334155;">${item.fldBranchName || 'الفرع الرئيسي'}</td>
+        <td style="padding: 6px 14px; text-align: right; font-weight: bold; color: #0f172a;">${item.fldDescription || ''}</td>
+        <td style="padding: 6px 6px; text-align: center;"><input type="checkbox" ${item.fldOK ? 'checked' : ''} disabled></td>
+        <td style="padding: 6px 10px; text-align: right; font-weight: 900; font-family: monospace; color: #059669; font-size: 0.92rem;">${formattedTotal}</td>
+        <td style="padding: 6px 6px; text-align: center; color: #64748b;">${item.fldsymbol || 'YR'}</td>
+        <td style="padding: 6px 6px; font-family: monospace;">${parseFloat(item.fldTotalCleaningFees || 0).toFixed(2)}</td>
+        <td style="padding: 6px 6px; font-family: monospace;">${parseFloat(item.fldTotalLocalFees || 0).toFixed(2)}</td>
+        <td style="padding: 6px 6px; font-family: monospace;">${parseFloat(item.fldTotalServicesCost || 0).toFixed(2)}</td>
+        <td style="padding: 6px 6px; font-family: monospace;">${parseFloat(item.fldTotalFuel || 0).toFixed(2)}</td>
+        <td style="padding: 6px 6px; font-family: monospace;">${parseFloat(item.fldTotalTax || 0).toFixed(2)}</td>
+        <td style="padding: 6px 8px; text-align: center;"><span class="badge" style="background: #e0f2fe; color: #0369a1; padding: 2px 6px; border-radius: 4px; font-weight: bold;">${item.fldTypeName || 'اجل'}</span></td>
+        <td style="padding: 6px 6px; font-family: monospace; font-weight: bold; color: #475569;">${item.fldID}</td>
+        <td style="padding: 6px 12px; text-align: right; color: #334155; font-weight: 600;">فاتورة استهلاك كهرباء</td>
+        <td style="padding: 6px 8px; color: #475569;">${item.fldMoneyName || 'ريال يمني1'}</td>
+        <td style="padding: 6px 6px; text-align: center;"><input type="checkbox" ${item.fldClosed ? 'checked' : ''} disabled></td>
+      </tr>
+    `;
+  });
+
+  tbody.innerHTML = html;
+};
+
+window.selectElectricityBillRow = function(tabId, id, rowEl) {
+  state.selectedElectricityBillId = id;
+  const tbody = document.getElementById(`elecBillsTableBody-${tabId}`);
+  if (tbody) {
+    tbody.querySelectorAll('tr').forEach(r => r.style.background = 'transparent');
+  }
+  if (rowEl) rowEl.style.background = '#e2e8f0';
+};
+
+window.openEditSelectedElectricityBill = function(tabId) {
+  if (!state.selectedElectricityBillId) {
+    showToast("يرجى تحديد فاتورة كهرباء من الجدول للتعديل.", "warning");
+    return;
+  }
+  openElectricityInvoiceTab(state.selectedElectricityBillId);
+};
+
+window.deleteSelectedElectricityBill = async function(tabId) {
+  if (!state.selectedElectricityBillId) {
+    showToast("يرجى تحديد فاتورة كهرباء لحذفها.", "warning");
+    return;
+  }
+
+  const isAdmin = state.currentUser && (state.currentUser.fldAdmin || state.currentUser.isAdmin || state.currentUser.id === 1);
+  if (!isAdmin && state.permissions && state.permissions.length > 0) {
+    if (typeof hasPermission === 'function' && !hasPermission(41, 'fldDELETE')) {
+      showToast("عذراً، ليس لديك صلاحية حذف فاتورة الكهرباء.", "error");
+      return;
+    }
+  }
+
+  if (!confirm(`هل أنت متأكد من حذف فاتورة الكهرباء رقم (${state.selectedElectricityBillId})؟ سيتم حذف كافة السطور المرتبطة بها.`)) return;
+
+  try {
+    const res = await fetch(`/api/electricity-bills/${state.selectedElectricityBillId}`, { method: 'DELETE' });
+    const result = await res.json();
+    if (result.success) {
+      showToast(result.message, "success");
+      state.selectedElectricityBillId = null;
+      loadElectricityBillsList(tabId);
+    } else {
+      showToast(result.error || "فشل حذف الفاتورة.", "error");
+    }
+  } catch (err) {
+    showToast("خطأ عند حذف الفاتورة: " + err.message, "error");
+  }
+};
+
+window.printElectricityBillsList = function(tabId) {
+  window.print();
+};
+
+window.exportElectricityBillsListExcel = function(tabId) {
+  const table = document.getElementById(`elecBillsTable-${tabId}`);
+  if (!table) return;
+  exportTableToCSV(table, `فواتير_استهلاك_الكهرباء_${new Date().toISOString().split('T')[0]}.csv`);
+};
+
+// =============================================================================
+// 5. ELECTRICITY INVOICE EDITOR TAB CONTROLLERS (Image 2)
+// =============================================================================
+
+window.initElectricityInvoiceTab = async function(tabId, elecId = null) {
+  state.elecInvoices[tabId] = {
+    elecId,
+    lines: []
+  };
+
+  if (!state.branches || state.branches.length === 0) {
+    try {
+      const res = await fetch('/api/branches');
+      const branchData = await res.json();
+      state.branches = branchData.data || [];
+    } catch (e) {
+      console.warn("Could not fetch branches for electricity invoice:", e);
+    }
+  }
+
+  const branchList = (state.userBranches && state.userBranches.length > 0) ? state.userBranches : (state.branches || []);
+  const branchSelect = document.getElementById(`elecHdrBranch-${tabId}`);
+  if (branchSelect) {
+    branchSelect.innerHTML = '';
+    branchList.forEach(b => {
+      const opt = document.createElement('option');
+      opt.value = b.fldID;
+      opt.textContent = b.fldName;
+      if (state.currentBranch && String(b.fldID) === String(state.currentBranch.id)) {
+        opt.selected = true;
+      }
+      branchSelect.appendChild(opt);
+    });
+  }
+
+  const today = new Date().toISOString().split('T')[0];
+  const dateEl = document.getElementById(`elecHdrDate-${tabId}`);
+  const refDateEl = document.getElementById(`elecHdrRefDate-${tabId}`);
+  if (dateEl && !dateEl.value) dateEl.value = today;
+  if (refDateEl && !refDateEl.value) refDateEl.value = today;
+
+  if (elecId) {
+    await loadExistingElectricityInvoiceData(tabId, elecId);
+  } else {
+    try {
+      const res = await fetch('/api/electricity-bills/next-no');
+      const data = await res.json();
+      const numEl = document.getElementById(`elecHdrTransNo-${tabId}`);
+      if (numEl) numEl.value = data.nextNo || 1;
+
+      const monthNames = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
+      const currentMonth = monthNames[new Date().getMonth()];
+      const currentYear = new Date().getFullYear();
+      const descEl = document.getElementById(`elecHdrDesc-${tabId}`);
+      if (descEl) descEl.value = `فاتورة استهلاك كهرباء ${currentMonth} ${currentYear} م`;
+    } catch (e) {
+      console.warn("Could not fetch next electricity trans no:", e);
+    }
+  }
+};
+
+window.loadExistingElectricityInvoiceData = async function(tabId, elecId) {
+  try {
+    const res = await fetch(`/api/electricity-bills/${elecId}`);
+    const result = await res.json();
+    if (!result.success || !result.data) {
+      showToast("فشل تحميل بيانات فاتورة الكهرباء.", "error");
+      return;
+    }
+
+    const data = result.data;
+    const transIdEl = document.getElementById(`elecTransId-${tabId}`);
+    if (transIdEl) transIdEl.value = data.fldID;
+
+    const noEl = document.getElementById(`elecHdrTransNo-${tabId}`);
+    if (noEl) noEl.value = data.fldTransNo;
+
+    const dateEl = document.getElementById(`elecHdrDate-${tabId}`);
+    if (dateEl) dateEl.value = data.fldDate;
+
+    const refDateEl = document.getElementById(`elecHdrRefDate-${tabId}`);
+    if (refDateEl) refDateEl.value = data.fldRefDate || data.fldDate;
+
+    const refNoEl = document.getElementById(`elecHdrRefNo-${tabId}`);
+    if (refNoEl) refNoEl.value = data.fldRefNo || 0;
+
+    const descEl = document.getElementById(`elecHdrDesc-${tabId}`);
+    if (descEl) descEl.value = data.fldDescription || '';
+
+    const typeEl = document.getElementById(`elecHdrType-${tabId}`);
+    if (typeEl) typeEl.value = data.fldType || 3;
+
+    const moneyEl = document.getElementById(`elecHdrMoney-${tabId}`);
+    if (moneyEl) moneyEl.value = data.fldVoisherMoneyID || 3;
+
+    const rateEl = document.getElementById(`elecHdrRate-${tabId}`);
+    if (rateEl) rateEl.value = data.fldVoisherMoneyValue || 1.0;
+
+    const branchEl = document.getElementById(`elecHdrBranch-${tabId}`);
+    if (branchEl) branchEl.value = data.fldBranchNo || 1;
+
+    state.elecInvoices[tabId].lines = (data.lines || []).map(l => {
+      const prev = parseFloat(l.fldPreviousReading) || 0;
+      const curr = parseFloat(l.fldCurrentreading) || 0;
+      const units = Math.max(0, curr - prev);
+      const unitCost = parseFloat(l.fldUnitCost) || 600;
+      return {
+        ...l,
+        fldUnits: units,
+        fldTotalPrice: units * unitCost,
+        fldIsActive: l.fldIsActive !== false
+      };
+    });
+
+    renderElectricityInvoiceLinesTable(tabId);
+  } catch (err) {
+    console.error("Error loading electricity invoice details:", err);
+    showToast("خطأ عند تحميل الفاتورة: " + err.message, "error");
+  }
+};
+
+// LOAD SHOPS TEMPLATE (ادراج الكشف - كهرباء)
+window.loadShopsTemplateIntoElecInvoice = async function(tabId) {
+  const branchId = document.getElementById(`elecHdrBranch-${tabId}`)?.value || 1;
+  showToast("جاري إدراج كشف المحلات والعدادات والقراءات السابقة...", "info");
+
+  try {
+    const res = await fetch(`/api/electricity-bills/shops-template?branchId=${branchId}`);
+    const result = await res.json();
+    if (!result.success || !result.data || result.data.length === 0) {
+      showToast("لا توجد محلات مسجلة لهذا الفرع.", "warning");
+      return;
+    }
+
+    state.elecInvoices[tabId].lines = result.data.map(s => {
+      const prev = parseFloat(s.fldPreviousReading) || 0;
+      const curr = prev; // Default current reading starts as previous
+      const unitCost = parseFloat(s.fldUnitCost) || 600;
+      return {
+        fldShopID: s.fldShopID,
+        fldShopNumber: s.fldShopNumber,
+        fldShopName: s.fldShopName,
+        fldCustomerName: s.fldCustomerName,
+        fldtheCounter: s.fldtheCounter,
+        fldUnitCost: unitCost,
+        fldPreviousReading: prev,
+        fldCurrentreading: curr,
+        fldUnits: 0,
+        fldTotalPrice: 0,
+        fldServicesCostElectricity: parseFloat(s.fldServicesCostElectricity || 1000),
+        fldCleaningFees: parseFloat(s.fldCleaningFees || 0),
+        fldLocalFees: parseFloat(s.fldLocalFees || 0),
+        fldFuel: parseFloat(s.fldFuel || 0),
+        fldlTaxTota_D: parseFloat(s.fldlTaxTota_D || 0),
+        fldDebit: 0,
+        fldIsActive: s.fldIsActive !== false
+      };
+    });
+
+    renderElectricityInvoiceLinesTable(tabId);
+    showToast(`تم إدراج كشف (${result.data.length}) عداد ومحل بنجاح!`, "success");
+  } catch (err) {
+    console.error("Error loading electricity shops template:", err);
+    showToast("فشل إدراج كشف العدادات: " + err.message, "error");
+  }
+};
+
+window.renderElectricityInvoiceLinesTable = function(tabId) {
+  const tbody = document.getElementById(`elecLinesTableBody-${tabId}`);
+  if (!tbody) return;
+
+  const lines = state.elecInvoices[tabId]?.lines || [];
+  if (lines.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="16" style="text-align: center; padding: 25px; color: #94a3b8;">اضغط على زر "ادراج الكشف" لتحميل كافة المحلات والعدادات والقراءات السابقة تلقائياً.</td></tr>';
+    calculateElectricityInvoiceTotals(tabId);
+    return;
+  }
+
+  let html = '';
+  lines.forEach((line, idx) => {
+    html += `
+      <tr id="elecLineRow-${tabId}-${idx}" style="border-bottom: 1px solid #e2e8f0; text-align: center; vertical-align: middle;">
+        <td style="padding: 4px 4px;"><input type="checkbox" ${line.fldIsActive !== false ? 'checked' : ''} onchange="updateElecLineField('${tabId}', ${idx}, 'fldIsActive', this.checked)"></td>
+        <td style="padding: 4px 6px; font-weight: bold; font-family: monospace; color: #1e3a8a;">#${line.fldShopNumber || ''}</td>
+        <td style="padding: 4px 10px; text-align: right; font-weight: bold; color: #1e293b;">${line.fldShopName || ''}</td>
+        <td style="padding: 4px 10px; text-align: right; color: #334155; font-size: 0.78rem;">${line.fldCustomerName || ''}</td>
+        <td style="padding: 4px 6px; font-family: monospace; color: #0284c7; font-weight: bold;">${line.fldtheCounter || ''}</td>
+        <td style="padding: 4px 4px;"><input type="number" step="any" value="${line.fldUnitCost || 600}" oninput="updateElecLineField('${tabId}', ${idx}, 'fldUnitCost', this.value)" style="width: 65px; padding: 3px; text-align: center; border: 1px solid #cbd5e1; border-radius: 4px; font-family: monospace; font-weight: bold;"></td>
+        <td style="padding: 4px 4px;"><input type="number" step="any" value="${line.fldPreviousReading || 0}" oninput="updateElecLineField('${tabId}', ${idx}, 'fldPreviousReading', this.value)" style="width: 75px; padding: 3px; text-align: center; border: 1px solid #cbd5e1; border-radius: 4px; font-family: monospace; background: #f8fafc;"></td>
+        <td style="padding: 4px 4px;"><input type="number" step="any" value="${line.fldCurrentreading || 0}" oninput="updateElecLineField('${tabId}', ${idx}, 'fldCurrentreading', this.value)" style="width: 75px; padding: 3px; text-align: center; border: 1px solid #0284c7; border-radius: 4px; font-family: monospace; font-weight: bold; background: #f0fdf4;"></td>
+        <td style="padding: 4px 6px; font-weight: bold; font-family: monospace; color: #b45309;" id="elecLineUnits-${tabId}-${idx}">${parseFloat(line.fldUnits || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+        <td style="padding: 4px 8px; text-align: right; font-weight: 900; font-family: monospace; color: #059669;" id="elecLineTotal-${tabId}-${idx}">${parseFloat(line.fldTotalPrice || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+        <td style="padding: 4px 4px;"><input type="number" step="any" value="${line.fldServicesCostElectricity || 0}" oninput="updateElecLineField('${tabId}', ${idx}, 'fldServicesCostElectricity', this.value)" style="width: 65px; padding: 3px; text-align: right; border: 1px solid #cbd5e1; border-radius: 4px; font-family: monospace;"></td>
+        <td style="padding: 4px 4px;"><input type="number" step="any" value="${line.fldCleaningFees || 0}" oninput="updateElecLineField('${tabId}', ${idx}, 'fldCleaningFees', this.value)" style="width: 55px; padding: 3px; text-align: right; border: 1px solid #cbd5e1; border-radius: 4px; font-family: monospace;"></td>
+        <td style="padding: 4px 4px;"><input type="number" step="any" value="${line.fldLocalFees || 0}" oninput="updateElecLineField('${tabId}', ${idx}, 'fldLocalFees', this.value)" style="width: 55px; padding: 3px; text-align: right; border: 1px solid #cbd5e1; border-radius: 4px; font-family: monospace;"></td>
+        <td style="padding: 4px 4px;"><input type="number" step="any" value="${line.fldFuel || 0}" oninput="updateElecLineField('${tabId}', ${idx}, 'fldFuel', this.value)" style="width: 55px; padding: 3px; text-align: right; border: 1px solid #cbd5e1; border-radius: 4px; font-family: monospace;"></td>
+        <td style="padding: 4px 4px;"><input type="number" step="any" value="${line.fldlTaxTota_D || 0}" oninput="updateElecLineField('${tabId}', ${idx}, 'fldlTaxTota_D', this.value)" style="width: 55px; padding: 3px; text-align: right; border: 1px solid #cbd5e1; border-radius: 4px; font-family: monospace;"></td>
+        <td style="padding: 4px 4px;"><button type="button" onclick="removeElectricityInvoiceLine('${tabId}', ${idx})" style="background: none; border: none; color: #ef4444; cursor: pointer;"><i class="fa-solid fa-trash-can"></i></button></td>
+      </tr>
+    `;
+  });
+
+  tbody.innerHTML = html;
+  calculateElectricityInvoiceTotals(tabId);
+};
+
+window.updateElecLineField = function(tabId, idx, field, value) {
+  const line = state.elecInvoices[tabId]?.lines[idx];
+  if (!line) return;
+
+  if (field === 'fldIsActive') {
+    line.fldIsActive = value;
+  } else {
+    line[field] = parseFloat(value) || 0;
+  }
+
+  const prev = parseFloat(line.fldPreviousReading) || 0;
+  const curr = parseFloat(line.fldCurrentreading) || 0;
+  const units = Math.max(0, curr - prev);
+  const unitCost = parseFloat(line.fldUnitCost) || 600;
+  line.fldUnits = units;
+  line.fldTotalPrice = units * unitCost;
+
+  const unitsEl = document.getElementById(`elecLineUnits-${tabId}-${idx}`);
+  const totalEl = document.getElementById(`elecLineTotal-${tabId}-${idx}`);
+
+  if (unitsEl) unitsEl.innerText = units.toLocaleString('en-US', { minimumFractionDigits: 2 });
+  if (totalEl) totalEl.innerText = line.fldTotalPrice.toLocaleString('en-US', { minimumFractionDigits: 2 });
+
+  calculateElectricityInvoiceTotals(tabId);
+};
+
+window.removeElectricityInvoiceLine = function(tabId, idx) {
+  state.elecInvoices[tabId]?.lines.splice(idx, 1);
+  renderElectricityInvoiceLinesTable(tabId);
+};
+
+window.clearElectricityInvoiceLines = function(tabId) {
+  if (!confirm("هل أنت متأكد من حذف كافة سطور الكشف؟")) return;
+  state.elecInvoices[tabId].lines = [];
+  renderElectricityInvoiceLinesTable(tabId);
+};
+
+window.calculateElectricityInvoiceTotals = function(tabId) {
+  const lines = state.elecInvoices[tabId]?.lines || [];
+  let totalUsage = 0;
+  let totalFees = 0;
+  let totalNetDue = 0;
+
+  lines.forEach(l => {
+    if (l.fldIsActive !== false) {
+      const usage = parseFloat(l.fldTotalPrice || 0);
+      const fees = (parseFloat(l.fldServicesCostElectricity) || 0) +
+                   (parseFloat(l.fldCleaningFees) || 0) +
+                   (parseFloat(l.fldLocalFees) || 0) +
+                   (parseFloat(l.fldFuel) || 0) +
+                   (parseFloat(l.fldlTaxTota_D) || 0);
+      totalUsage += usage;
+      totalFees += fees;
+      totalNetDue += (usage + fees);
+    }
+  });
+
+  const usageEl = document.getElementById(`elecTotalUsage-${tabId}`);
+  const feesEl = document.getElementById(`elecTotalFees-${tabId}`);
+  const netDueEl = document.getElementById(`elecTotalNetDue-${tabId}`);
+
+  if (usageEl) usageEl.value = totalUsage.toLocaleString('en-US', { minimumFractionDigits: 2 });
+  if (feesEl) feesEl.value = totalFees.toLocaleString('en-US', { minimumFractionDigits: 2 });
+  if (netDueEl) netDueEl.value = totalNetDue.toLocaleString('en-US', { minimumFractionDigits: 2 });
+};
+
+window.saveElectricityInvoice = async function(tabId, andPrint = false) {
+  const isAdmin = state.currentUser && (state.currentUser.fldAdmin || state.currentUser.isAdmin || state.currentUser.id === 1);
+  const elecId = document.getElementById(`elecTransId-${tabId}`)?.value;
+
+  if (!isAdmin && state.permissions && state.permissions.length > 0) {
+    if (elecId && typeof hasPermission === 'function' && !hasPermission(41, 'fldUPDATE')) {
+      showToast("عذراً، ليس لديك صلاحية تعديل فاتورة الكهرباء.", "error");
+      return;
+    }
+    if (!elecId && typeof hasPermission === 'function' && !hasPermission(41, 'fldINSERT')) {
+      showToast("عذراً، ليس لديك صلاحية إضافة فاتورة كهرباء جديدة.", "error");
+      return;
+    }
+  }
+
+  const fldBranchNo = document.getElementById(`elecHdrBranch-${tabId}`)?.value || 1;
+  const fldDate = document.getElementById(`elecHdrDate-${tabId}`)?.value;
+  const fldRefDate = document.getElementById(`elecHdrRefDate-${tabId}`)?.value;
+  const fldDescription = document.getElementById(`elecHdrDesc-${tabId}`)?.value;
+  const fldType = document.getElementById(`elecHdrType-${tabId}`)?.value || 3;
+  const fldRefNo = document.getElementById(`elecHdrRefNo-${tabId}`)?.value || 0;
+  const fldMoneyID = document.getElementById(`elecHdrMoney-${tabId}`)?.value || 3;
+  const fldMoneyValue = document.getElementById(`elecHdrRate-${tabId}`)?.value || 1.0;
+  const fldVoisherAccID = document.getElementById(`elecHdrAccBox-${tabId}`)?.value || 265;
+  const lines = state.elecInvoices[tabId]?.lines || [];
+
+  if (!fldDate) {
+    showToast("يرجى تحديد تاريخ الفاتورة.", "warning");
+    return;
+  }
+  if (lines.length === 0) {
+    showToast("لا يمكن حفظ فاتورة كهرباء فارغة بدون سطور عدادات.", "warning");
+    return;
+  }
+
+  const payload = {
+    fldBranchNo,
+    fldDate,
+    fldRefDate,
+    fldDescription,
+    fldType,
+    fldRefNo,
+    fldMoneyID,
+    fldMoneyValue,
+    fldVoisherAccID,
+    fldUserID: (state.currentUser && state.currentUser.id) ? state.currentUser.id : 1,
+    lines
+  };
+
+  try {
+    const url = elecId ? `/api/electricity-bills/${elecId}` : '/api/electricity-bills';
+    const method = elecId ? 'PUT' : 'POST';
+
+    const res = await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    const result = await res.json();
+    if (result.success) {
+      showToast(result.message, "success");
+      if (result.data && result.data.id) {
+        const transIdEl = document.getElementById(`elecTransId-${tabId}`);
+        if (transIdEl) transIdEl.value = result.data.id;
+        const noEl = document.getElementById(`elecHdrTransNo-${tabId}`);
+        if (noEl) noEl.value = result.data.fldTransNo;
+      }
+      if (andPrint) {
+        window.print();
+      }
+    } else {
+      showToast(result.error || "فشل حفظ فاتورة الكهرباء.", "error");
+    }
+  } catch (err) {
+    console.error("Error saving electricity invoice:", err);
+    showToast("خطأ عند حفظ الفاتورة: " + err.message, "error");
+  }
+};
+
+window.saveAndPrintElectricityInvoice = function(tabId) {
+  saveElectricityInvoice(tabId, true);
 };

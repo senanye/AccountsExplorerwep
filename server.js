@@ -17064,6 +17064,11 @@ app.post('/api/rent-bills', async (req, res) => {
     );
     const nextTransNo = req.body.fldTransNo || noRes.recordset[0].nextNo;
 
+    const idRes = await globalPool.request().query(
+      "SELECT ISNULL(MAX(fldID), 0) + 1 AS nextId FROM dbo.tblTransAction"
+    );
+    const newTransID = idRes.recordset[0].nextId;
+
     let totalRent = 0;
     if (lines && Array.isArray(lines)) {
       lines.forEach(l => {
@@ -17074,6 +17079,7 @@ app.post('/api/rent-bills', async (req, res) => {
     const yearVal = fldDate ? new Date(fldDate).getFullYear().toString().substr(-2) : '26';
 
     const transReq = globalPool.request();
+    transReq.input('fldID', sql.Int, newTransID);
     transReq.input('fldBranchNo', sql.Int, parseInt(fldBranchNo) || 1);
     transReq.input('fldYaer', sql.NVarChar, yearVal);
     transReq.input('fldUserID', sql.Int, parseInt(fldUserID) || 1);
@@ -17092,7 +17098,7 @@ app.post('/api/rent-bills', async (req, res) => {
 
     const insertTransQ = `
       INSERT INTO dbo.tblTransAction (
-        fldBranchNo, fldYaer, fldUserID, fldTransType, fldType, fldTransNo, fldBookNO,
+        fldID, fldBranchNo, fldYaer, fldUserID, fldTransType, fldType, fldTransNo, fldBookNO,
         fldDate, fldRefDate, fldDescription, fldRefNo, fldOrderNO, fldDescription2,
         fldSalespersonID, fldCenterCostID, fldName, fldhname, fldcodeno, fldagince,
         fldCompanyID, picID, fldVoisherAccID, fldVoisherMoneyID, fldVoisherMoneyValue,
@@ -17101,7 +17107,7 @@ app.post('/api/rent-bills', async (req, res) => {
         fldlAccTax, fldstoreID, fldstoreID2, fldDateINSERT, fldprintCount,
         fldUPDATECount, fldOK, fldClosed, fldchanging
       ) VALUES (
-        @fldBranchNo, @fldYaer, @fldUserID, @fldTransType, @fldType, @fldTransNo, 0,
+        @fldID, @fldBranchNo, @fldYaer, @fldUserID, @fldTransType, @fldType, @fldTransNo, 0,
         @fldDate, @fldRefDate, @fldDescription, @fldRefNo, 0, '',
         0, 0, '', '', '', '',
         0, 0, @fldVoisherAccID, @fldVoisherMoneyID, @fldVoisherMoneyValue,
@@ -17110,11 +17116,9 @@ app.post('/api/rent-bills', async (req, res) => {
         0, 0, 0, GETDATE(), 0,
         0, 1, 0, 0
       );
-      SELECT SCOPE_IDENTITY() AS newID;
     `;
 
-    const transResult = await transReq.query(insertTransQ);
-    const newTransID = transResult.recordset[0].newID;
+    await transReq.query(insertTransQ);
 
     if (lines && Array.isArray(lines) && lines.length > 0) {
       for (const line of lines) {

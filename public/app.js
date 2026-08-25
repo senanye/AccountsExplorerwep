@@ -29688,42 +29688,74 @@ state.rentInvoices = state.rentInvoices || {};
 
 // 1. OPEN RENT BILLS EXPLORER TAB (شاشة استعلامات فواتير الإيجار الشهري - Image 1)
 window.openRentBillsExplorerTab = function() {
-  const tabId = 'rent-bills-explorer';
-  const tabTitle = 'فاتورة ايجار شهري';
-  
-  if (state.tabs && state.tabs.some(t => t.id === tabId)) {
-    switchTab(tabId);
-    loadRentBillsList(tabId);
-    return;
+  const isAdmin = state.currentUser && (state.currentUser.fldAdmin || state.currentUser.isAdmin || state.currentUser.id === 1);
+  if (!isAdmin && state.permissions && state.permissions.length > 0) {
+    if (typeof hasPermission === 'function' && !hasPermission(40, 'fldSELECT')) {
+      showToast("عذراً، ليس لديك صلاحية استعلام (عرض) لفواتير الإيجار الشهري.", "error");
+      return;
+    }
   }
   
-  createTab(tabId, tabTitle);
+  openTab('rent-bills-explorer', 'فاتورة ايجار شهري', 'fa-solid fa-file-invoice-dollar', 'text-primary', true);
 };
 
 // 2. OPEN RENT INVOICE EDITOR TAB (شاشة إدخال/تحرير فاتورة الإيجار الشهري - Image 2)
 window.openRentInvoiceTab = function(rentId = null) {
+  const isAdmin = state.currentUser && (state.currentUser.fldAdmin || state.currentUser.isAdmin || state.currentUser.id === 1);
+  if (!isAdmin && state.permissions && state.permissions.length > 0) {
+    if (rentId && typeof hasPermission === 'function' && !hasPermission(40, 'fldUPDATE') && !hasPermission(40, 'fldSELECT')) {
+      showToast("عذراً، ليس لديك صلاحية تعديل أو عرض فاتورة الإيجار.", "error");
+      return;
+    }
+    if (!rentId && typeof hasPermission === 'function' && !hasPermission(40, 'fldINSERT')) {
+      showToast("عذراً، ليس لديك صلاحية إضافة فاتورة إيجار جديدة.", "error");
+      return;
+    }
+  }
+
   const tabId = rentId ? `rent-inv-tab-${rentId}` : `rent-inv-tab-new-${Date.now()}`;
   const tabTitle = rentId ? `فاتورة ايجار: #${rentId}` : 'فاتورة ايجار شهري جديدة';
 
-  if (state.tabs && state.tabs.some(t => t.id === tabId)) {
-    switchTab(tabId);
-    return;
-  }
+  openTab(tabId, tabTitle, 'fa-solid fa-file-invoice-dollar', 'text-success', true);
 
-  createTab(tabId, tabTitle);
-  initRentInvoiceTab(tabId, rentId);
+  setTimeout(() => {
+    if (typeof window.initRentInvoiceTab === 'function') {
+      window.initRentInvoiceTab(tabId, rentId);
+    }
+  }, 200);
 };
 
 // 3. INITIALIZE EXPLORER TAB (Image 1)
-window.initRentBillsExplorerTab = function(tabId) {
-  // Populate branches filter
+window.initRentBillsExplorerTab = async function(tabId) {
+  // Ensure branches are loaded
+  if (!state.branches || state.branches.length === 0) {
+    try {
+      const res = await fetch('/api/branches');
+      const branchData = await res.json();
+      state.branches = branchData.data || [];
+    } catch (e) {
+      console.warn("Could not fetch branches for rent explorer:", e);
+    }
+  }
+
+  const branchList = (state.userBranches && state.userBranches.length > 0) ? state.userBranches : (state.branches || []);
   const branchSelect = document.getElementById(`rentBranchFilter-${tabId}`);
-  if (branchSelect && state.branches) {
-    branchSelect.innerHTML = '<option value="0">كافة الفروع</option>';
-    state.branches.forEach(b => {
+  if (branchSelect) {
+    branchSelect.innerHTML = '';
+    const isAdmin = state.currentUser && (state.currentUser.fldAdmin || state.currentUser.isAdmin || state.currentUser.id === 1);
+    if (isAdmin || branchList.length > 1) {
+      const allOpt = document.createElement('option');
+      allOpt.value = '0';
+      allOpt.textContent = 'كافة الفروع';
+      branchSelect.appendChild(allOpt);
+    }
+    branchList.forEach(b => {
       const opt = document.createElement('option');
       opt.value = b.fldID;
       opt.textContent = b.fldName;
+      if (state.currentBranch && String(b.fldID) === String(state.currentBranch.id)) {
+        opt.selected = true;
+      }
       branchSelect.appendChild(opt);
     });
   }
@@ -29748,7 +29780,14 @@ window.loadRentBillsList = async function(tabId) {
 
   tbody.innerHTML = '<tr><td colspan="13" style="text-align: center; padding: 25px; color: #64748b;"><i class="fa-solid fa-spinner fa-spin"></i> جاري استعلام فواتير الإيجار الشهري...</td></tr>';
 
-  const branchId = document.getElementById(`rentBranchFilter-${tabId}`)?.value || 0;
+  let branchId = document.getElementById(`rentBranchFilter-${tabId}`)?.value || 0;
+  
+  // If not admin and user has fixed branch, force that branch
+  const isAdmin = state.currentUser && (state.currentUser.fldAdmin || state.currentUser.isAdmin || state.currentUser.id === 1);
+  if (!isAdmin && state.currentUser && state.currentUser.branchId && (!branchId || branchId === '0')) {
+    branchId = state.currentUser.branchId;
+  }
+
   const fromDate = document.getElementById(`rentFromDate-${tabId}`)?.value || '';
   const toDate = document.getElementById(`rentToDate-${tabId}`)?.value || '';
   const search = document.getElementById(`rentSearchInput-${tabId}`)?.value || '';
@@ -29825,6 +29864,14 @@ window.deleteSelectedRentBill = async function(tabId) {
     return;
   }
 
+  const isAdmin = state.currentUser && (state.currentUser.fldAdmin || state.currentUser.isAdmin || state.currentUser.id === 1);
+  if (!isAdmin && state.permissions && state.permissions.length > 0) {
+    if (typeof hasPermission === 'function' && !hasPermission(40, 'fldDELETE')) {
+      showToast("عذراً، ليس لديك صلاحية حذف فاتورة الإيجار.", "error");
+      return;
+    }
+  }
+
   if (!confirm(`هل أنت متأكد من حذف فاتورة الإيجار رقم (${state.selectedRentBillId})؟ سيتم حذف كافة السطور المرتبطة بها.`)) return;
 
   try {
@@ -29862,14 +29909,28 @@ window.initRentInvoiceTab = async function(tabId, rentId = null) {
     lines: []
   };
 
-  // Populate branches
+  // Ensure branches are loaded
+  if (!state.branches || state.branches.length === 0) {
+    try {
+      const res = await fetch('/api/branches');
+      const branchData = await res.json();
+      state.branches = branchData.data || [];
+    } catch (e) {
+      console.warn("Could not fetch branches for invoice editor:", e);
+    }
+  }
+
+  const branchList = (state.userBranches && state.userBranches.length > 0) ? state.userBranches : (state.branches || []);
   const branchSelect = document.getElementById(`rentHdrBranch-${tabId}`);
-  if (branchSelect && state.branches) {
+  if (branchSelect) {
     branchSelect.innerHTML = '';
-    state.branches.forEach(b => {
+    branchList.forEach(b => {
       const opt = document.createElement('option');
       opt.value = b.fldID;
       opt.textContent = b.fldName;
+      if (state.currentBranch && String(b.fldID) === String(state.currentBranch.id)) {
+        opt.selected = true;
+      }
       branchSelect.appendChild(opt);
     });
   }
@@ -29912,16 +29973,35 @@ window.loadExistingRentInvoiceData = async function(tabId, rentId) {
     }
 
     const data = result.data;
-    document.getElementById(`rentTransId-${tabId}`).value = data.fldID;
-    document.getElementById(`rentHdrTransNo-${tabId}`).value = data.fldTransNo;
-    document.getElementById(`rentHdrDate-${tabId}`).value = data.fldDate;
-    document.getElementById(`rentHdrRefDate-${tabId}`).value = data.fldRefDate || data.fldDate;
-    document.getElementById(`rentHdrRefNo-${tabId}`).value = data.fldRefNo || 0;
-    document.getElementById(`rentHdrDesc-${tabId}`).value = data.fldDescription || '';
-    document.getElementById(`rentHdrType-${tabId}`).value = data.fldType || 3;
-    document.getElementById(`rentHdrMoney-${tabId}`).value = data.fldVoisherMoneyID || 1;
-    document.getElementById(`rentHdrRate-${tabId}`).value = data.fldVoisherMoneyValue || 1.0;
-    document.getElementById(`rentHdrBranch-${tabId}`).value = data.fldBranchNo || 1;
+    const transIdEl = document.getElementById(`rentTransId-${tabId}`);
+    if (transIdEl) transIdEl.value = data.fldID;
+
+    const noEl = document.getElementById(`rentHdrTransNo-${tabId}`);
+    if (noEl) noEl.value = data.fldTransNo;
+
+    const dateEl = document.getElementById(`rentHdrDate-${tabId}`);
+    if (dateEl) dateEl.value = data.fldDate;
+
+    const refDateEl = document.getElementById(`rentHdrRefDate-${tabId}`);
+    if (refDateEl) refDateEl.value = data.fldRefDate || data.fldDate;
+
+    const refNoEl = document.getElementById(`rentHdrRefNo-${tabId}`);
+    if (refNoEl) refNoEl.value = data.fldRefNo || 0;
+
+    const descEl = document.getElementById(`rentHdrDesc-${tabId}`);
+    if (descEl) descEl.value = data.fldDescription || '';
+
+    const typeEl = document.getElementById(`rentHdrType-${tabId}`);
+    if (typeEl) typeEl.value = data.fldType || 3;
+
+    const moneyEl = document.getElementById(`rentHdrMoney-${tabId}`);
+    if (moneyEl) moneyEl.value = data.fldVoisherMoneyID || 1;
+
+    const rateEl = document.getElementById(`rentHdrRate-${tabId}`);
+    if (rateEl) rateEl.value = data.fldVoisherMoneyValue || 1.0;
+
+    const branchEl = document.getElementById(`rentHdrBranch-${tabId}`);
+    if (branchEl) branchEl.value = data.fldBranchNo || 1;
 
     state.rentInvoices[tabId].lines = data.lines || [];
     renderRentInvoiceLinesTable(tabId);
@@ -30012,7 +30092,6 @@ window.updateRentLineField = function(tabId, idx, field, value) {
     line[field] = parseFloat(value) || 0;
   }
 
-  // Recalculate line total
   const qty = parseFloat(line.fldQTY || 1);
   const rent = parseFloat(line.fldRent || 0);
   const tax = parseFloat(line.fldlTaxTota_D || 0);
@@ -30061,7 +30140,20 @@ window.calculateRentInvoiceTotals = function(tabId) {
 };
 
 window.saveRentInvoice = async function(tabId, andPrint = false) {
+  const isAdmin = state.currentUser && (state.currentUser.fldAdmin || state.currentUser.isAdmin || state.currentUser.id === 1);
   const rentId = document.getElementById(`rentTransId-${tabId}`)?.value;
+
+  if (!isAdmin && state.permissions && state.permissions.length > 0) {
+    if (rentId && typeof hasPermission === 'function' && !hasPermission(40, 'fldUPDATE')) {
+      showToast("عذراً، ليس لديك صلاحية تعديل فاتورة الإيجار.", "error");
+      return;
+    }
+    if (!rentId && typeof hasPermission === 'function' && !hasPermission(40, 'fldINSERT')) {
+      showToast("عذراً، ليس لديك صلاحية إضافة فاتورة إيجار جديدة.", "error");
+      return;
+    }
+  }
+
   const fldBranchNo = document.getElementById(`rentHdrBranch-${tabId}`)?.value || 1;
   const fldDate = document.getElementById(`rentHdrDate-${tabId}`)?.value;
   const fldRefDate = document.getElementById(`rentHdrRefDate-${tabId}`)?.value;
@@ -30108,8 +30200,10 @@ window.saveRentInvoice = async function(tabId, andPrint = false) {
     if (result.success) {
       showToast(result.message, "success");
       if (result.data && result.data.id) {
-        document.getElementById(`rentTransId-${tabId}`).value = result.data.id;
-        document.getElementById(`rentHdrTransNo-${tabId}`).value = result.data.fldTransNo;
+        const transIdEl = document.getElementById(`rentTransId-${tabId}`);
+        if (transIdEl) transIdEl.value = result.data.id;
+        const noEl = document.getElementById(`rentHdrTransNo-${tabId}`);
+        if (noEl) noEl.value = result.data.fldTransNo;
       }
       if (andPrint) {
         window.print();

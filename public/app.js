@@ -6166,7 +6166,7 @@ window.renderDbProfilesTable = function(profiles) {
   if (!tbody) return;
 
   if (profiles.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="9" style="padding: 20px; color: #94a3b8;">لا توجد مزودات اتصال مسجلة. اضغط "جديد" للإضافة.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6" style="padding: 20px; color: #94a3b8;">لا توجد مزودات اتصال مسجلة. اضغط "جديد" للإضافة.</td></tr>';
     return;
   }
 
@@ -6175,6 +6175,8 @@ window.renderDbProfilesTable = function(profiles) {
   let html = '';
   profiles.forEach(p => {
     const isEditing = String(p.id) === String(activeEditId);
+    const serverName = p.MainDataSource || p.DataSource || '';
+    const dbName = p.MainCatalog || p.Catalog || '';
     html += `
       <tr id="profRow-${p.id}" style="border-bottom: 1px solid #1e293b; background: ${isEditing ? '#0f2042' : 'transparent'}; transition: background 0.15s;">
         <td style="padding: 6px 10px;">
@@ -6182,13 +6184,10 @@ window.renderDbProfilesTable = function(profiles) {
             ${isEditing ? 'محدد للتعديل ✏️' : 'تعديل ✏️'}
           </button>
         </td>
-        <td style="padding: 6px 8px; font-family: monospace; font-weight: bold; color: #38bdf8;">#${p.fldPointNO || ''}</td>
         <td style="padding: 6px 14px; text-align: right; font-weight: bold; color: #ffffff;">${p.fldName || ''}</td>
         <td style="padding: 6px 8px; font-family: monospace; color: #cbd5e1;">#${p.fldBranchNo || 1}</td>
-        <td style="padding: 6px 12px; font-family: monospace; color: #38bdf8; font-weight: bold; background: rgba(56, 189, 248, 0.08); border-radius: 4px;">${p.DataSource || ''}</td>
-        <td style="padding: 6px 12px; font-family: monospace; color: #94a3b8; font-weight: bold;">${p.Catalog || ''}</td>
-        <td style="padding: 6px 12px; font-family: monospace; color: #fbbf24; background: rgba(251, 191, 36, 0.08); border-radius: 4px;">${p.MainDataSource || p.DataSource || ''}</td>
-        <td style="padding: 6px 12px; font-family: monospace; color: #fbbf24;">${p.MainCatalog || p.Catalog || ''}</td>
+        <td style="padding: 6px 12px; font-family: monospace; color: #fbbf24; background: rgba(251, 191, 36, 0.08); border-radius: 4px;">${serverName}</td>
+        <td style="padding: 6px 12px; font-family: monospace; color: #fbbf24;">${dbName}</td>
         <td style="padding: 6px 10px;">
           <button type="button" onclick="deleteConnectionProfile(${p.id})" title="حذف" style="background: transparent; border: 1px solid #ef4444; color: #ef4444; padding: 2px 8px; border-radius: 4px; cursor: pointer; font-size: 0.75rem;">
             <i class="fa-solid fa-trash-can"></i>
@@ -6207,74 +6206,93 @@ window.selectProfileForEditing = function(id) {
   if (!p) return;
 
   document.getElementById('dbProfileHiddenId').value = p.id;
-  document.getElementById('hdrPointNo').innerText = p.fldPointNO || '1';
-  document.getElementById('hdrBranchName').innerText = p.fldName || '';
+  const hdrNameEl = document.getElementById('hdrBranchName');
+  if (hdrNameEl) hdrNameEl.innerText = p.fldName || '';
 
-  document.getElementById('dbInputPointNo').value = p.fldPointNO || '';
-  document.getElementById('dbInputBranchName').value = p.fldName || '';
-  document.getElementById('dbInputBranchNo').value = p.fldBranchNo || 1;
-  document.getElementById('dbInputDataSource').value = p.DataSource || '';
-  document.getElementById('dbInputCatalog').value = p.Catalog || '';
-  document.getElementById('dbInputMainDataSource').value = p.MainDataSource || p.DataSource || '';
-  document.getElementById('dbInputMainCatalog').value = p.MainCatalog || p.Catalog || '';
-  document.getElementById('dbInputUserID').value = p.UserID || 'sa';
-  document.getElementById('dbInputPassword').value = p.Password || '';
-  document.getElementById('dbInputPort').value = p.Port || '1433';
+  const branchNameEl = document.getElementById('dbInputBranchName');
+  if (branchNameEl) branchNameEl.value = p.fldName || '';
+
+  const branchNoEl = document.getElementById('dbInputBranchNo');
+  if (branchNoEl) branchNoEl.value = p.fldBranchNo || 1;
+
+  const serverEl = document.getElementById('dbInputMainDataSource');
+  if (serverEl) serverEl.value = p.MainDataSource || p.DataSource || 'SENANSERVER\\SQLEXPRESS';
+
+  const catalogEl = document.getElementById('dbInputMainCatalog');
+  if (catalogEl) catalogEl.value = p.MainCatalog || p.Catalog || 'hc';
+
+  const userEl = document.getElementById('dbInputUserID');
+  if (userEl) userEl.value = p.UserID || 'sa';
+
+  const passEl = document.getElementById('dbInputPassword');
+  if (passEl) passEl.value = p.Password || '';
+
+  const portEl = document.getElementById('dbInputPort');
+  if (portEl) portEl.value = p.Port || '1433';
 
   renderDbProfilesTable(profiles);
 };
 
 window.resetDbProfileFormForNew = function() {
   document.getElementById('dbProfileHiddenId').value = '';
-  document.getElementById('hdrPointNo').innerText = 'جديد';
-  document.getElementById('hdrBranchName').innerText = 'فرع جديد';
+  const hdrNameEl = document.getElementById('hdrBranchName');
+  if (hdrNameEl) hdrNameEl.innerText = 'فرع جديد';
 
-  document.getElementById('dbInputPointNo').value = '';
-  document.getElementById('dbInputBranchName').value = '';
-  document.getElementById('dbInputBranchNo').value = '1';
-  document.getElementById('dbInputDataSource').value = 'SENANSERVER\\SQLEXPRESS';
-  document.getElementById('dbInputCatalog').value = '';
-  document.getElementById('dbInputMainDataSource').value = 'SENANSERVER\\SQLEXPRESS';
-  document.getElementById('dbInputMainCatalog').value = '';
-  document.getElementById('dbInputUserID').value = 'sa';
-  document.getElementById('dbInputPassword').value = 'as';
-  document.getElementById('dbInputPort').value = '1433';
+  const branchNameEl = document.getElementById('dbInputBranchName');
+  if (branchNameEl) branchNameEl.value = '';
+
+  const branchNoEl = document.getElementById('dbInputBranchNo');
+  if (branchNoEl) branchNoEl.value = '1';
+
+  const serverEl = document.getElementById('dbInputMainDataSource');
+  if (serverEl) serverEl.value = 'SENANSERVER\\SQLEXPRESS';
+
+  const catalogEl = document.getElementById('dbInputMainCatalog');
+  if (catalogEl) catalogEl.value = 'hc';
+
+  const userEl = document.getElementById('dbInputUserID');
+  if (userEl) userEl.value = 'sa';
+
+  const passEl = document.getElementById('dbInputPassword');
+  if (passEl) passEl.value = 'as';
+
+  const portEl = document.getElementById('dbInputPort');
+  if (portEl) portEl.value = '1433';
 
   renderDbProfilesTable(state.connectionProfiles || []);
-  document.getElementById('dbInputBranchName').focus();
+  if (branchNameEl) branchNameEl.focus();
 };
 
 window.saveConnectionProfileForm = async function() {
   const id = document.getElementById('dbProfileHiddenId').value;
-  const fldPointNO = document.getElementById('dbInputPointNo').value.trim();
-  const fldName = document.getElementById('dbInputBranchName').value.trim();
-  const DataSource = document.getElementById('dbInputDataSource').value.trim();
-  const Catalog = document.getElementById('dbInputCatalog').value.trim();
+  const fldName = document.getElementById('dbInputBranchName')?.value.trim() || '';
+  const server = document.getElementById('dbInputMainDataSource')?.value.trim() || 'SENANSERVER\\SQLEXPRESS';
+  const dbName = document.getElementById('dbInputMainCatalog')?.value.trim() || 'hc';
 
   if (!fldName) {
     showToast("يرجى إدخال اسم الفرع / مزود الاتصال.", "warning");
     return;
   }
-  if (!DataSource) {
-    showToast("يرجى إدخال سيرفر الفرع (DataSource).", "warning");
+  if (!server) {
+    showToast("يرجى إدخال اسم السيرفر (Server / IP).", "warning");
     return;
   }
-  if (!Catalog) {
-    showToast("يرجى إدخال قاعدة بيانات الفرع (Catalog).", "warning");
+  if (!dbName) {
+    showToast("يرجى إدخال اسم قاعدة البيانات (Database).", "warning");
     return;
   }
 
   const payload = {
-    fldPointNO: fldPointNO || '1',
+    fldPointNO: '1',
     fldName,
-    fldBranchNo: parseInt(document.getElementById('dbInputBranchNo').value) || 1,
-    DataSource,
-    Catalog,
-    MainDataSource: document.getElementById('dbInputMainDataSource').value.trim() || DataSource,
-    MainCatalog: document.getElementById('dbInputMainCatalog').value.trim() || Catalog,
-    UserID: document.getElementById('dbInputUserID').value.trim() || 'sa',
-    Password: document.getElementById('dbInputPassword').value,
-    Port: document.getElementById('dbInputPort').value.trim() || '1433'
+    fldBranchNo: parseInt(document.getElementById('dbInputBranchNo')?.value) || 1,
+    DataSource: server,
+    Catalog: dbName,
+    MainDataSource: server,
+    MainCatalog: dbName,
+    UserID: document.getElementById('dbInputUserID')?.value.trim() || 'sa',
+    Password: document.getElementById('dbInputPassword')?.value || '',
+    Port: document.getElementById('dbInputPort')?.value.trim() || '1433'
   };
 
   try {
@@ -6289,7 +6307,6 @@ window.saveConnectionProfileForm = async function() {
 
     const result = await res.json();
     if (result.success) {
-      // Also apply this profile as active
       await fetch('/api/connections/select', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -6309,11 +6326,11 @@ window.saveConnectionProfileForm = async function() {
 };
 
 window.testCurrentDbConnection = async function() {
-  const DataSource = document.getElementById('dbInputDataSource').value.trim();
-  const Catalog = document.getElementById('dbInputCatalog').value.trim();
-  const UserID = document.getElementById('dbInputUserID').value.trim();
-  const Password = document.getElementById('dbInputPassword').value;
-  const Port = document.getElementById('dbInputPort').value.trim() || '1433';
+  const DataSource = document.getElementById('dbInputMainDataSource')?.value.trim() || 'SENANSERVER\\SQLEXPRESS';
+  const Catalog = document.getElementById('dbInputMainCatalog')?.value.trim() || 'hc';
+  const UserID = document.getElementById('dbInputUserID')?.value.trim() || 'sa';
+  const Password = document.getElementById('dbInputPassword')?.value || '';
+  const Port = document.getElementById('dbInputPort')?.value.trim() || '1433';
 
   showToast("جاري فحص الاتصال بقاعدة البيانات...", "info");
 

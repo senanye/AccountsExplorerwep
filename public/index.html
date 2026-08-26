@@ -1625,7 +1625,7 @@
           <div style="display: flex; align-items: center; gap: 10px;">
             <i class="fa-solid fa-pen-to-square" style="color: #fbbf24; font-size: 1.3rem;"></i>
             <h2 id="dbModalHeaderTitle" style="margin: 0; font-size: 1.15rem; font-weight: 800; color: #fde047;">
-              ✏️ نموذج تعديل بيانات الفرع: #<span id="hdrPointNo">71</span> (<span id="hdrBranchName">هيا</span>)
+              ✏️ نموذج تعديل بيانات الفرع: <span id="hdrBranchName">الفرع الرئيسي</span>
             </h2>
           </div>
           <button type="button" onclick="closeDbModal()" style="background: none; border: none; color: #94a3b8; font-size: 1.6rem; cursor: pointer; line-height: 1;">&times;</button>
@@ -1643,70 +1643,42 @@
               </span>
             </div>
 
-            <!-- Row 1: Point No, Branch Name, Primary Branch No -->
-            <div style="display: grid; grid-template-columns: 1fr 1.8fr 1fr; gap: 12px; margin-bottom: 12px;">
-              
-              <div>
-                <label style="font-size: 0.78rem; color: #cbd5e1; display: flex; justify-content: space-between; margin-bottom: 4px;">
-                  <span>رقم النقطة (fldPointNO)</span>
-                  <span style="background: #fbbf24; color: #0f172a; padding: 0 4px; border-radius: 3px; font-size: 0.7rem; font-weight: 900;">123</span>
-                </label>
-                <input type="text" id="dbInputPointNo" value="71" style="width: 100%; height: 34px; background: #070e1c; border: 1px solid #1e3a8a; border-radius: 6px; color: #38bdf8; font-family: monospace; font-weight: bold; text-align: center; font-size: 0.95rem;">
-              </div>
-
+            <!-- Row 1: Branch Name, Branch No -->
+            <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 12px; margin-bottom: 12px;">
               <div>
                 <label style="font-size: 0.78rem; color: #cbd5e1; display: flex; justify-content: space-between; margin-bottom: 4px;">
                   <span>اسم الفرع (fldName)</span>
                   <i class="fa-solid fa-store" style="color: #fbbf24;"></i>
                 </label>
-                <input type="text" id="dbInputBranchName" value="هيا" style="width: 100%; height: 34px; background: #070e1c; border: 1px solid #1e3a8a; border-radius: 6px; color: #ffffff; font-family: var(--font-arabic); font-weight: bold; text-align: center; font-size: 0.95rem;">
+                <input type="text" id="dbInputBranchName" value="" placeholder="اسم الفرع / مزود الاتصال" style="width: 100%; height: 34px; background: #070e1c; border: 1px solid #1e3a8a; border-radius: 6px; color: #ffffff; font-family: var(--font-arabic); font-weight: bold; text-align: center; font-size: 0.95rem;">
               </div>
 
               <div>
                 <label style="font-size: 0.78rem; color: #cbd5e1; display: flex; justify-content: space-between; margin-bottom: 4px;">
-                  <span>رقم الفرع الأساسي (fldBranchNo)</span>
+                  <span>رقم الفرع (fldBranchNo)</span>
                   <span style="color: #38bdf8; font-weight: 900;">#</span>
                 </label>
                 <input type="number" id="dbInputBranchNo" value="1" style="width: 100%; height: 34px; background: #070e1c; border: 1px solid #1e3a8a; border-radius: 6px; color: #ffffff; font-family: monospace; font-weight: bold; text-align: center; font-size: 0.95rem;">
               </div>
-
             </div>
 
-            <!-- Row 2: Branch Server, Branch DB, Main Server, Main DB -->
-            <div style="display: grid; grid-template-columns: 1.5fr 1fr 1.5fr 1fr; gap: 12px; margin-bottom: 12px;">
-              
+            <!-- Row 2: Server, Database -->
+            <div style="display: grid; grid-template-columns: 1.5fr 1.2fr; gap: 12px; margin-bottom: 12px;">
               <div>
                 <label style="font-size: 0.78rem; color: #cbd5e1; display: flex; justify-content: space-between; margin-bottom: 4px;">
-                  <span>سيرفر الفرع (DataSource / IP)</span>
-                  <i class="fa-solid fa-server" style="color: #38bdf8;"></i>
+                  <span>السيرفر (Server / IP)</span>
+                  <i class="fa-solid fa-server" style="color: #fbbf24;"></i>
                 </label>
-                <input type="text" id="dbInputDataSource" value="SENANSERVER\SQLEXPRESS" style="width: 100%; height: 34px; background: #070e1c; border: 1px solid #1e3a8a; border-radius: 6px; color: #38bdf8; font-family: monospace; font-weight: bold; text-align: center; font-size: 0.9rem;">
+                <input type="text" id="dbInputMainDataSource" value="SENANSERVER\SQLEXPRESS" placeholder="مثال: SENANSERVER\SQLEXPRESS أو IP" style="width: 100%; height: 34px; background: #070e1c; border: 1px solid #1e3a8a; border-radius: 6px; color: #fbbf24; font-family: monospace; font-weight: bold; text-align: center; font-size: 0.9rem;">
               </div>
 
               <div>
                 <label style="font-size: 0.78rem; color: #cbd5e1; display: flex; justify-content: space-between; margin-bottom: 4px;">
-                  <span>قاعدة بيانات الفرع (Catalog)</span>
-                  <i class="fa-solid fa-database" style="color: #94a3b8;"></i>
+                  <span>قاعدة البيانات (Database)</span>
+                  <i class="fa-solid fa-database" style="color: #fbbf24;"></i>
                 </label>
-                <input type="text" id="dbInputCatalog" value="sp" style="width: 100%; height: 34px; background: #070e1c; border: 1px solid #1e3a8a; border-radius: 6px; color: #ffffff; font-family: monospace; font-weight: bold; text-align: center; font-size: 0.9rem;">
+                <input type="text" id="dbInputMainCatalog" value="hc" placeholder="اسم الداتابيز e.g. hc / mydb" style="width: 100%; height: 34px; background: #070e1c; border: 1px solid #1e3a8a; border-radius: 6px; color: #fbbf24; font-family: monospace; font-weight: bold; text-align: center; font-size: 0.9rem;">
               </div>
-
-              <div>
-                <label style="font-size: 0.78rem; color: #cbd5e1; display: flex; justify-content: space-between; margin-bottom: 4px;">
-                  <span>السيرفر الرئيسي (MainDataSource)</span>
-                  <i class="fa-solid fa-asterisk" style="color: #fbbf24;"></i>
-                </label>
-                <input type="text" id="dbInputMainDataSource" value="SENANSERVER\SQLEXPRESS" style="width: 100%; height: 34px; background: #070e1c; border: 1px solid #1e3a8a; border-radius: 6px; color: #fbbf24; font-family: monospace; font-weight: bold; text-align: center; font-size: 0.9rem;">
-              </div>
-
-              <div>
-                <label style="font-size: 0.78rem; color: #cbd5e1; display: flex; justify-content: space-between; margin-bottom: 4px;">
-                  <span>قاعدة البيانات الرئيسية (MainCatalog)</span>
-                  <i class="fa-solid fa-network-wired" style="color: #fbbf24;"></i>
-                </label>
-                <input type="text" id="dbInputMainCatalog" value="mydb" style="width: 100%; height: 34px; background: #070e1c; border: 1px solid #1e3a8a; border-radius: 6px; color: #fbbf24; font-family: monospace; font-weight: bold; text-align: center; font-size: 0.9rem;">
-              </div>
-
             </div>
 
             <!-- Row 3: UserID, Password, Port + Action Buttons -->
@@ -1770,13 +1742,10 @@
               <thead>
                 <tr style="background: #0f2042; border-bottom: 2px solid #1e3a8a; color: #93c5fd; font-weight: 800;">
                   <th style="padding: 8px 10px; width: 110px;">تعديل فوري</th>
-                  <th style="padding: 8px 8px; width: 85px;">رقم النقطة</th>
                   <th style="padding: 8px 14px; text-align: right;">اسم الفرع</th>
                   <th style="padding: 8px 8px; width: 80px;">رقم الفرع</th>
-                  <th style="padding: 8px 12px; color: #38bdf8;">سيرفر الفرع (DataSource)</th>
-                  <th style="padding: 8px 12px;">قاعدة بيانات الفرع</th>
-                  <th style="padding: 8px 12px; color: #fbbf24;">السيرفر الرئيسي (MainDataSource)</th>
-                  <th style="padding: 8px 12px; color: #fbbf24;">قاعدة البيانات الرئيسية</th>
+                  <th style="padding: 8px 12px; color: #fbbf24;">السيرفر (Server / IP)</th>
+                  <th style="padding: 8px 12px; color: #fbbf24;">قاعدة البيانات (Database)</th>
                   <th style="padding: 8px 10px; width: 80px;">حذف</th>
                 </tr>
               </thead>

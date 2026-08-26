@@ -1672,10 +1672,10 @@ function getScreenContent(tabId, tabTitle, iconClass, colorClass) {
                 </div>
                 <div>
                   <label style="font-size: 0.75rem; font-weight: bold; color: #334155; display: block; margin: 0 0 1px 0;">العملة:</label>
-                  <select id="rentHdrMoney-${tabId}" class="rent-nav-field" data-next="rentHdrRate-${tabId}" style="width: 100%; height: 28px; padding: 0 6px; border: 1px solid #94a3b8; border-radius: 4px; font-weight: bold; font-family: var(--font-arabic); font-size: 0.82rem;">
-                    <option value="3">ريال يمني1</option>
+                  <select id="rentHdrMoney-${tabId}" class="rent-nav-field" data-next="rentHdrRate-${tabId}" onchange="handleRentCurrencyChange('${tabId}')" style="width: 100%; height: 28px; padding: 0 6px; border: 1px solid #94a3b8; border-radius: 4px; font-weight: bold; font-family: var(--font-arabic); font-size: 0.82rem;">
                     <option value="1">دولار امريكي</option>
                     <option value="2">ريال سعودي</option>
+                    <option value="3">ريال يمني1</option>
                   </select>
                 </div>
                 <div>
@@ -1692,12 +1692,12 @@ function getScreenContent(tabId, tabTitle, iconClass, colorClass) {
                 </div>
                 <div>
                   <label style="font-size: 0.75rem; font-weight: bold; color: #334155; display: block; margin: 0 0 1px 0;">تاريخ المرجع:</label>
-                  <input type="date" id="rentHdrRefDate-${tabId}" class="rent-nav-field" data-next="rentHdrDesc-${tabId}" style="width: 100%; height: 28px; padding: 0 6px; border: 1px solid #94a3b8; border-radius: 4px; font-family: monospace; font-size: 0.82rem;">
+                  <input type="date" id="rentHdrRefDate-${tabId}" class="rent-nav-field" data-next="rentHdrCenterCost-${tabId}" style="width: 100%; height: 28px; padding: 0 6px; border: 1px solid #94a3b8; border-radius: 4px; font-family: monospace; font-size: 0.82rem;">
                 </div>
                 <div>
-                  <label style="font-size: 0.75rem; font-weight: bold; color: #334155; display: block; margin: 0 0 1px 0;">م. الكلفة:</label>
-                  <select id="rentHdrCenterCost-${tabId}" style="width: 100%; height: 28px; padding: 0 6px; border: 1px solid #94a3b8; border-radius: 4px; font-weight: bold; font-family: var(--font-arabic); font-size: 0.82rem;">
-                    <option value="0">عام</option>
+                  <label style="font-size: 0.75rem; font-weight: bold; color: #b91c1c; display: block; margin: 0 0 1px 0;">م. الكلفة: * (إجباري)</label>
+                  <select id="rentHdrCenterCost-${tabId}" class="rent-nav-field" data-next="rentHdrDesc-${tabId}" style="width: 100%; height: 28px; padding: 0 6px; border: 1.5px solid #dc2626; background: #fff5f5; border-radius: 4px; font-weight: bold; font-family: var(--font-arabic); font-size: 0.82rem;">
+                    <option value="">جاري تحميل مراكز التكلفة...</option>
                   </select>
                 </div>
                 <div>
@@ -30293,6 +30293,12 @@ window.initRentInvoiceTab = async function(tabId, rentId = null) {
   if (dateEl && !dateEl.value) dateEl.value = today;
   if (refDateEl && !refDateEl.value) refDateEl.value = today;
 
+  // Load Cost Centers from dbo.tblCostCenter (SELECT fldID, fldName FROM dbo.tblCostCenter)
+  await loadRentCostCentersList(tabId);
+
+  // Load Currencies
+  await loadRentCurrenciesList(tabId);
+
   setupRentInvoiceEnterNavigation(tabId);
 
   if (rentId) {
@@ -30356,6 +30362,9 @@ window.loadExistingRentInvoiceData = async function(tabId, rentId) {
 
     const branchEl = document.getElementById(`rentHdrBranch-${tabId}`);
     if (branchEl) branchEl.value = data.fldBranchNo || 1;
+
+    const ccEl = document.getElementById(`rentHdrCenterCost-${tabId}`);
+    if (ccEl && data.fldCenterCostID) ccEl.value = data.fldCenterCostID;
 
     state.rentInvoices[tabId].lines = data.lines || [];
     renderRentInvoiceLinesTable(tabId);
@@ -30589,10 +30598,16 @@ window.saveRentInvoice = async function(tabId, andPrint = false) {
   const fldRefNo = document.getElementById(`rentHdrRefNo-${tabId}`)?.value || 0;
   const fldMoneyID = document.getElementById(`rentHdrMoney-${tabId}`)?.value || 1;
   const fldMoneyValue = document.getElementById(`rentHdrRate-${tabId}`)?.value || 1.0;
+  const fldCenterCostID = document.getElementById(`rentHdrCenterCost-${tabId}`)?.value;
   const lines = state.rentInvoices[tabId]?.lines || [];
 
   if (!fldDate) {
     showToast("يرجى تحديد تاريخ الفاتورة.", "warning");
+    return;
+  }
+  if (!fldCenterCostID || fldCenterCostID === '0' || fldCenterCostID === '') {
+    showToast("يرجى اختيار مركز التكلفة أولاً (حقل إجباري).", "warning");
+    document.getElementById(`rentHdrCenterCost-${tabId}`)?.focus();
     return;
   }
   if (lines.length === 0) {
@@ -30609,6 +30624,7 @@ window.saveRentInvoice = async function(tabId, andPrint = false) {
     fldRefNo,
     fldMoneyID,
     fldMoneyValue,
+    fldCenterCostID: parseInt(fldCenterCostID) || 2,
     fldUserID: (state.currentUser && state.currentUser.id) ? state.currentUser.id : 1,
     lines
   };
@@ -30644,8 +30660,9 @@ window.saveRentInvoice = async function(tabId, andPrint = false) {
   }
 };
 
-window.saveAndPrintRentInvoice = function(tabId) {
-  saveRentInvoice(tabId, true);
+window.saveAndPrintRentInvoice = async function(tabId) {
+  await saveRentInvoice(tabId, false);
+  openRentInvoicePrintModal(tabId);
 };
 
 
@@ -31489,4 +31506,342 @@ window.openJournalEntryModal = function(journalData) {
 window.closeJournalEntryModal = function() {
   const modal = document.getElementById('journalEntryModal');
   if (modal) modal.style.display = 'none';
+};
+
+// =============================================================================
+// RENT COST CENTERS & CURRENCY AUTO EXCHANGE RATE
+// =============================================================================
+
+window.loadRentCostCentersList = async function(tabId) {
+  const ccSelect = document.getElementById(`rentHdrCenterCost-${tabId}`);
+  if (!ccSelect) return;
+
+  try {
+    const res = await fetch('/api/cost-centers');
+    const result = await res.json();
+    const list = result.data || [];
+    state.costCenters = list;
+
+    ccSelect.innerHTML = '<option value="">-- اختر مركز التكلفة --</option>';
+    list.forEach(cc => {
+      const opt = document.createElement('option');
+      opt.value = cc.fldID;
+      opt.textContent = cc.fldName;
+      // Default to 2 (الايجارات) or matching name
+      if (cc.fldID === 2 || cc.fldName.includes('ايجار') || cc.fldName.includes('إيجار')) {
+        opt.selected = true;
+      }
+      ccSelect.appendChild(opt);
+    });
+  } catch (err) {
+    console.warn("Could not load cost centers:", err);
+    ccSelect.innerHTML = '<option value="2" selected>الايجارات</option><option value="1">ايراد خدمة الكهرياء</option>';
+  }
+};
+
+window.loadRentCurrenciesList = async function(tabId) {
+  const curSelect = document.getElementById(`rentHdrMoney-${tabId}`);
+  if (!curSelect) return;
+
+  if (!state.currencies || state.currencies.length === 0) {
+    try {
+      const res = await fetch('/api/currencies');
+      const result = await res.json();
+      if (result.data) state.currencies = result.data;
+    } catch (e) {
+      console.warn("Currencies list fallback:", e);
+    }
+  }
+
+  if (state.currencies && state.currencies.length > 0) {
+    curSelect.innerHTML = '';
+    state.currencies.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.fldID;
+      opt.textContent = c.fldName;
+      opt.dataset.rate = c.fldValue || 1.0;
+      if (c.fldID === 1 || (c.fldName || '').includes('دولار')) {
+        opt.selected = true;
+      }
+      curSelect.appendChild(opt);
+    });
+    handleRentCurrencyChange(tabId);
+  }
+};
+
+window.handleRentCurrencyChange = function(tabId) {
+  const moneySelect = document.getElementById(`rentHdrMoney-${tabId}`);
+  const rateInput = document.getElementById(`rentHdrRate-${tabId}`);
+  if (!moneySelect || !rateInput) return;
+
+  const curId = parseInt(moneySelect.value);
+  const curObj = (state.currencies || []).find(c => c.fldID === curId);
+  if (curObj && curObj.fldValue !== undefined) {
+    rateInput.value = parseFloat(curObj.fldValue).toFixed(2);
+  } else {
+    if (curId === 1) rateInput.value = "1.00";
+    else if (curId === 2) rateInput.value = "3.80";
+    else if (curId === 3) rateInput.value = "1560.00";
+    else rateInput.value = "1.00";
+  }
+};
+
+
+// =============================================================================
+// RENT INVOICE PRINT MODEL (Matching media_1787742584071.png & media_1787742614151.png)
+// =============================================================================
+
+window.openRentInvoicePrintModal = function(tabId, targetShopIdx = null) {
+  const transNo = document.getElementById(`rentHdrTransNo-${tabId}`)?.value || '0';
+  const rawDate = document.getElementById(`rentHdrDate-${tabId}`)?.value || new Date().toISOString().split('T')[0];
+  const description = document.getElementById(`rentHdrDesc-${tabId}`)?.value || 'فاتورة ايجار شهري';
+  const moneySelect = document.getElementById(`rentHdrMoney-${tabId}`);
+  const currencyName = moneySelect ? moneySelect.options[moneySelect.selectedIndex]?.text : 'دولار امريكي';
+  
+  // Format Date DD/MM/YYYY
+  const dParts = rawDate.split('-');
+  const formattedDate = dParts.length === 3 ? `${dParts[2]}/${dParts[1]}/${dParts[0]}` : rawDate;
+  
+  // Arabic Date string (e.g. 26 أغسطس 2026)
+  const monthNamesAr = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
+  const dObj = new Date(rawDate);
+  const arabicDateStr = `${dObj.getDate()} ${monthNamesAr[dObj.getMonth()]} ${dObj.getFullYear()}`;
+
+  const lines = state.rentInvoices[tabId]?.lines || [];
+  if (lines.length === 0) {
+    showToast("لا توجد سطور محلات للطباعة في هذه الفاتورة.", "warning");
+    return;
+  }
+
+  // Filter lines if targetShopIdx specified
+  const printLines = (targetShopIdx !== null && lines[targetShopIdx]) ? [lines[targetShopIdx]] : lines.filter(l => l.fldIsActive !== false);
+  const totalPages = printLines.length;
+
+  // Retrieve logo from state or settings
+  const logoSrc = (state.appLogo && state.appLogo.startsWith('data:image')) ? state.appLogo : '/logo.png';
+
+  let slipsHtml = '';
+  printLines.forEach((l, idx) => {
+    const pageNum = (targetShopIdx !== null) ? 1 : (idx + 1);
+    const shopNum = l.fldShopNumber || '';
+    const customerName = (l.fldCustomerName || l.fldShopName || '').trim();
+    const rentVal = parseFloat(l.fldTotalPrice || l.fldRent || 0);
+    const debitVal = parseFloat(l.fldDebit || 0);
+    const totalDueVal = rentVal + debitVal;
+
+    slipsHtml += `
+      <div class="rent-print-page" style="page-break-after: always; padding: 15px 25px; margin-bottom: 25px; background: #ffffff; border: 1.5px solid #000; border-radius: 8px; font-family: var(--font-arabic); direction: rtl; color: #000; box-sizing: border-box; max-width: 820px; margin-left: auto; margin-right: auto;">
+        
+        <!-- Header Box matching Image 2 -->
+        <div style="border: 2px solid #000; border-radius: 12px; padding: 6px 14px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+          
+          <!-- Left: English Info -->
+          <div style="text-align: left; font-family: Arial, sans-serif; font-size: 0.8rem; line-height: 1.35; width: 33%;">
+            <div style="color: #c00; font-weight: 900; font-size: 1.05rem; white-space: nowrap;">AL-Horaibi Commercial Center</div>
+            <div>Tel No.: <u>02343531</u> &nbsp; <u>02343541</u></div>
+            <div><u>FAX NO</u></div>
+            <div><u>PO BOX</u></div>
+          </div>
+
+          <!-- Center: Logo -->
+          <div style="text-align: center; width: 33%;">
+            <img src="${logoSrc}" style="max-height: 50px; max-width: 120px; object-fit: contain;" alt="الشعار" onerror="this.style.display='none'">
+            <div style="color: #c00; font-weight: bold; font-size: 0.92rem; margin-top: 2px;">مركز الحريبي التجاري</div>
+          </div>
+
+          <!-- Right: Arabic Info -->
+          <div style="text-align: right; font-size: 0.82rem; line-height: 1.35; width: 33%;">
+            <div style="color: #c00; font-weight: 900; font-size: 1.15rem; white-space: nowrap;">مركز الحريبي التجاري</div>
+            <div>رقم التلفون: <u>02343531</u> &nbsp; <u>02343541</u></div>
+            <div><u>رقم الفاكس</u></div>
+            <div><u>صندوق البريد</u></div>
+          </div>
+
+        </div>
+
+        <!-- Identification Bar -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin: 10px 0 14px 0; font-size: 0.92rem; font-weight: bold;">
+          <div style="width: 25%; text-align: right;">رقم &nbsp; <span style="font-family: monospace; font-size: 1.1rem; font-weight: 900;">${transNo}</span></div>
+          <div style="width: 50%; text-align: center; font-size: 1.25rem; font-weight: 900;">فاتورة ايجار شهري</div>
+          <div style="width: 25%; text-align: left;">تاريخ الاصدار &nbsp; <span style="font-family: monospace; font-size: 0.95rem;">${formattedDate}</span></div>
+        </div>
+
+        <!-- Customer & Shop Info -->
+        <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; font-size: 0.92rem;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-weight: bold; width: 85px;">اسم المشترك</span>
+            <span style="font-weight: 800; font-size: 1rem; color: #000;">${customerName} المحترم</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-weight: bold; width: 85px;">البيان</span>
+              <span style="font-weight: 700;">${description}</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; margin-left: 20px;">
+              <span style="font-weight: bold;">رقم المحل</span>
+              <span style="font-family: monospace; font-weight: 900; font-size: 1.1rem;">${shopNum}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Financial Table matching Image 1 -->
+        <table style="width: 100%; border-collapse: collapse; text-align: center; font-size: 0.9rem; margin-bottom: 14px; border: 1.5px solid #000;">
+          <thead>
+            <tr style="background-color: #dbeafe; border-bottom: 1.5px solid #000;">
+              <th style="padding: 8px; border: 1.5px solid #000; width: 25%; font-weight: bold; color: #000;">العمله</th>
+              <th style="padding: 8px; border: 1.5px solid #000; width: 25%; font-weight: bold; color: #000;">اجمالي المبلغ المستحق</th>
+              <th style="padding: 8px; border: 1.5px solid #000; width: 25%; font-weight: bold; color: #000;">المتاخرات</th>
+              <th style="padding: 8px; border: 1.5px solid #000; width: 25%; font-weight: bold; color: #000;">الايجار الشهري</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="padding: 10px; border: 1.5px solid #000; font-weight: bold;">${currencyName}</td>
+              <td style="padding: 10px; border: 1.5px solid #000; font-weight: 900; font-family: monospace; font-size: 1.15rem;">${totalDueVal > 0 ? totalDueVal.toLocaleString('en-US') : '0'}</td>
+              <td style="padding: 10px; border: 1.5px solid #000; font-family: monospace; font-size: 1rem;">${debitVal > 0 ? debitVal.toLocaleString('en-US') : ''}</td>
+              <td style="padding: 10px; border: 1.5px solid #000; font-weight: 900; font-family: monospace; font-size: 1.15rem;">${rentVal > 0 ? rentVal.toLocaleString('en-US') : '0'}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- Notice Box -->
+        <div style="text-align: center; font-weight: 900; font-size: 1.05rem; color: #000; margin: 18px 0;">
+          يتم التسديد خلال ثلاثة ايام و الا سوف يتم اتخاذ الاجراءات اللازمة
+        </div>
+
+        <!-- Footer Bar -->
+        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; font-weight: bold; border-top: 1px dashed #94a3b8; padding-top: 6px;">
+          <div>ص ${pageNum} الى ${totalPages}</div>
+          <div>${arabicDateStr}</div>
+        </div>
+
+      </div>
+    `;
+  });
+
+  // Create or update Modal
+  let modal = document.getElementById('rentInvoicePrintModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'rentInvoicePrintModal';
+    modal.style.position = 'fixed';
+    modal.style.top = '0';
+    modal.style.left = '0';
+    modal.style.width = '100vw';
+    modal.style.height = '100vh';
+    modal.style.backgroundColor = 'rgba(15, 23, 42, 0.75)';
+    modal.style.backdropFilter = 'blur(4px)';
+    modal.style.zIndex = '999999';
+    modal.style.display = 'flex';
+    modal.style.alignItems = 'center';
+    modal.style.justifyContent = 'center';
+    modal.style.direction = 'rtl';
+    modal.style.fontFamily = 'var(--font-arabic)';
+    document.body.appendChild(modal);
+  }
+
+  modal.innerHTML = `
+    <div style="background: #ffffff; width: 95%; max-width: 900px; height: 95vh; border-radius: 8px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.4); display: flex; flex-direction: column; overflow: hidden; border: 1px solid #cbd5e1;">
+      
+      <!-- Top Action Bar -->
+      <div style="background: #f1f5f9; padding: 10px 18px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #cbd5e1;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <h3 style="margin: 0; font-size: 1.1rem; font-weight: 900; color: #1e293b;">
+            <i class="fa-solid fa-print" style="color: #0284c7;"></i> معاينة طباعة فواتير الإيجار (${totalPages} فاتورة)
+          </h3>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <button type="button" onclick="executeRentInvoicePrint()" style="background: #0284c7; color: #ffffff; border: none; border-radius: 4px; padding: 6px 16px; font-weight: 800; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 4px rgba(2,132,199,0.2);">
+            <i class="fa-solid fa-print"></i> طباعة الآن
+          </button>
+          <button type="button" onclick="closeRentInvoicePrintModal()" style="background: #ef4444; color: #ffffff; border: none; border-radius: 4px; width: 30px; height: 30px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1rem;" title="إغلاق">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Scrollable Printable Slips Container -->
+      <div id="rentPrintableContainer" style="flex: 1; overflow-y: auto; padding: 20px; background: #e2e8f0;">
+        ${slipsHtml}
+      </div>
+
+    </div>
+  `;
+
+  modal.style.display = 'flex';
+};
+
+window.closeRentInvoicePrintModal = function() {
+  const modal = document.getElementById('rentInvoicePrintModal');
+  if (modal) modal.style.display = 'none';
+};
+
+window.executeRentInvoicePrint = function() {
+  const container = document.getElementById('rentPrintableContainer');
+  if (!container) return;
+
+  const printWindow = window.open('', '_blank', 'width=900,height=750');
+  if (!printWindow) {
+    window.print();
+    return;
+  }
+
+  printWindow.document.write(`
+    <!DOCTYPE html>
+    <html dir="rtl" lang="ar">
+    <head>
+      <meta charset="utf-8">
+      <title>طباعة فواتير الإيجار الشهري</title>
+      <style>
+        @page {
+          size: A4 portrait;
+          margin: 10mm;
+        }
+        body {
+          margin: 0;
+          padding: 0;
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          direction: rtl;
+          background: #fff;
+          color: #000;
+        }
+        .rent-print-page {
+          page-break-after: always;
+          border: 1.5px solid #000 !important;
+          border-radius: 8px;
+          padding: 15px 25px;
+          margin-bottom: 20px;
+          box-sizing: border-box;
+        }
+        .rent-print-page:last-child {
+          page-break-after: auto;
+        }
+        table {
+          width: 100%;
+          border-collapse: collapse;
+        }
+        th, td {
+          border: 1.5px solid #000 !important;
+          text-align: center;
+        }
+        th {
+          background-color: #dbeafe !important;
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
+        }
+      </style>
+    </head>
+    <body>
+      ${container.innerHTML}
+      <script>
+        window.onload = function() {
+          window.focus();
+          window.print();
+          setTimeout(function() { window.close(); }, 500);
+        };
+      <\/script>
+    </body>
+    </html>
+  `);
+  printWindow.document.close();
 };

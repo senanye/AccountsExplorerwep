@@ -16952,6 +16952,7 @@ app.get('/api/rent-bills', async (req, res) => {
         ISNULL(m.fldName, N'دولار امريكي') AS fldMoneyName,
         RTRIM(LTRIM(ISNULL(m.fldsymbol, 'USD'))) AS fldsymbol,
         ISNULL(t.fldRefNo, 0) AS fldRefNo,
+        ISNULL(t.fldCenterCostID, 2) AS fldCenterCostID,
         t.fldOK,
         t.fldClosed,
         t.fldUserID,
@@ -17159,6 +17160,7 @@ app.get('/api/rent-bills/:id', async (req, res) => {
         ISNULL(m.fldName, N'دولار امريكي') AS fldMoneyName,
         RTRIM(LTRIM(ISNULL(m.fldsymbol, '$'))) AS fldsymbol,
         ISNULL(t.fldRefNo, 0) AS fldRefNo,
+        ISNULL(t.fldCenterCostID, 2) AS fldCenterCostID,
         t.fldOK,
         t.fldClosed,
         t.fldUserID,
@@ -17253,6 +17255,8 @@ app.post('/api/rent-bills', async (req, res) => {
 
     const yearVal = fldDate ? new Date(fldDate).getFullYear().toString().substr(-2) : '26';
 
+    const costCenterNum = parseInt(req.body.fldCenterCostID) || 2;
+
     const transReq = globalPool.request();
     transReq.input('fldID', sql.Int, newTransID);
     transReq.input('fldBranchNo', sql.Int, parseInt(fldBranchNo) || 1);
@@ -17265,6 +17269,7 @@ app.post('/api/rent-bills', async (req, res) => {
     transReq.input('fldRefDate', sql.NVarChar, fldRefDate || fldDate || new Date().toISOString().split('T')[0]);
     transReq.input('fldDescription', sql.NVarChar, fldDescription || 'فاتورة ايجار شهري');
     transReq.input('fldRefNo', sql.Int, parseInt(fldRefNo) || 0);
+    transReq.input('fldCenterCostID', sql.Int, costCenterNum);
     transReq.input('fldVoisherAccID', sql.Int, parseInt(fldVoisherAccID) || 264);
     transReq.input('fldVoisherMoneyID', sql.Int, parseInt(fldMoneyID) || 1);
     transReq.input('fldVoisherMoneyValue', sql.Float, parseFloat(fldMoneyValue) || 1.0);
@@ -17284,7 +17289,7 @@ app.post('/api/rent-bills', async (req, res) => {
       ) VALUES (
         @fldID, @fldBranchNo, @fldYaer, @fldUserID, @fldTransType, @fldType, @fldTransNo, 0,
         @fldDate, @fldRefDate, @fldDescription, @fldRefNo, 0, '',
-        0, 0, '', '', '', '',
+        0, @fldCenterCostID, '', '', '', '',
         0, 0, @fldVoisherAccID, @fldVoisherMoneyID, @fldVoisherMoneyValue,
         @fldVoisherTotal, 0, 0, @fldVoisherMoneyID, @fldVoisherMoneyValue,
         @fldAccTotal, 0, 0, 0, 0,
@@ -17448,6 +17453,8 @@ app.put('/api/rent-bills/:id', async (req, res) => {
       });
     }
 
+    const costCenterNum = parseInt(req.body.fldCenterCostID) || 2;
+
     const transReq = globalPool.request();
     transReq.input('id', sql.Int, id);
     transReq.input('fldBranchNo', sql.Int, parseInt(fldBranchNo) || 1);
@@ -17456,6 +17463,7 @@ app.put('/api/rent-bills/:id', async (req, res) => {
     transReq.input('fldDescription', sql.NVarChar, fldDescription || 'فاتورة ايجار شهري');
     transReq.input('fldType', sql.Int, parseInt(fldType) || 3);
     transReq.input('fldRefNo', sql.Int, parseInt(fldRefNo) || 0);
+    transReq.input('fldCenterCostID', sql.Int, costCenterNum);
     transReq.input('fldVoisherAccID', sql.Int, parseInt(fldVoisherAccID) || 264);
     transReq.input('fldVoisherMoneyID', sql.Int, parseInt(fldMoneyID) || 1);
     transReq.input('fldVoisherMoneyValue', sql.Float, parseFloat(fldMoneyValue) || 1.0);
@@ -17470,6 +17478,7 @@ app.put('/api/rent-bills/:id', async (req, res) => {
         fldDescription = @fldDescription,
         fldType = @fldType,
         fldRefNo = @fldRefNo,
+        fldCenterCostID = @fldCenterCostID,
         fldVoisherAccID = @fldVoisherAccID,
         fldVoisherMoneyID = @fldVoisherMoneyID,
         fldVoisherMoneyValue = @fldVoisherMoneyValue,
@@ -17688,6 +17697,7 @@ app.get('/api/electricity-bills', async (req, res) => {
         ISNULL(t.fldVoisherMoneyID, 3) AS fldVoisherMoneyID,
         ISNULL(t.fldVoisherMoneyValue, 1.0) AS fldVoisherMoneyValue,
         ISNULL(t.fldRefNo, 0) AS fldRefNo,
+        ISNULL(t.fldCenterCostID, 2) AS fldCenterCostID,
         t.fldOK,
         t.fldClosed,
         t.fldUserID,
@@ -17830,6 +17840,7 @@ app.get('/api/electricity-bills/:id', async (req, res) => {
         ISNULL(m.fldName, N'ريال يمني1') AS fldMoneyName,
         RTRIM(LTRIM(ISNULL(m.fldsymbol, 'YR'))) AS fldsymbol,
         ISNULL(t.fldRefNo, 0) AS fldRefNo,
+        ISNULL(t.fldCenterCostID, 2) AS fldCenterCostID,
         t.fldOK,
         t.fldClosed,
         t.fldUserID,

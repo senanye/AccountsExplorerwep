@@ -1736,7 +1736,6 @@ function getScreenContent(tabId, tabTitle, iconClass, colorClass) {
                 <th style="padding: 6px 10px; width: 120px; text-align: right; position: sticky; top: 0; background: #f8fafc;">الاجمالي</th>
                 <th style="padding: 6px 8px; width: 90px; position: sticky; top: 0; background: #f8fafc;">رقم الحساب</th>
                 <th style="padding: 6px 12px; min-width: 170px; text-align: right; position: sticky; top: 0; background: #f8fafc;">اسم الحساب</th>
-                <th style="padding: 6px 4px; width: 45px; position: sticky; top: 0; background: #f8fafc;">حذف</th>
               </tr>
             </thead>
             <tbody id="rentLinesTableBody-${tabId}">
@@ -2003,7 +2002,6 @@ function getScreenContent(tabId, tabTitle, iconClass, colorClass) {
                 <th style="padding: 6px 6px; width: 60px;">محلي</th>
                 <th style="padding: 6px 6px; width: 60px;">محروقات</th>
                 <th style="padding: 6px 6px; width: 60px;">م ضريبه</th>
-                <th style="padding: 6px 4px; width: 35px;">حذف</th>
               </tr>
             </thead>
             <tbody id="elecLinesTableBody-${tabId}">
@@ -30403,7 +30401,7 @@ window.renderRentInvoiceLinesTable = function(tabId) {
 
   const lines = state.rentInvoices[tabId]?.lines || [];
   if (lines.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="12" style="text-align: center; padding: 25px; color: #94a3b8;">اضغط على زر "ادراج الكشف" لتحميل كافة المحلات والمستأجرين تلقائياً.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="11" style="text-align: center; padding: 25px; color: #94a3b8;">اضغط على زر "ادراج الكشف" لتحميل كافة المحلات والمستأجرين تلقائياً.</td></tr>';
     calculateRentInvoiceTotals(tabId);
     return;
   }
@@ -30431,7 +30429,6 @@ window.renderRentInvoiceLinesTable = function(tabId) {
         <td style="padding: 4px 8px; text-align: right; font-weight: 900; font-family: monospace; color: #059669; font-size: 0.9rem;" id="rentLineTotal-${tabId}-${idx}">${parseFloat(line.fldTotalPrice || line.fldRent || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
         <td style="padding: 4px 6px; font-family: monospace; color: #64748b;">${line.fldAccID || ''}</td>
         <td style="padding: 4px 10px; text-align: right; font-size: 0.78rem; color: #475569; white-space: nowrap;">${line.fldAccountName || ''}</td>
-        <td style="padding: 4px 4px;"><button type="button" onclick="removeRentInvoiceLine('${tabId}', ${idx})" style="background: none; border: none; color: #ef4444; cursor: pointer;" title="حذف السطر"><i class="fa-solid fa-trash-can"></i></button></td>
       </tr>
     `;
   });
@@ -31039,7 +31036,7 @@ window.renderElectricityInvoiceLinesTable = function(tabId) {
 
   const lines = state.elecInvoices[tabId]?.lines || [];
   if (lines.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="16" style="text-align: center; padding: 25px; color: #94a3b8;">اضغط على زر "ادراج الكشف" لتحميل كافة المحلات والعدادات والقراءات السابقة تلقائياً.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="15" style="text-align: center; padding: 25px; color: #94a3b8;">اضغط على زر "ادراج الكشف" لتحميل كافة المحلات والعدادات والقراءات السابقة تلقائياً.</td></tr>';
     calculateElectricityInvoiceTotals(tabId);
     return;
   }
@@ -31063,7 +31060,6 @@ window.renderElectricityInvoiceLinesTable = function(tabId) {
         <td style="padding: 4px 4px;"><input type="number" step="any" value="${line.fldLocalFees || 0}" oninput="updateElecLineField('${tabId}', ${idx}, 'fldLocalFees', this.value)" style="width: 55px; padding: 3px; text-align: right; border: 1px solid #cbd5e1; border-radius: 4px; font-family: monospace;"></td>
         <td style="padding: 4px 4px;"><input type="number" step="any" value="${line.fldFuel || 0}" oninput="updateElecLineField('${tabId}', ${idx}, 'fldFuel', this.value)" style="width: 55px; padding: 3px; text-align: right; border: 1px solid #cbd5e1; border-radius: 4px; font-family: monospace;"></td>
         <td style="padding: 4px 4px;"><input type="number" step="any" value="${line.fldlTaxTota_D || 0}" oninput="updateElecLineField('${tabId}', ${idx}, 'fldlTaxTota_D', this.value)" style="width: 55px; padding: 3px; text-align: right; border: 1px solid #cbd5e1; border-radius: 4px; font-family: monospace;"></td>
-        <td style="padding: 4px 4px;"><button type="button" onclick="removeElectricityInvoiceLine('${tabId}', ${idx})" style="background: none; border: none; color: #ef4444; cursor: pointer;"><i class="fa-solid fa-trash-can"></i></button></td>
       </tr>
     `;
   });

@@ -1767,93 +1767,88 @@ function getScreenContent(tabId, tabTitle, iconClass, colorClass) {
     `;
   } else if (isElectricityBillsExplorer) {
     bodyHtml = `
-      <div class="voucher-screen" style="direction: rtl; text-align: right; font-family: var(--font-arabic); display: flex; flex-direction: column; gap: 12px; height: 100%;">
-        <!-- Top Toolbar matching Image 1 -->
-        <div class="accounts-toolbar" style="background-color: #f1f5f9; padding: 8px 15px; border-bottom: 2px solid #cbd5e1; display: flex; gap: 10px; align-items: center; border-radius: 6px; flex-wrap: wrap;">
-          <button class="btn btn-secondary btn-sm" onclick="openElectricityInvoiceTab(null)" style="font-weight: bold; display: flex; align-items: center; gap: 6px;">
-            <i class="fa-solid fa-file-circle-plus" style="color: #10b981; font-size: 1.1rem;"></i> جديد
+      <div class="voucher-screen" style="direction: rtl; text-align: right; font-family: var(--font-arabic); display: flex; flex-direction: column; gap: 2px; height: 100%; padding: 2px;">
+        
+        <!-- Compact Top Toolbar -->
+        <div class="accounts-toolbar" style="background-color: #f1f5f9; padding: 4px 10px; margin-bottom: 2px; border-bottom: 1.5px solid #cbd5e1; display: flex; gap: 6px; align-items: center; border-radius: 6px; flex-wrap: wrap;">
+          <button class="btn btn-secondary btn-sm" onclick="openElectricityInvoiceTab(null)" style="font-weight: bold; display: flex; align-items: center; gap: 5px; height: 28px; padding: 0 10px;">
+            <i class="fa-solid fa-file-circle-plus" style="color: #10b981;"></i> جديد
           </button>
-          <button class="btn btn-secondary btn-sm" onclick="openEditSelectedElectricityBill('${tabId}')" style="font-weight: bold; display: flex; align-items: center; gap: 6px;">
-            <i class="fa-solid fa-pen-to-square" style="color: #f59e0b; font-size: 1.1rem;"></i> تعديل
+          <button class="btn btn-secondary btn-sm" onclick="openEditSelectedElectricityBill('${tabId}')" style="font-weight: bold; display: flex; align-items: center; gap: 5px; height: 28px; padding: 0 10px;">
+            <i class="fa-solid fa-pen-to-square" style="color: #f59e0b;"></i> تعديل
           </button>
-          <button class="btn btn-secondary btn-sm" onclick="loadElectricityBillsList('${tabId}')" style="font-weight: bold; display: flex; align-items: center; gap: 6px;">
-            <i class="fa-solid fa-magnifying-glass" style="color: #0284c7; font-size: 1.1rem;"></i> استعلام
+          <button class="btn btn-secondary btn-sm" onclick="loadElectricityBillsList('${tabId}')" style="font-weight: bold; display: flex; align-items: center; gap: 5px; height: 28px; padding: 0 10px;">
+            <i class="fa-solid fa-magnifying-glass" style="color: #0284c7;"></i> استعلام
           </button>
-          <button class="btn btn-secondary btn-sm" onclick="deleteSelectedElectricityBill('${tabId}')" style="font-weight: bold; display: flex; align-items: center; gap: 6px;">
-            <i class="fa-solid fa-trash-can" style="color: #ef4444; font-size: 1.1rem;"></i> حذف
+          <button class="btn btn-secondary btn-sm" onclick="deleteSelectedElectricityBill('${tabId}')" style="font-weight: bold; display: flex; align-items: center; gap: 5px; height: 28px; padding: 0 10px;">
+            <i class="fa-solid fa-trash-can" style="color: #ef4444;"></i> حذف
           </button>
-          <button class="btn btn-secondary btn-sm" onclick="printElectricityBillsList('${tabId}')" style="font-weight: bold; display: flex; align-items: center; gap: 6px;">
-            <i class="fa-solid fa-print" style="color: #475569; font-size: 1.1rem;"></i> طباعة
+          <button class="btn btn-secondary btn-sm" onclick="printElectricityBillsList('${tabId}')" style="font-weight: bold; display: flex; align-items: center; gap: 5px; height: 28px; padding: 0 10px;">
+            <i class="fa-solid fa-print"></i> طباعة
           </button>
-          <button class="btn btn-secondary btn-sm" onclick="exportElectricityBillsListExcel('${tabId}')" style="font-weight: bold; display: flex; align-items: center; gap: 6px;">
-            <i class="fa-solid fa-file-excel" style="color: #10b981; font-size: 1.1rem;"></i> تصدير XLS
+          <button class="btn btn-secondary btn-sm" onclick="exportElectricityBillsListExcel('${tabId}')" style="font-weight: bold; display: flex; align-items: center; gap: 5px; height: 28px; padding: 0 10px;">
+            <i class="fa-solid fa-file-excel" style="color: #10b981;"></i> تصدير XLS
           </button>
         </div>
 
-        <!-- Filter Row matching Image 1 -->
-        <div style="background: #ffffff; padding: 10px 16px; border: 1px solid #cbd5e1; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; gap: 15px; flex-wrap: wrap;">
-          <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-            <div style="display: flex; align-items: center; gap: 6px;">
-              <label style="font-weight: bold; font-size: 0.85rem; color: #334155;">الفرع:</label>
-              <select id="elecBranchFilter-${tabId}" onchange="loadElectricityBillsList('${tabId}')" style="padding: 4px 10px; border: 1px solid #94a3b8; border-radius: 4px; font-weight: bold; font-family: var(--font-arabic);">
+        <!-- Ultra-Compact Filter & Search Row -->
+        <div style="background: #ffffff; padding: 4px 10px; margin-bottom: 2px; border: 1px solid #cbd5e1; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap;">
+          <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <label style="font-weight: bold; font-size: 0.76rem; color: #334155;">الفرع:</label>
+              <select id="elecBranchFilter-${tabId}" onchange="loadElectricityBillsList('${tabId}')" style="height: 26px; padding: 0 6px; border: 1px solid #94a3b8; border-radius: 3px; font-weight: bold; font-family: var(--font-arabic); font-size: 0.8rem;">
               </select>
             </div>
 
-            <div style="display: flex; align-items: center; gap: 6px;">
-              <label style="font-weight: bold; font-size: 0.85rem; color: #334155;">من تاريخ:</label>
-              <input type="date" id="elecFromDate-${tabId}" style="padding: 4px 8px; border: 1px solid #94a3b8; border-radius: 4px; font-family: monospace;">
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <label style="font-weight: bold; font-size: 0.76rem; color: #334155;">من تاريخ:</label>
+              <input type="date" id="elecFromDate-${tabId}" style="height: 26px; padding: 0 6px; border: 1px solid #94a3b8; border-radius: 3px; font-family: monospace; font-size: 0.8rem;">
             </div>
 
-            <div style="display: flex; align-items: center; gap: 6px;">
-              <label style="font-weight: bold; font-size: 0.85rem; color: #334155;">الى تاريخ:</label>
-              <input type="date" id="elecToDate-${tabId}" style="padding: 4px 8px; border: 1px solid #94a3b8; border-radius: 4px; font-family: monospace;">
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <label style="font-weight: bold; font-size: 0.76rem; color: #334155;">الى تاريخ:</label>
+              <input type="date" id="elecToDate-${tabId}" style="height: 26px; padding: 0 6px; border: 1px solid #94a3b8; border-radius: 3px; font-family: monospace; font-size: 0.8rem;">
             </div>
 
-            <button type="button" onclick="loadElectricityBillsList('${tabId}')" class="btn btn-primary btn-sm" style="font-weight: bold;">
-              <i class="fa-solid fa-filter"></i> تطبيق الفلتر
+            <button type="button" onclick="loadElectricityBillsList('${tabId}')" class="btn btn-primary btn-sm" style="font-weight: bold; height: 26px; padding: 0 10px; font-size: 0.78rem;">
+              <i class="fa-solid fa-filter"></i> فلترة
             </button>
+            
+            <input type="text" id="elecSearchInput-${tabId}" oninput="loadElectricityBillsList('${tabId}')" placeholder="بحث سريع برقم الفاتورة أو البيان..." style="height: 26px; width: 220px; padding: 0 8px; border: 1px solid #cbd5e1; border-radius: 3px; font-family: var(--font-arabic); font-size: 0.8rem;">
           </div>
 
-          <div style="display: flex; align-items: center; gap: 10px;">
-            <button type="button" onclick="printElectricityBillsList('${tabId}')" style="background: #f1f5f9; border: 1px solid #cbd5e1; padding: 4px 12px; border-radius: 4px; font-weight: bold; font-size: 0.82rem; cursor: pointer;">
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <button type="button" onclick="printElectricityBillsList('${tabId}')" style="height: 26px; background: #f1f5f9; border: 1px solid #cbd5e1; padding: 0 10px; border-radius: 3px; font-weight: bold; font-size: 0.76rem; cursor: pointer;">
               طباعة الفواتير
             </button>
-            <button type="button" onclick="showToast('حركة المتغيرات قيد التشغيل', 'info')" style="background: #f1f5f9; border: 1px solid #cbd5e1; padding: 4px 12px; border-radius: 4px; font-weight: bold; font-size: 0.82rem; cursor: pointer;">
-              حركة المتغيرات
-            </button>
-            <label style="font-size: 0.82rem; font-weight: bold; color: #475569; display: flex; align-items: center; gap: 4px; cursor: pointer;">
+            <label style="font-size: 0.74rem; font-weight: bold; color: #475569; display: flex; align-items: center; gap: 3px; cursor: pointer;">
               <input type="checkbox"> الطباعة مباشره
             </label>
           </div>
         </div>
 
-        <!-- Search Input -->
-        <div style="padding: 0 5px;">
-          <input type="text" id="elecSearchInput-${tabId}" oninput="loadElectricityBillsList('${tabId}')" placeholder="بحث سريع برقم الفاتورة، البيان، أو الفرع..." style="width: 100%; max-width: 400px; padding: 6px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-family: var(--font-arabic); font-size: 0.85rem;">
-        </div>
-
-        <!-- Explorer Table matching Image 1 -->
-        <div class="accounts-table-container" style="flex: 1; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; overflow: auto;">
-          <table id="elecBillsTable-${tabId}" class="accounts-table" style="width: 100%; border-collapse: collapse; font-size: 0.82rem; text-align: center;">
+        <!-- Explorer Table Container with Horizontal & Vertical Scrollbars & Sticky Headers -->
+        <div class="accounts-table-container" style="flex: 1; min-height: 250px; max-height: calc(100vh - 210px); background: #ffffff; border: 1px solid #cbd5e1; border-radius: 4px; overflow-x: auto; overflow-y: auto; position: relative;">
+          <table id="elecBillsTable-${tabId}" class="accounts-table" style="width: 100%; min-width: 1650px; border-collapse: separate; border-spacing: 0; font-size: 0.82rem; text-align: center;">
             <thead>
-              <tr style="background: #f8fafc; border-bottom: 2px solid #cbd5e1; color: #334155; font-weight: 800;">
-                <th style="padding: 8px 6px; width: 55px;">الرقم</th>
-                <th style="padding: 8px 8px; width: 95px;">التاريخ</th>
-                <th style="padding: 8px 12px; width: 120px;">المركز المالي</th>
-                <th style="padding: 8px 14px; text-align: right;">البيان</th>
-                <th style="padding: 8px 6px; width: 50px;">مرحل</th>
-                <th style="padding: 8px 10px; width: 120px; text-align: right;">الاجمالي</th>
-                <th style="padding: 8px 6px; width: 50px;">العملة</th>
-                <th style="padding: 8px 8px; width: 70px;">نظافة</th>
-                <th style="padding: 8px 8px; width: 70px;">محلي</th>
-                <th style="padding: 8px 8px; width: 75px;">خدمات</th>
-                <th style="padding: 8px 8px; width: 70px;">محروقات</th>
-                <th style="padding: 8px 8px; width: 70px;">م ضريبه</th>
-                <th style="padding: 8px 6px; width: 60px;">النوع</th>
-                <th style="padding: 8px 6px; width: 65px;">رقم ID</th>
-                <th style="padding: 8px 12px; text-align: right;">نوع الحركة</th>
-                <th style="padding: 8px 8px; width: 80px;">اسم العملة</th>
-                <th style="padding: 8px 6px; width: 50px;">مغلق</th>
+              <tr style="position: sticky; top: 0; z-index: 10; background: #f8fafc; border-bottom: 2px solid #cbd5e1; color: #334155; font-weight: 800;">
+                <th style="padding: 6px 8px; width: 60px; position: sticky; top: 0; background: #f8fafc;">الرقم</th>
+                <th style="padding: 6px 8px; width: 95px; position: sticky; top: 0; background: #f8fafc;">التاريخ</th>
+                <th style="padding: 6px 12px; width: 140px; text-align: right; position: sticky; top: 0; background: #f8fafc;">المركز المالي</th>
+                <th style="padding: 6px 14px; min-width: 250px; text-align: right; position: sticky; top: 0; background: #f8fafc;">البيان</th>
+                <th style="padding: 6px 6px; width: 50px; position: sticky; top: 0; background: #f8fafc;">مرحل</th>
+                <th style="padding: 6px 10px; width: 130px; text-align: right; position: sticky; top: 0; background: #f8fafc;">الاجمالي</th>
+                <th style="padding: 6px 6px; width: 55px; position: sticky; top: 0; background: #f8fafc;">العملة</th>
+                <th style="padding: 6px 8px; width: 75px; text-align: right; position: sticky; top: 0; background: #f8fafc;">نظافة</th>
+                <th style="padding: 6px 8px; width: 75px; text-align: right; position: sticky; top: 0; background: #f8fafc;">محلي</th>
+                <th style="padding: 6px 8px; width: 75px; text-align: right; position: sticky; top: 0; background: #f8fafc;">خدمات</th>
+                <th style="padding: 6px 8px; width: 75px; text-align: right; position: sticky; top: 0; background: #f8fafc;">محروقات</th>
+                <th style="padding: 6px 8px; width: 75px; text-align: right; position: sticky; top: 0; background: #f8fafc;">م ضريبه</th>
+                <th style="padding: 6px 8px; width: 65px; position: sticky; top: 0; background: #f8fafc;">النوع</th>
+                <th style="padding: 6px 6px; width: 70px; position: sticky; top: 0; background: #f8fafc;">رقم ID</th>
+                <th style="padding: 6px 12px; width: 130px; text-align: right; position: sticky; top: 0; background: #f8fafc;">نوع الحركة</th>
+                <th style="padding: 6px 10px; width: 95px; position: sticky; top: 0; background: #f8fafc;">اسم العملة</th>
+                <th style="padding: 6px 6px; width: 50px; position: sticky; top: 0; background: #f8fafc;">مغلق</th>
               </tr>
             </thead>
             <tbody id="elecBillsTableBody-${tabId}">
@@ -1865,150 +1860,149 @@ function getScreenContent(tabId, tabTitle, iconClass, colorClass) {
     `;
   } else if (isElectricityBillInvoice) {
     bodyHtml = `
-      <div class="voucher-screen" style="direction: rtl; text-align: right; font-family: var(--font-arabic); display: flex; flex-direction: column; gap: 12px; height: 100%;">
+      <div class="voucher-screen" style="direction: rtl; text-align: right; font-family: var(--font-arabic); display: flex; flex-direction: column; gap: 2px; height: 100%; padding: 2px;">
         <input type="hidden" id="elecTransId-${tabId}" value="">
 
-        <!-- Top Toolbar matching Image 2 -->
-        <div class="accounts-toolbar" style="background-color: #f1f5f9; padding: 8px 15px; border-bottom: 2px solid #cbd5e1; display: flex; gap: 10px; align-items: center; border-radius: 6px; flex-wrap: wrap;">
-          <button class="btn btn-primary btn-sm" onclick="saveElectricityInvoice('${tabId}')" style="font-weight: bold; display: flex; align-items: center; gap: 6px;">
+        <!-- Compact Top Toolbar -->
+        <div class="accounts-toolbar" style="background-color: #f1f5f9; padding: 4px 10px; margin-bottom: 2px; border-bottom: 1.5px solid #cbd5e1; display: flex; gap: 8px; align-items: center; border-radius: 6px; flex-wrap: wrap;">
+          <button class="btn btn-primary btn-sm" onclick="saveElectricityInvoice('${tabId}')" style="font-weight: bold; display: flex; align-items: center; gap: 5px; height: 28px; padding: 0 10px;">
             <i class="fa-solid fa-floppy-disk"></i> حفظ
           </button>
-          <button class="btn btn-info btn-sm" onclick="saveAndPrintElectricityInvoice('${tabId}')" style="font-weight: bold; display: flex; align-items: center; gap: 6px;">
+          <button class="btn btn-info btn-sm" onclick="saveAndPrintElectricityInvoice('${tabId}')" style="font-weight: bold; display: flex; align-items: center; gap: 5px; height: 28px; padding: 0 10px;">
             <i class="fa-solid fa-print"></i> حفظ طباعه
           </button>
-          <button class="btn btn-secondary btn-sm" onclick="loadShopsTemplateIntoElecInvoice('${tabId}')" style="font-weight: bold; display: flex; align-items: center; gap: 6px;">
+          <button class="btn btn-secondary btn-sm" onclick="loadShopsTemplateIntoElecInvoice('${tabId}')" style="font-weight: bold; display: flex; align-items: center; gap: 5px; height: 28px; padding: 0 10px;">
             <i class="fa-solid fa-copy"></i> نسخه من
           </button>
           <button class="btn btn-warning btn-sm" onclick="showElectricityInvoiceJournalEntry('${tabId}')" style="font-weight: bold; display: flex; align-items: center; gap: 5px; height: 28px; padding: 0 10px; background: #f59e0b; color: #ffffff; border: none; border-radius: 4px; cursor: pointer;">
             <i class="fa-solid fa-file-invoice-dollar"></i> القيد
           </button>
-          <button class="btn btn-danger btn-sm" onclick="clearElectricityInvoiceLines('${tabId}')" style="font-weight: bold; display: flex; align-items: center; gap: 6px;">
+          <button class="btn btn-danger btn-sm" onclick="clearElectricityInvoiceLines('${tabId}')" style="font-weight: bold; display: flex; align-items: center; gap: 5px; height: 28px; padding: 0 10px;">
             <i class="fa-solid fa-trash-can"></i> حذف الكشف
           </button>
-          <button class="btn btn-secondary btn-sm" onclick="closeTab('${tabId}')" style="font-weight: bold; display: flex; align-items: center; gap: 6px;">
+          <button class="btn btn-secondary btn-sm" onclick="closeTab('${tabId}')" style="font-weight: bold; display: flex; align-items: center; gap: 5px; height: 28px; padding: 0 10px;">
             <i class="fa-solid fa-xmark"></i> إغلاق
           </button>
         </div>
 
-        <!-- Top Form Fields matching Image 2 -->
-        <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 14px; display: flex; flex-direction: column; gap: 10px;">
-          
-          <div style="display: grid; grid-template-columns: 200px 1fr; gap: 15px;">
-            <!-- Side Actions -->
-            <div style="display: flex; flex-direction: column; gap: 6px; border-left: 1px solid #e2e8f0; padding-left: 15px;">
-              <button type="button" onclick="clearElectricityInvoiceLines('${tabId}')" style="padding: 5px 10px; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 4px; font-weight: bold; font-size: 0.8rem; cursor: pointer; text-align: center;">
+        <!-- Zero-Gap Ultra-Compact Form Header (Right=0, Left=0, Top=0, Bottom=0) -->
+        <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 4px; padding: 2px 4px; margin: 0 0 2px 0;">
+          <div style="display: grid; grid-template-columns: 145px 1fr; gap: 0; align-items: stretch; margin: 0; padding: 0;">
+            
+            <!-- Side Quick Actions -->
+            <div style="display: flex; flex-direction: column; gap: 2px; border-left: 1px solid #cbd5e1; padding: 0 4px; margin: 0; justify-content: center;">
+              <button type="button" onclick="clearElectricityInvoiceLines('${tabId}')" style="padding: 2px 4px; height: 22px; margin: 0; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 3px; font-weight: bold; font-size: 0.72rem; cursor: pointer; text-align: center;">
                 حذف الكشف
               </button>
-              <button type="button" onclick="showToast('اصدار كشف استهلاك قيد التفعيل', 'info')" style="padding: 5px 10px; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 4px; font-weight: bold; font-size: 0.8rem; cursor: pointer; text-align: center;">
+              <button type="button" onclick="showToast('اصدار كشف استهلاك قيد التفعيل', 'info')" style="padding: 2px 4px; height: 22px; margin: 0; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 3px; font-weight: bold; font-size: 0.72rem; cursor: pointer; text-align: center;">
                 اصدار كشف استهلاك
               </button>
-              <button type="button" onclick="showToast('اصدار فاتورة فردية قيد التفعيل', 'info')" style="padding: 5px 10px; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 4px; font-weight: bold; font-size: 0.8rem; cursor: pointer; text-align: center;">
-                اصدار فاتورة فرديه
-              </button>
-              <button type="button" onclick="calculateElectricityInvoiceTotals('${tabId}')" style="padding: 5px 10px; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 4px; font-weight: bold; font-size: 0.8rem; cursor: pointer; text-align: center;">
+              <button type="button" onclick="calculateElectricityInvoiceTotals('${tabId}')" style="padding: 2px 4px; height: 22px; margin: 0; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 3px; font-weight: bold; font-size: 0.72rem; cursor: pointer; text-align: center;">
                 تحديث الرصيد
               </button>
-              <label style="font-size: 0.78rem; font-weight: bold; color: #475569; display: flex; align-items: center; gap: 5px; cursor: pointer; margin-top: 4px;">
-                <input type="checkbox"> الطباعة مباشره
+              <label style="font-size: 0.7rem; font-weight: bold; color: #475569; display: flex; align-items: center; gap: 2px; cursor: pointer; margin: 0; padding: 0;">
+                <input type="checkbox" style="margin: 0;"> الطباعة مباشره
               </label>
             </div>
 
-            <!-- Main Fields Grid -->
-            <div style="display: flex; flex-direction: column; gap: 10px;">
-              <!-- Row 1: Branch, Pay Type, Date, Number, Money, Rate -->
-              <div style="display: grid; grid-template-columns: 1.3fr 0.9fr 1.1fr 0.7fr 1.1fr 0.9fr; gap: 8px; align-items: center;">
-                <div>
-                  <label style="font-size: 0.78rem; font-weight: bold; color: #334155; display: block; margin-bottom: 2px;">الفرع:</label>
-                  <select id="elecHdrBranch-${tabId}" style="width: 100%; height: 30px; padding: 0 6px; border: 1px solid #94a3b8; border-radius: 4px; font-weight: bold; font-family: var(--font-arabic); font-size: 0.85rem;">
+            <!-- Fields Grid: Zero margin and zero gap (يمين=0, يسار=0, اعلى=0, اسفل=0) -->
+            <div style="display: flex; flex-direction: column; gap: 0; margin: 0; padding: 0 4px 0 0;">
+              
+              <!-- Row 1: Branch, Pay Type, Date, Number, Currency, Rate (gap=0) -->
+              <div style="display: grid; grid-template-columns: 1.4fr 1fr 1.1fr 0.8fr 1.1fr 0.8fr; gap: 0; margin: 0; padding: 0; align-items: stretch;">
+                <div style="margin: 0; padding: 0 1px 0 0;">
+                  <label style="font-size: 0.72rem; font-weight: 800; color: #334155; display: block; margin: 0; padding: 0; line-height: 1.1;">الفرع:</label>
+                  <select id="elecHdrBranch-${tabId}" class="elec-nav-field" data-next="elecHdrType-${tabId}" style="width: 100%; height: 26px; margin: 0; padding: 0 4px; border: 1px solid #94a3b8; border-radius: 2px; font-weight: bold; font-family: var(--font-arabic); font-size: 0.8rem;">
                   </select>
                 </div>
-                <div>
-                  <label style="font-size: 0.78rem; font-weight: bold; color: #334155; display: block; margin-bottom: 2px;">طريقة الدفع:</label>
-                  <select id="elecHdrType-${tabId}" style="width: 100%; height: 30px; padding: 0 6px; border: 1px solid #94a3b8; border-radius: 4px; font-weight: bold; font-family: var(--font-arabic); font-size: 0.85rem;">
+                <div style="margin: 0; padding: 0 1px;">
+                  <label style="font-size: 0.72rem; font-weight: 800; color: #334155; display: block; margin: 0; padding: 0; line-height: 1.1;">طريقة الدفع:</label>
+                  <select id="elecHdrType-${tabId}" class="elec-nav-field" data-next="elecHdrDate-${tabId}" style="width: 100%; height: 26px; margin: 0; padding: 0 4px; border: 1px solid #94a3b8; border-radius: 2px; font-weight: bold; font-family: var(--font-arabic); font-size: 0.8rem;">
                     <option value="3">اجل</option>
                     <option value="1">نقدا</option>
                   </select>
                 </div>
-                <div>
-                  <label style="font-size: 0.78rem; font-weight: bold; color: #334155; display: block; margin-bottom: 2px;">التاريخ:</label>
-                  <input type="date" id="elecHdrDate-${tabId}" style="width: 100%; height: 30px; padding: 0 6px; border: 1px solid #94a3b8; border-radius: 4px; font-family: monospace; font-size: 0.85rem;">
+                <div style="margin: 0; padding: 0 1px;">
+                  <label style="font-size: 0.72rem; font-weight: 800; color: #334155; display: block; margin: 0; padding: 0; line-height: 1.1;">التاريخ:</label>
+                  <input type="date" id="elecHdrDate-${tabId}" class="elec-nav-field" data-next="elecHdrMoney-${tabId}" style="width: 100%; height: 26px; margin: 0; padding: 0 4px; border: 1px solid #94a3b8; border-radius: 2px; font-family: monospace; font-size: 0.8rem;">
                 </div>
-                <div>
-                  <label style="font-size: 0.78rem; font-weight: bold; color: #334155; display: block; margin-bottom: 2px;">الرقم:</label>
-                  <input type="number" id="elecHdrTransNo-${tabId}" value="0" readonly style="width: 100%; height: 30px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 4px; font-family: monospace; font-weight: bold; text-align: center; color: #1e3a8a;">
+                <div style="margin: 0; padding: 0 1px;">
+                  <label style="font-size: 0.72rem; font-weight: 800; color: #334155; display: block; margin: 0; padding: 0; line-height: 1.1;">الرقم:</label>
+                  <input type="number" id="elecHdrTransNo-${tabId}" value="0" readonly style="width: 100%; height: 26px; margin: 0; padding: 0 2px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 2px; font-family: monospace; font-weight: bold; text-align: center; color: #1e3a8a; font-size: 0.82rem;">
                 </div>
-                <div>
-                  <label style="font-size: 0.78rem; font-weight: bold; color: #334155; display: block; margin-bottom: 2px;">العملة:</label>
-                  <select id="elecHdrMoney-${tabId}" style="width: 100%; height: 30px; padding: 0 6px; border: 1px solid #94a3b8; border-radius: 4px; font-weight: bold; font-family: var(--font-arabic); font-size: 0.85rem;">
+                <div style="margin: 0; padding: 0 1px;">
+                  <label style="font-size: 0.72rem; font-weight: 800; color: #334155; display: block; margin: 0; padding: 0; line-height: 1.1;">العملة:</label>
+                  <select id="elecHdrMoney-${tabId}" class="elec-nav-field" data-next="elecHdrRate-${tabId}" onchange="handleElecCurrencyChange('${tabId}')" style="width: 100%; height: 26px; margin: 0; padding: 0 4px; border: 1px solid #94a3b8; border-radius: 2px; font-weight: bold; font-family: var(--font-arabic); font-size: 0.8rem;">
                     <option value="3">ريال يمني1</option>
                     <option value="1">دولار امريكي</option>
                     <option value="2">ريال سعودي</option>
                   </select>
                 </div>
-                <div>
-                  <label style="font-size: 0.78rem; font-weight: bold; color: #334155; display: block; margin-bottom: 2px;">الصرف:</label>
-                  <input type="number" id="elecHdrRate-${tabId}" value="1560.00" step="0.01" style="width: 100%; height: 30px; padding: 0 6px; border: 1px solid #94a3b8; border-radius: 4px; font-family: monospace; text-align: center; font-size: 0.85rem;">
+                <div style="margin: 0; padding: 0 0 0 1px;">
+                  <label style="font-size: 0.72rem; font-weight: 800; color: #334155; display: block; margin: 0; padding: 0; line-height: 1.1;">الصرف:</label>
+                  <input type="number" id="elecHdrRate-${tabId}" class="elec-nav-field" data-next="elecHdrRefNo-${tabId}" value="1560.00" step="0.01" style="width: 100%; height: 26px; margin: 0; padding: 0 4px; border: 1px solid #94a3b8; border-radius: 2px; font-family: monospace; text-align: center; font-size: 0.8rem;">
                 </div>
               </div>
 
-              <!-- Row 2: Ref No, Ref Date, Cost Center, Revenue Acc -->
-              <div style="display: grid; grid-template-columns: 1fr 1.2fr 1.4fr 1.4fr; gap: 8px; align-items: center;">
-                <div>
-                  <label style="font-size: 0.78rem; font-weight: bold; color: #334155; display: block; margin-bottom: 2px;">رقم المرجع:</label>
-                  <input type="number" id="elecHdrRefNo-${tabId}" value="0" style="width: 100%; height: 30px; padding: 0 6px; border: 1px solid #94a3b8; border-radius: 4px; font-family: monospace; text-align: center; font-size: 0.85rem;">
+              <!-- Row 2: Ref No, Ref Date, Cost Center, Revenue Acc (gap=0) -->
+              <div style="display: grid; grid-template-columns: 1fr 1.2fr 1.4fr 1.4fr; gap: 0; margin: 0; padding: 0; align-items: stretch;">
+                <div style="margin: 0; padding: 0 1px 0 0;">
+                  <label style="font-size: 0.72rem; font-weight: 800; color: #334155; display: block; margin: 0; padding: 0; line-height: 1.1;">رقم المرجع:</label>
+                  <input type="number" id="elecHdrRefNo-${tabId}" class="elec-nav-field" data-next="elecHdrRefDate-${tabId}" value="0" style="width: 100%; height: 26px; margin: 0; padding: 0 4px; border: 1px solid #94a3b8; border-radius: 2px; font-family: monospace; text-align: center; font-size: 0.8rem;">
                 </div>
-                <div>
-                  <label style="font-size: 0.78rem; font-weight: bold; color: #334155; display: block; margin-bottom: 2px;">تاريخ المرجع:</label>
-                  <input type="date" id="elecHdrRefDate-${tabId}" style="width: 100%; height: 30px; padding: 0 6px; border: 1px solid #94a3b8; border-radius: 4px; font-family: monospace; font-size: 0.85rem;">
+                <div style="margin: 0; padding: 0 1px;">
+                  <label style="font-size: 0.72rem; font-weight: 800; color: #334155; display: block; margin: 0; padding: 0; line-height: 1.1;">تاريخ المرجع:</label>
+                  <input type="date" id="elecHdrRefDate-${tabId}" class="elec-nav-field" data-next="elecHdrCenterCost-${tabId}" style="width: 100%; height: 26px; margin: 0; padding: 0 4px; border: 1px solid #94a3b8; border-radius: 2px; font-family: monospace; font-size: 0.8rem;">
                 </div>
-                <div>
-                  <label style="font-size: 0.78rem; font-weight: bold; color: #334155; display: block; margin-bottom: 2px;">م. الكلفة:</label>
-                  <select id="elecHdrCenterCost-${tabId}" style="width: 100%; height: 30px; padding: 0 6px; border: 1px solid #94a3b8; border-radius: 4px; font-weight: bold; font-family: var(--font-arabic); font-size: 0.85rem;">
-                    <option value="0">عام</option>
+                <div style="margin: 0; padding: 0 1px;">
+                  <label style="font-size: 0.72rem; font-weight: 800; color: #b91c1c; display: block; margin: 0; padding: 0; line-height: 1.1;">م. الكلفة: * (إجباري)</label>
+                  <select id="elecHdrCenterCost-${tabId}" class="elec-nav-field" data-next="elecHdrDesc-${tabId}" style="width: 100%; height: 26px; margin: 0; padding: 0 4px; border: 1.5px solid #dc2626; background: #fff5f5; border-radius: 2px; font-weight: bold; font-family: var(--font-arabic); font-size: 0.8rem;">
+                    <option value="1">ايراد خدمة الكهرياء</option>
                   </select>
                 </div>
-                <div>
-                  <label style="font-size: 0.78rem; font-weight: bold; color: #334155; display: block; margin-bottom: 2px;">حساب الايراد:</label>
-                  <select id="elecHdrAccBox-${tabId}" style="width: 100%; height: 30px; padding: 0 6px; border: 1px solid #94a3b8; border-radius: 4px; font-weight: bold; font-family: var(--font-arabic); font-size: 0.85rem;">
+                <div style="margin: 0; padding: 0 0 0 1px;">
+                  <label style="font-size: 0.72rem; font-weight: 800; color: #334155; display: block; margin: 0; padding: 0; line-height: 1.1;">حساب الايراد:</label>
+                  <select id="elecHdrAccBox-${tabId}" style="width: 100%; height: 26px; margin: 0; padding: 0 4px; border: 1px solid #94a3b8; border-radius: 2px; font-weight: bold; font-family: var(--font-arabic); font-size: 0.8rem;">
                     <option value="265">ايراد خدمة الكهرباء</option>
                   </select>
                 </div>
               </div>
 
-              <!-- Row 3: Description & Insert Template Button -->
-              <div style="display: flex; gap: 8px; align-items: flex-end;">
-                <div style="flex: 1;">
-                  <label style="font-size: 0.78rem; font-weight: bold; color: #334155; display: block; margin-bottom: 2px;">البيان:</label>
-                  <input type="text" id="elecHdrDesc-${tabId}" value="فاتورة استهلاك كهرباء" style="width: 100%; height: 30px; padding: 0 8px; border: 1px solid #94a3b8; border-radius: 4px; font-family: var(--font-arabic); font-weight: bold; font-size: 0.85rem;">
+              <!-- Row 3: Description & Template Button (gap=0) -->
+              <div style="display: flex; gap: 2px; margin: 0; padding: 0; align-items: flex-end;">
+                <div style="flex: 1; margin: 0; padding: 0;">
+                  <label style="font-size: 0.72rem; font-weight: 800; color: #334155; display: block; margin: 0; padding: 0; line-height: 1.1;">البيان:</label>
+                  <input type="text" id="elecHdrDesc-${tabId}" class="elec-nav-field" data-action="insertShops" value="فاتورة استهلاك كهرباء" style="width: 100%; height: 26px; margin: 0; padding: 0 6px; border: 1px solid #94a3b8; border-radius: 2px; font-family: var(--font-arabic); font-weight: bold; font-size: 0.82rem;">
                 </div>
-                <button type="button" onclick="loadShopsTemplateIntoElecInvoice('${tabId}')" style="height: 32px; padding: 0 14px; background: #0284c7; color: #ffffff; border: none; border-radius: 4px; font-weight: 800; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 4px rgba(2,132,199,0.2);">
+                <button type="button" id="btnElecInsertTemplate-${tabId}" onclick="loadShopsTemplateIntoElecInvoice('${tabId}')" style="height: 26px; margin: 0; padding: 0 14px; background: #0284c7; color: #ffffff; border: none; border-radius: 2px; font-weight: 800; font-size: 0.8rem; cursor: pointer; display: flex; align-items: center; gap: 4px; box-shadow: 0 1px 3px rgba(2,132,199,0.2);">
                   <i class="fa-solid fa-file-import"></i> ادراج الكشف
                 </button>
               </div>
+
             </div>
           </div>
         </div>
 
-        <!-- Detail Lines Table matching Image 2 -->
-        <div class="accounts-table-container" style="flex: 1; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; overflow: auto;">
-          <table class="accounts-table" style="width: 100%; border-collapse: collapse; font-size: 0.8rem; text-align: center;">
+        <!-- Detail Lines Table with Horizontal & Vertical Scrollbars & Sticky Header -->
+        <div class="accounts-table-container" style="flex: 1; min-height: 250px; max-height: calc(100vh - 275px); background: #ffffff; border: 1px solid #cbd5e1; border-radius: 4px; overflow-x: auto; overflow-y: auto; position: relative;">
+          <table class="accounts-table" id="elecTableGrid-${tabId}" style="width: 100%; min-width: 1600px; border-collapse: separate; border-spacing: 0; font-size: 0.82rem; text-align: center;">
             <thead>
-              <tr style="background: #f8fafc; border-bottom: 2px solid #cbd5e1; color: #334155; font-weight: 800;">
-                <th style="padding: 6px 4px; width: 35px;">نشط</th>
-                <th style="padding: 6px 6px; width: 65px;">رقم المحل</th>
-                <th style="padding: 6px 10px; text-align: right;">اسم المحل</th>
-                <th style="padding: 6px 10px; text-align: right;">اسم المستاجر</th>
-                <th style="padding: 6px 6px; width: 95px;">العداد</th>
-                <th style="padding: 6px 6px; width: 75px;">كلفه الكيلو</th>
-                <th style="padding: 6px 6px; width: 80px;">السابقة</th>
-                <th style="padding: 6px 6px; width: 80px;">الحالية</th>
-                <th style="padding: 6px 6px; width: 75px;">الاستهلاك</th>
-                <th style="padding: 6px 8px; width: 100px; text-align: right;">اجمالي الاستهلاك</th>
-                <th style="padding: 6px 6px; width: 70px;">خدمات</th>
-                <th style="padding: 6px 6px; width: 60px;">نظافة</th>
-                <th style="padding: 6px 6px; width: 60px;">محلي</th>
-                <th style="padding: 6px 6px; width: 60px;">محروقات</th>
-                <th style="padding: 6px 6px; width: 60px;">م ضريبه</th>
+              <tr style="position: sticky; top: 0; z-index: 10; background: #f8fafc; border-bottom: 2px solid #cbd5e1; color: #334155; font-weight: 800;">
+                <th style="padding: 6px 4px; width: 40px; position: sticky; top: 0; background: #f8fafc;">نشط</th>
+                <th style="padding: 6px 6px; width: 75px; position: sticky; top: 0; background: #f8fafc;">رقم المحل</th>
+                <th style="padding: 6px 12px; min-width: 160px; text-align: right; position: sticky; top: 0; background: #f8fafc;">اسم المحل</th>
+                <th style="padding: 6px 12px; min-width: 200px; text-align: right; position: sticky; top: 0; background: #f8fafc;">اسم المستاجر</th>
+                <th style="padding: 6px 6px; width: 95px; position: sticky; top: 0; background: #f8fafc;">العداد</th>
+                <th style="padding: 6px 6px; width: 80px; position: sticky; top: 0; background: #f8fafc;">كلفه الكيلو</th>
+                <th style="padding: 6px 6px; width: 85px; position: sticky; top: 0; background: #f8fafc;">السابقة</th>
+                <th style="padding: 6px 6px; width: 85px; position: sticky; top: 0; background: #f8fafc;">الحالية</th>
+                <th style="padding: 6px 6px; width: 85px; position: sticky; top: 0; background: #f8fafc;">الاستهلاك</th>
+                <th style="padding: 6px 8px; width: 115px; text-align: right; position: sticky; top: 0; background: #f8fafc;">اجمالي الاستهلاك</th>
+                <th style="padding: 6px 6px; width: 75px; position: sticky; top: 0; background: #f8fafc;">خدمات</th>
+                <th style="padding: 6px 6px; width: 70px; position: sticky; top: 0; background: #f8fafc;">نظافة</th>
+                <th style="padding: 6px 6px; width: 70px; position: sticky; top: 0; background: #f8fafc;">محلي</th>
+                <th style="padding: 6px 6px; width: 70px; position: sticky; top: 0; background: #f8fafc;">محروقات</th>
+                <th style="padding: 6px 6px; width: 75px; position: sticky; top: 0; background: #f8fafc;">م ضريبه</th>
               </tr>
             </thead>
             <tbody id="elecLinesTableBody-${tabId}">
@@ -2017,19 +2011,19 @@ function getScreenContent(tabId, tabTitle, iconClass, colorClass) {
           </table>
         </div>
 
-        <!-- Bottom Totals Bar matching Image 2 -->
-        <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; padding: 6px 16px; display: flex; justify-content: flex-end; gap: 20px; align-items: center;">
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <label style="font-weight: bold; font-size: 0.82rem; color: #334155;">اجمالي الاستهلاك:</label>
-            <input type="text" id="elecTotalUsage-${tabId}" value="0.00" readonly style="width: 120px; height: 30px; padding: 0 8px; text-align: right; background: #ffffff; border: 1px solid #94a3b8; border-radius: 4px; font-family: monospace; font-weight: bold; color: #0f766e;">
+        <!-- Ultra-Compact Bottom Totals Bar -->
+        <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 4px; padding: 3px 12px; margin-top: 1px; display: flex; justify-content: flex-end; gap: 12px; align-items: center;">
+          <div style="display: flex; align-items: center; gap: 4px;">
+            <label style="font-weight: bold; font-size: 0.76rem; color: #334155;">اجمالي الاستهلاك:</label>
+            <input type="text" id="elecTotalUsage-${tabId}" value="0.00" readonly style="width: 105px; height: 26px; padding: 0 6px; text-align: right; background: #ffffff; border: 1px solid #94a3b8; border-radius: 3px; font-family: monospace; font-weight: bold; color: #0f766e; font-size: 0.82rem;">
           </div>
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <label style="font-weight: bold; font-size: 0.82rem; color: #334155;">اجمالي الرسوم والخدمات:</label>
-            <input type="text" id="elecTotalFees-${tabId}" value="0.00" readonly style="width: 110px; height: 30px; padding: 0 8px; text-align: right; background: #ffffff; border: 1px solid #94a3b8; border-radius: 4px; font-family: monospace; font-weight: bold; color: #b91c1c;">
+          <div style="display: flex; align-items: center; gap: 4px;">
+            <label style="font-weight: bold; font-size: 0.76rem; color: #334155;">اجمالي الرسوم والخدمات:</label>
+            <input type="text" id="elecTotalFees-${tabId}" value="0.00" readonly style="width: 95px; height: 26px; padding: 0 6px; text-align: right; background: #ffffff; border: 1px solid #94a3b8; border-radius: 3px; font-family: monospace; font-weight: bold; color: #b91c1c; font-size: 0.82rem;">
           </div>
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <label style="font-weight: 800; font-size: 0.92rem; color: #1e3a8a;">الاجمالي المستحق (YR):</label>
-            <input type="text" id="elecTotalNetDue-${tabId}" value="0.00" readonly style="width: 150px; height: 32px; padding: 0 10px; text-align: right; background: #e0f2fe; border: 2px solid #0284c7; border-radius: 4px; font-family: monospace; font-weight: 900; font-size: 1rem; color: #0369a1;">
+          <div style="display: flex; align-items: center; gap: 4px;">
+            <label style="font-weight: 800; font-size: 0.82rem; color: #1e3a8a;">الاجمالي المستحق (YR):</label>
+            <input type="text" id="elecTotalNetDue-${tabId}" value="0.00" readonly style="width: 130px; height: 26px; padding: 0 8px; text-align: right; background: #e0f2fe; border: 1.5px solid #0284c7; border-radius: 3px; font-family: monospace; font-weight: 900; font-size: 0.92rem; color: #0369a1;">
           </div>
         </div>
       </div>
@@ -30899,34 +30893,55 @@ window.renderElectricityBillsTable = function(tabId, list) {
   if (!tbody) return;
 
   let html = '';
-  list.forEach((item) => {
+  list.forEach((item, idx) => {
     const formattedDate = item.fldDate ? item.fldDate.split('T')[0] : '';
     const formattedTotal = parseFloat(item.fldVoisherTotal || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     
     html += `
-      <tr class="elec-bill-row" data-id="${item.fldID}" onclick="selectElectricityBillRow('${tabId}', ${item.fldID}, this)" ondblclick="openElectricityInvoiceTab(${item.fldID})" style="cursor: pointer; border-bottom: 1px solid #e2e8f0; transition: background 0.15s;">
-        <td style="padding: 6px 8px; font-weight: bold; font-family: monospace; color: #1e3a8a;">${item.fldTransNo}</td>
-        <td style="padding: 6px 8px; font-family: monospace;">${formattedDate}</td>
-        <td style="padding: 6px 12px; font-weight: 600; color: #334155;">${item.fldBranchName || 'الفرع الرئيسي'}</td>
-        <td style="padding: 6px 14px; text-align: right; font-weight: bold; color: #0f172a;">${item.fldDescription || ''}</td>
-        <td style="padding: 6px 6px; text-align: center;"><input type="checkbox" ${item.fldOK ? 'checked' : ''} disabled></td>
-        <td style="padding: 6px 10px; text-align: right; font-weight: 900; font-family: monospace; color: #059669; font-size: 0.92rem;">${formattedTotal}</td>
-        <td style="padding: 6px 6px; text-align: center; color: #64748b;">${item.fldsymbol || 'YR'}</td>
-        <td style="padding: 6px 6px; font-family: monospace;">${parseFloat(item.fldTotalCleaningFees || 0).toFixed(2)}</td>
-        <td style="padding: 6px 6px; font-family: monospace;">${parseFloat(item.fldTotalLocalFees || 0).toFixed(2)}</td>
-        <td style="padding: 6px 6px; font-family: monospace;">${parseFloat(item.fldTotalServicesCost || 0).toFixed(2)}</td>
-        <td style="padding: 6px 6px; font-family: monospace;">${parseFloat(item.fldTotalFuel || 0).toFixed(2)}</td>
-        <td style="padding: 6px 6px; font-family: monospace;">${parseFloat(item.fldTotalTax || 0).toFixed(2)}</td>
-        <td style="padding: 6px 8px; text-align: center;"><span class="badge" style="background: #e0f2fe; color: #0369a1; padding: 2px 6px; border-radius: 4px; font-weight: bold;">${item.fldTypeName || 'اجل'}</span></td>
-        <td style="padding: 6px 6px; font-family: monospace; font-weight: bold; color: #475569;">${item.fldID}</td>
-        <td style="padding: 6px 12px; text-align: right; color: #334155; font-weight: 600;">فاتورة استهلاك كهرباء</td>
-        <td style="padding: 6px 8px; color: #475569;">${item.fldMoneyName || 'ريال يمني1'}</td>
-        <td style="padding: 6px 6px; text-align: center;"><input type="checkbox" ${item.fldClosed ? 'checked' : ''} disabled></td>
+      <tr class="elec-bill-row" data-id="${item.fldID}" data-index="${idx}" tabindex="0" onclick="selectElectricityBillRow('${tabId}', ${item.fldID}, this)" ondblclick="openElectricityInvoiceTab(${item.fldID})" onkeydown="handleElecExplorerKeydown(event, '${tabId}', ${item.fldID}, this)" style="cursor: pointer; border-bottom: 1px solid #e2e8f0; transition: background 0.15s; outline: none;">
+        <td style="padding: 6px 8px; font-weight: bold; font-family: monospace; color: #1e3a8a; width: 60px;">${item.fldTransNo}</td>
+        <td style="padding: 6px 8px; font-family: monospace; width: 95px;">${formattedDate}</td>
+        <td style="padding: 6px 12px; font-weight: 600; color: #334155; width: 140px; text-align: right; white-space: nowrap;">${item.fldBranchName || 'الفرع الرئيسي'}</td>
+        <td style="padding: 6px 14px; text-align: right; font-weight: bold; color: #0f172a; min-width: 250px; white-space: nowrap;">${item.fldDescription || ''}</td>
+        <td style="padding: 6px 6px; text-align: center; width: 50px;"><input type="checkbox" ${item.fldOK ? 'checked' : ''} disabled></td>
+        <td style="padding: 6px 10px; text-align: right; font-weight: 900; font-family: monospace; color: #059669; font-size: 0.92rem; width: 130px;">${formattedTotal}</td>
+        <td style="padding: 6px 6px; text-align: center; color: #64748b; width: 55px;">${item.fldsymbol || 'YR'}</td>
+        <td style="padding: 6px 8px; text-align: right; font-family: monospace; width: 75px;">${parseFloat(item.fldTotalCleaningFees || 0).toFixed(2)}</td>
+        <td style="padding: 6px 8px; text-align: right; font-family: monospace; width: 75px;">${parseFloat(item.fldTotalLocalFees || 0).toFixed(2)}</td>
+        <td style="padding: 6px 8px; text-align: right; font-family: monospace; width: 75px;">${parseFloat(item.fldTotalServicesCost || 0).toFixed(2)}</td>
+        <td style="padding: 6px 8px; text-align: right; font-family: monospace; width: 75px;">${parseFloat(item.fldTotalFuel || 0).toFixed(2)}</td>
+        <td style="padding: 6px 8px; text-align: right; font-family: monospace; width: 75px;">${parseFloat(item.fldTotalTax || 0).toFixed(2)}</td>
+        <td style="padding: 6px 8px; text-align: center; width: 65px;"><span class="badge" style="background: #e0f2fe; color: #0369a1; padding: 2px 6px; border-radius: 4px; font-weight: bold;">${item.fldTypeName || 'اجل'}</span></td>
+        <td style="padding: 6px 6px; font-family: monospace; font-weight: bold; color: #475569; width: 70px;">${item.fldID}</td>
+        <td style="padding: 6px 12px; text-align: right; color: #334155; font-weight: 600; width: 130px; white-space: nowrap;">فاتورة استهلاك كهرباء</td>
+        <td style="padding: 6px 10px; color: #475569; width: 95px; white-space: nowrap;">${item.fldMoneyName || 'ريال يمني1'}</td>
+        <td style="padding: 6px 6px; text-align: center; width: 50px;"><input type="checkbox" ${item.fldClosed ? 'checked' : ''} disabled></td>
       </tr>
     `;
   });
 
   tbody.innerHTML = html;
+};
+
+window.handleElecExplorerKeydown = function(e, tabId, id, rowEl) {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    openElectricityInvoiceTab(id);
+  } else if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    const next = rowEl.nextElementSibling;
+    if (next) {
+      next.focus();
+      next.click();
+    }
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    const prev = rowEl.previousElementSibling;
+    if (prev) {
+      prev.focus();
+      prev.click();
+    }
+  }
 };
 
 window.selectElectricityBillRow = function(tabId, id, rowEl) {
@@ -31027,6 +31042,46 @@ window.initElectricityInvoiceTab = async function(tabId, elecId = null) {
   const refDateEl = document.getElementById(`elecHdrRefDate-${tabId}`);
   if (dateEl && !dateEl.value) dateEl.value = today;
   if (refDateEl && !refDateEl.value) refDateEl.value = today;
+
+  // Load Cost Centers into elecHdrCenterCost
+  const ccSelect = document.getElementById(`elecHdrCenterCost-${tabId}`);
+  if (ccSelect) {
+    if (state.costCenters && state.costCenters.length > 0) {
+      ccSelect.innerHTML = '<option value="">-- اختر مركز التكلفة --</option>';
+      state.costCenters.forEach(cc => {
+        const opt = document.createElement('option');
+        opt.value = cc.fldID;
+        opt.textContent = cc.fldName;
+        if (cc.fldID === 1 || cc.fldName.includes('كهرباء') || cc.fldName.includes('كهرياء')) {
+          opt.selected = true;
+        }
+        ccSelect.appendChild(opt);
+      });
+    } else {
+      try {
+        const ccRes = await fetch('/api/cost-centers');
+        const ccResult = await ccRes.json();
+        if (ccResult.data) {
+          state.costCenters = ccResult.data;
+          ccSelect.innerHTML = '<option value="">-- اختر مركز التكلفة --</option>';
+          ccResult.data.forEach(cc => {
+            const opt = document.createElement('option');
+            opt.value = cc.fldID;
+            opt.textContent = cc.fldName;
+            if (cc.fldID === 1 || cc.fldName.includes('كهرباء') || cc.fldName.includes('كهرياء')) {
+              opt.selected = true;
+            }
+            ccSelect.appendChild(opt);
+          });
+        }
+      } catch (e) {
+        console.warn("Could not load cost centers for elec invoice:", e);
+      }
+    }
+  }
+
+  // Setup Enter key navigation
+  setupElectricityInvoiceEnterNavigation(tabId);
 
   if (elecId) {
     await loadExistingElectricityInvoiceData(tabId, elecId);
@@ -31154,6 +31209,41 @@ window.loadShopsTemplateIntoElecInvoice = async function(tabId) {
   }
 };
 
+window.setupElectricityInvoiceEnterNavigation = function(tabId) {
+  const fields = [
+    `elecHdrBranch-${tabId}`,
+    `elecHdrType-${tabId}`,
+    `elecHdrDate-${tabId}`,
+    `elecHdrMoney-${tabId}`,
+    `elecHdrRate-${tabId}`,
+    `elecHdrRefNo-${tabId}`,
+    `elecHdrRefDate-${tabId}`,
+    `elecHdrCenterCost-${tabId}`,
+    `elecHdrDesc-${tabId}`
+  ];
+
+  fields.forEach((fieldId, index) => {
+    const el = document.getElementById(fieldId);
+    if (el) {
+      el.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          if (index < fields.length - 1) {
+            const nextEl = document.getElementById(fields[index + 1]);
+            if (nextEl) {
+              nextEl.focus();
+              if (nextEl.select) nextEl.select();
+            }
+          } else {
+            const btn = document.getElementById(`btnElecInsertTemplate-${tabId}`);
+            if (btn) btn.focus();
+          }
+        }
+      });
+    }
+  });
+};
+
 window.renderElectricityInvoiceLinesTable = function(tabId) {
   const tbody = document.getElementById(`elecLinesTableBody-${tabId}`);
   if (!tbody) return;
@@ -31169,27 +31259,69 @@ window.renderElectricityInvoiceLinesTable = function(tabId) {
   lines.forEach((line, idx) => {
     html += `
       <tr id="elecLineRow-${tabId}-${idx}" style="border-bottom: 1px solid #e2e8f0; text-align: center; vertical-align: middle;">
-        <td style="padding: 4px 4px;"><input type="checkbox" ${line.fldIsActive !== false ? 'checked' : ''} onchange="updateElecLineField('${tabId}', ${idx}, 'fldIsActive', this.checked)"></td>
-        <td style="padding: 4px 6px; font-weight: bold; font-family: monospace; color: #1e3a8a;">#${line.fldShopNumber || ''}</td>
-        <td style="padding: 4px 10px; text-align: right; font-weight: bold; color: #1e293b;">${line.fldShopName || ''}</td>
-        <td style="padding: 4px 10px; text-align: right; color: #334155; font-size: 0.78rem;">${line.fldCustomerName || ''}</td>
-        <td style="padding: 4px 6px; font-family: monospace; color: #0284c7; font-weight: bold;">${line.fldtheCounter || ''}</td>
-        <td style="padding: 4px 4px;"><input type="number" step="any" value="${line.fldUnitCost || 600}" oninput="updateElecLineField('${tabId}', ${idx}, 'fldUnitCost', this.value)" style="width: 65px; padding: 3px; text-align: center; border: 1px solid #cbd5e1; border-radius: 4px; font-family: monospace; font-weight: bold;"></td>
-        <td style="padding: 4px 4px;"><input type="number" step="any" value="${line.fldPreviousReading || 0}" oninput="updateElecLineField('${tabId}', ${idx}, 'fldPreviousReading', this.value)" style="width: 75px; padding: 3px; text-align: center; border: 1px solid #cbd5e1; border-radius: 4px; font-family: monospace; background: #f8fafc;"></td>
-        <td style="padding: 4px 4px;"><input type="number" step="any" value="${line.fldCurrentreading || 0}" oninput="updateElecLineField('${tabId}', ${idx}, 'fldCurrentreading', this.value)" style="width: 75px; padding: 3px; text-align: center; border: 1px solid #0284c7; border-radius: 4px; font-family: monospace; font-weight: bold; background: #f0fdf4;"></td>
-        <td style="padding: 4px 6px; font-weight: bold; font-family: monospace; color: #b45309;" id="elecLineUnits-${tabId}-${idx}">${parseFloat(line.fldUnits || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
-        <td style="padding: 4px 8px; text-align: right; font-weight: 900; font-family: monospace; color: #059669;" id="elecLineTotal-${tabId}-${idx}">${parseFloat(line.fldTotalPrice || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
-        <td style="padding: 4px 4px;"><input type="number" step="any" value="${line.fldServicesCostElectricity || 0}" oninput="updateElecLineField('${tabId}', ${idx}, 'fldServicesCostElectricity', this.value)" style="width: 65px; padding: 3px; text-align: right; border: 1px solid #cbd5e1; border-radius: 4px; font-family: monospace;"></td>
-        <td style="padding: 4px 4px;"><input type="number" step="any" value="${line.fldCleaningFees || 0}" oninput="updateElecLineField('${tabId}', ${idx}, 'fldCleaningFees', this.value)" style="width: 55px; padding: 3px; text-align: right; border: 1px solid #cbd5e1; border-radius: 4px; font-family: monospace;"></td>
-        <td style="padding: 4px 4px;"><input type="number" step="any" value="${line.fldLocalFees || 0}" oninput="updateElecLineField('${tabId}', ${idx}, 'fldLocalFees', this.value)" style="width: 55px; padding: 3px; text-align: right; border: 1px solid #cbd5e1; border-radius: 4px; font-family: monospace;"></td>
-        <td style="padding: 4px 4px;"><input type="number" step="any" value="${line.fldFuel || 0}" oninput="updateElecLineField('${tabId}', ${idx}, 'fldFuel', this.value)" style="width: 55px; padding: 3px; text-align: right; border: 1px solid #cbd5e1; border-radius: 4px; font-family: monospace;"></td>
-        <td style="padding: 4px 4px;"><input type="number" step="any" value="${line.fldlTaxTota_D || 0}" oninput="updateElecLineField('${tabId}', ${idx}, 'fldlTaxTota_D', this.value)" style="width: 55px; padding: 3px; text-align: right; border: 1px solid #cbd5e1; border-radius: 4px; font-family: monospace;"></td>
+        <td style="padding: 3px 4px; width: 40px;"><input type="checkbox" ${line.fldIsActive !== false ? 'checked' : ''} onchange="updateElecLineField('${tabId}', ${idx}, 'fldIsActive', this.checked)"></td>
+        <td style="padding: 3px 6px; font-weight: bold; font-family: monospace; color: #1e3a8a; width: 75px;">#${line.fldShopNumber || ''}</td>
+        <td style="padding: 3px 12px; text-align: right; font-weight: bold; color: #1e293b; min-width: 160px; white-space: nowrap;">${line.fldShopName || ''}</td>
+        <td style="padding: 3px 12px; text-align: right; color: #334155; font-size: 0.8rem; min-width: 200px; white-space: nowrap;">${line.fldCustomerName || ''}</td>
+        <td style="padding: 3px 6px; font-family: monospace; color: #0284c7; font-weight: bold; width: 95px;">${line.fldtheCounter || ''}</td>
+        <td style="padding: 2px 4px; width: 80px;"><input type="number" step="any" id="elecGrid-cost-${tabId}-${idx}" class="elec-cell-input" data-col="cost" data-row="${idx}" value="${line.fldUnitCost || 600}" onkeydown="handleElecGridKeydown(event, '${tabId}', ${idx}, 'cost')" oninput="updateElecLineField('${tabId}', ${idx}, 'fldUnitCost', this.value)" style="width: 100%; height: 24px; padding: 0 4px; text-align: center; border: 1px solid #cbd5e1; border-radius: 2px; font-family: monospace; font-weight: bold; font-size: 0.8rem;"></td>
+        <td style="padding: 2px 4px; width: 85px;"><input type="number" step="any" id="elecGrid-prev-${tabId}-${idx}" class="elec-cell-input" data-col="prev" data-row="${idx}" value="${line.fldPreviousReading || 0}" onkeydown="handleElecGridKeydown(event, '${tabId}', ${idx}, 'prev')" oninput="updateElecLineField('${tabId}', ${idx}, 'fldPreviousReading', this.value)" style="width: 100%; height: 24px; padding: 0 4px; text-align: center; border: 1px solid #cbd5e1; border-radius: 2px; font-family: monospace; background: #f8fafc; font-size: 0.8rem;"></td>
+        <td style="padding: 2px 4px; width: 85px;"><input type="number" step="any" id="elecGrid-curr-${tabId}-${idx}" class="elec-cell-input" data-col="curr" data-row="${idx}" value="${line.fldCurrentreading || 0}" onkeydown="handleElecGridKeydown(event, '${tabId}', ${idx}, 'curr')" oninput="updateElecLineField('${tabId}', ${idx}, 'fldCurrentreading', this.value)" style="width: 100%; height: 24px; padding: 0 4px; text-align: center; border: 1.5px solid #0284c7; border-radius: 2px; font-family: monospace; font-weight: bold; background: #f0fdf4; font-size: 0.82rem;"></td>
+        <td style="padding: 3px 6px; font-weight: bold; font-family: monospace; color: #b45309; width: 85px;" id="elecLineUnits-${tabId}-${idx}">${parseFloat(line.fldUnits || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+        <td style="padding: 3px 8px; text-align: right; font-weight: 900; font-family: monospace; color: #059669; width: 115px;" id="elecLineTotal-${tabId}-${idx}">${parseFloat(line.fldTotalPrice || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+        <td style="padding: 2px 4px; width: 75px;"><input type="number" step="any" id="elecGrid-srv-${tabId}-${idx}" class="elec-cell-input" data-col="srv" data-row="${idx}" value="${line.fldServicesCostElectricity || 0}" onkeydown="handleElecGridKeydown(event, '${tabId}', ${idx}, 'srv')" oninput="updateElecLineField('${tabId}', ${idx}, 'fldServicesCostElectricity', this.value)" style="width: 100%; height: 24px; padding: 0 4px; text-align: right; border: 1px solid #cbd5e1; border-radius: 2px; font-family: monospace; font-size: 0.8rem;"></td>
+        <td style="padding: 2px 4px; width: 70px;"><input type="number" step="any" id="elecGrid-clean-${tabId}-${idx}" class="elec-cell-input" data-col="clean" data-row="${idx}" value="${line.fldCleaningFees || 0}" onkeydown="handleElecGridKeydown(event, '${tabId}', ${idx}, 'clean')" oninput="updateElecLineField('${tabId}', ${idx}, 'fldCleaningFees', this.value)" style="width: 100%; height: 24px; padding: 0 4px; text-align: right; border: 1px solid #cbd5e1; border-radius: 2px; font-family: monospace; font-size: 0.8rem;"></td>
+        <td style="padding: 2px 4px; width: 70px;"><input type="number" step="any" id="elecGrid-local-${tabId}-${idx}" class="elec-cell-input" data-col="local" data-row="${idx}" value="${line.fldLocalFees || 0}" onkeydown="handleElecGridKeydown(event, '${tabId}', ${idx}, 'local')" oninput="updateElecLineField('${tabId}', ${idx}, 'fldLocalFees', this.value)" style="width: 100%; height: 24px; padding: 0 4px; text-align: right; border: 1px solid #cbd5e1; border-radius: 2px; font-family: monospace; font-size: 0.8rem;"></td>
+        <td style="padding: 2px 4px; width: 70px;"><input type="number" step="any" id="elecGrid-fuel-${tabId}-${idx}" class="elec-cell-input" data-col="fuel" data-row="${idx}" value="${line.fldFuel || 0}" onkeydown="handleElecGridKeydown(event, '${tabId}', ${idx}, 'fuel')" oninput="updateElecLineField('${tabId}', ${idx}, 'fldFuel', this.value)" style="width: 100%; height: 24px; padding: 0 4px; text-align: right; border: 1px solid #cbd5e1; border-radius: 2px; font-family: monospace; font-size: 0.8rem;"></td>
+        <td style="padding: 2px 4px; width: 75px;"><input type="number" step="any" id="elecGrid-tax-${tabId}-${idx}" class="elec-cell-input" data-col="tax" data-row="${idx}" value="${line.fldlTaxTota_D || 0}" onkeydown="handleElecGridKeydown(event, '${tabId}', ${idx}, 'tax')" oninput="updateElecLineField('${tabId}', ${idx}, 'fldlTaxTota_D', this.value)" style="width: 100%; height: 24px; padding: 0 4px; text-align: right; border: 1px solid #cbd5e1; border-radius: 2px; font-family: monospace; font-size: 0.8rem;"></td>
       </tr>
     `;
   });
 
   tbody.innerHTML = html;
   calculateElectricityInvoiceTotals(tabId);
+};
+
+window.handleElecGridKeydown = function(e, tabId, rowIdx, colName) {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    const cols = ['cost', 'prev', 'curr', 'srv', 'clean', 'local', 'fuel', 'tax'];
+    const curColIdx = cols.indexOf(colName);
+    const totalRows = state.elecInvoices[tabId]?.lines?.length || 0;
+
+    if (curColIdx < cols.length - 1) {
+      const nextCol = cols[curColIdx + 1];
+      const nextEl = document.getElementById(`elecGrid-${nextCol}-${tabId}-${rowIdx}`);
+      if (nextEl) {
+        nextEl.focus();
+        nextEl.select();
+      }
+    } else {
+      if (rowIdx < totalRows - 1) {
+        const nextRowEl = document.getElementById(`elecGrid-${cols[0]}-${tabId}-${rowIdx + 1}`);
+        if (nextRowEl) {
+          nextRowEl.focus();
+          nextRowEl.select();
+        }
+      }
+    }
+  }
+};
+
+window.handleElecCurrencyChange = function(tabId) {
+  const moneySelect = document.getElementById(`elecHdrMoney-${tabId}`);
+  const rateInput = document.getElementById(`elecHdrRate-${tabId}`);
+  if (!moneySelect || !rateInput) return;
+
+  const curId = parseInt(moneySelect.value);
+  const curObj = (state.currencies || []).find(c => c.fldID === curId);
+  if (curObj && curObj.fldValue !== undefined) {
+    rateInput.value = parseFloat(curObj.fldValue).toFixed(2);
+  } else {
+    if (curId === 3) rateInput.value = "1560.00";
+    else if (curId === 1) rateInput.value = "1.00";
+    else if (curId === 2) rateInput.value = "3.80";
+  }
 };
 
 window.updateElecLineField = function(tabId, idx, field, value) {

@@ -1502,89 +1502,90 @@ function getScreenContent(tabId, tabTitle, iconClass, colorClass) {
     `;
   } else if (isRentBillsExplorer) {
     bodyHtml = `
-      <div class="voucher-screen" style="direction: rtl; text-align: right; font-family: var(--font-arabic); display: flex; flex-direction: column; gap: 12px; height: 100%;">
-        <!-- Top Toolbar -->
-        <div class="accounts-toolbar" style="background-color: #f1f5f9; padding: 8px 15px; border-bottom: 2px solid #cbd5e1; display: flex; gap: 10px; align-items: center; border-radius: 6px; flex-wrap: wrap;">
-          <button class="btn btn-secondary btn-sm" onclick="openRentInvoiceTab(null)" style="font-weight: bold; display: flex; align-items: center; gap: 6px;">
-            <i class="fa-solid fa-file-circle-plus" style="color: #10b981; font-size: 1.1rem;"></i> جديد
+      <div class="voucher-screen" style="direction: rtl; text-align: right; font-family: var(--font-arabic); display: flex; flex-direction: column; gap: 4px; height: 100%;">
+        <!-- Compact Top Toolbar -->
+        <div class="accounts-toolbar" style="background-color: #f1f5f9; padding: 4px 10px; margin-bottom: 2px; border-bottom: 1.5px solid #cbd5e1; display: flex; gap: 8px; align-items: center; border-radius: 6px; flex-wrap: wrap;">
+          <button class="btn btn-secondary btn-sm" onclick="openRentInvoiceTab(null)" style="font-weight: bold; display: flex; align-items: center; gap: 5px; height: 28px; padding: 0 10px;">
+            <i class="fa-solid fa-file-circle-plus" style="color: #10b981;"></i> جديد
           </button>
-          <button class="btn btn-secondary btn-sm" onclick="openEditSelectedRentBill('${tabId}')" style="font-weight: bold; display: flex; align-items: center; gap: 6px;">
-            <i class="fa-solid fa-pen-to-square" style="color: #f59e0b; font-size: 1.1rem;"></i> تعديل
+          <button class="btn btn-secondary btn-sm" onclick="openEditSelectedRentBill('${tabId}')" style="font-weight: bold; display: flex; align-items: center; gap: 5px; height: 28px; padding: 0 10px;">
+            <i class="fa-solid fa-pen-to-square" style="color: #f59e0b;"></i> تعديل
           </button>
-          <button class="btn btn-secondary btn-sm" onclick="loadRentBillsList('${tabId}')" style="font-weight: bold; display: flex; align-items: center; gap: 6px;">
-            <i class="fa-solid fa-magnifying-glass" style="color: #0284c7; font-size: 1.1rem;"></i> استعلام
+          <button class="btn btn-secondary btn-sm" onclick="loadRentBillsList('${tabId}')" style="font-weight: bold; display: flex; align-items: center; gap: 5px; height: 28px; padding: 0 10px;">
+            <i class="fa-solid fa-magnifying-glass" style="color: #0284c7;"></i> استعلام
           </button>
-          <button class="btn btn-secondary btn-sm" onclick="deleteSelectedRentBill('${tabId}')" style="font-weight: bold; display: flex; align-items: center; gap: 6px;">
-            <i class="fa-solid fa-trash-can" style="color: #ef4444; font-size: 1.1rem;"></i> حذف
+          <button class="btn btn-secondary btn-sm" onclick="deleteSelectedRentBill('${tabId}')" style="font-weight: bold; display: flex; align-items: center; gap: 5px; height: 28px; padding: 0 10px;">
+            <i class="fa-solid fa-trash-can" style="color: #ef4444;"></i> حذف
           </button>
-          <button class="btn btn-secondary btn-sm" onclick="printRentBillsList('${tabId}')" style="font-weight: bold; display: flex; align-items: center; gap: 6px;">
-            <i class="fa-solid fa-print" style="color: #475569; font-size: 1.1rem;"></i> طباعة
+          <button class="btn btn-secondary btn-sm" onclick="printRentBillsList('${tabId}')" style="font-weight: bold; display: flex; align-items: center; gap: 5px; height: 28px; padding: 0 10px;">
+            <i class="fa-solid fa-print" style="color: #475569;"></i> طباعة
           </button>
-          <button class="btn btn-secondary btn-sm" onclick="exportRentBillsListExcel('${tabId}')" style="font-weight: bold; display: flex; align-items: center; gap: 6px;">
-            <i class="fa-solid fa-file-excel" style="color: #10b981; font-size: 1.1rem;"></i> تصدير XLS
+          <button class="btn btn-secondary btn-sm" onclick="exportRentBillsListExcel('${tabId}')" style="font-weight: bold; display: flex; align-items: center; gap: 5px; height: 28px; padding: 0 10px;">
+            <i class="fa-solid fa-file-excel" style="color: #10b981;"></i> تصدير XLS
           </button>
         </div>
 
-        <!-- Filter Row matching Image 1 -->
-        <div style="background: #ffffff; padding: 10px 16px; border: 1px solid #cbd5e1; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; gap: 15px; flex-wrap: wrap;">
-          <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-            <div style="display: flex; align-items: center; gap: 6px;">
-              <label style="font-weight: bold; font-size: 0.85rem; color: #334155;">الفرع:</label>
-              <select id="rentBranchFilter-${tabId}" onchange="loadRentBillsList('${tabId}')" style="padding: 4px 10px; border: 1px solid #94a3b8; border-radius: 4px; font-weight: bold; font-family: var(--font-arabic);">
+        <!-- Ultra-Compact Filter & Search Bar with Zero Vertical Gap -->
+        <div style="background: #ffffff; padding: 6px 12px; margin-bottom: 2px; border: 1px solid #cbd5e1; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;">
+          <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; flex: 1;">
+            
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <label style="font-weight: bold; font-size: 0.76rem; color: #334155;">الفرع:</label>
+              <select id="rentBranchFilter-${tabId}" class="rent-exp-filter" data-next="rentFromDate-${tabId}" onchange="loadRentBillsList('${tabId}')" style="height: 28px; padding: 0 6px; border: 1px solid #94a3b8; border-radius: 4px; font-weight: bold; font-family: var(--font-arabic); font-size: 0.82rem;">
               </select>
             </div>
 
-            <div style="display: flex; align-items: center; gap: 6px;">
-              <label style="font-weight: bold; font-size: 0.85rem; color: #334155;">من تاريخ:</label>
-              <input type="date" id="rentFromDate-${tabId}" style="padding: 4px 8px; border: 1px solid #94a3b8; border-radius: 4px; font-family: monospace;">
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <label style="font-weight: bold; font-size: 0.76rem; color: #334155;">من تاريخ:</label>
+              <input type="date" id="rentFromDate-${tabId}" class="rent-exp-filter" data-next="rentToDate-${tabId}" style="height: 28px; padding: 0 6px; border: 1px solid #94a3b8; border-radius: 4px; font-family: monospace; font-size: 0.82rem;">
             </div>
 
-            <div style="display: flex; align-items: center; gap: 6px;">
-              <label style="font-weight: bold; font-size: 0.85rem; color: #334155;">الى تاريخ:</label>
-              <input type="date" id="rentToDate-${tabId}" style="padding: 4px 8px; border: 1px solid #94a3b8; border-radius: 4px; font-family: monospace;">
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <label style="font-weight: bold; font-size: 0.76rem; color: #334155;">الى تاريخ:</label>
+              <input type="date" id="rentToDate-${tabId}" class="rent-exp-filter" data-next="rentSearchInput-${tabId}" style="height: 28px; padding: 0 6px; border: 1px solid #94a3b8; border-radius: 4px; font-family: monospace; font-size: 0.82rem;">
             </div>
 
-            <button type="button" onclick="loadRentBillsList('${tabId}')" class="btn btn-primary btn-sm" style="font-weight: bold;">
-              <i class="fa-solid fa-filter"></i> تطبيق الفلتر
+            <!-- Wide Search Box -->
+            <div style="position: relative; flex: 1; min-width: 220px; max-width: 420px;">
+              <input type="text" id="rentSearchInput-${tabId}" class="rent-exp-filter" oninput="loadRentBillsList('${tabId}')" placeholder="🔍 بحث سريع برقم الفاتورة، البيان، أو الفرع..." style="width: 100%; height: 28px; padding: 0 10px; border: 1px solid #94a3b8; border-radius: 4px; font-family: var(--font-arabic); font-size: 0.82rem;">
+            </div>
+
+            <button type="button" onclick="loadRentBillsList('${tabId}')" class="btn btn-primary btn-sm" style="font-weight: bold; height: 28px; padding: 0 12px; font-size: 0.8rem;">
+              <i class="fa-solid fa-filter"></i> تطبيق
             </button>
           </div>
 
-          <div style="display: flex; align-items: center; gap: 10px;">
-            <button type="button" onclick="printRentBillsList('${tabId}')" style="background: #f1f5f9; border: 1px solid #cbd5e1; padding: 4px 12px; border-radius: 4px; font-weight: bold; font-size: 0.82rem; cursor: pointer;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <button type="button" onclick="printRentBillsList('${tabId}')" style="height: 28px; background: #f1f5f9; border: 1px solid #cbd5e1; padding: 0 10px; border-radius: 4px; font-weight: bold; font-size: 0.78rem; cursor: pointer;">
               طباعة الفواتير
             </button>
-            <button type="button" onclick="showToast('حركة المتغيرات قيد التشغيل', 'info')" style="background: #f1f5f9; border: 1px solid #cbd5e1; padding: 4px 12px; border-radius: 4px; font-weight: bold; font-size: 0.82rem; cursor: pointer;">
+            <button type="button" onclick="showToast('حركة المتغيرات قيد التشغيل', 'info')" style="height: 28px; background: #f1f5f9; border: 1px solid #cbd5e1; padding: 0 10px; border-radius: 4px; font-weight: bold; font-size: 0.78rem; cursor: pointer;">
               حركة المتغيرات
             </button>
-            <label style="font-size: 0.82rem; font-weight: bold; color: #475569; display: flex; align-items: center; gap: 4px; cursor: pointer;">
+            <label style="font-size: 0.75rem; font-weight: bold; color: #475569; display: flex; align-items: center; gap: 3px; cursor: pointer;">
               <input type="checkbox"> الطباعة مباشره
             </label>
           </div>
         </div>
 
-        <!-- Search Filter Bar -->
-        <div style="padding: 0 5px;">
-          <input type="text" id="rentSearchInput-${tabId}" oninput="loadRentBillsList('${tabId}')" placeholder="بحث سريع عن أي فاتورة بالرقم، البيان، أو الفرع..." style="width: 100%; max-width: 400px; padding: 6px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-family: var(--font-arabic); font-size: 0.85rem;">
-        </div>
-
-        <!-- Explorer Table matching Image 1 -->
-        <div class="accounts-table-container" style="flex: 1; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; overflow: auto;">
-          <table id="rentBillsTable-${tabId}" class="accounts-table" style="width: 100%; border-collapse: collapse; font-size: 0.85rem; text-align: center;">
+        <!-- Explorer Table with Horizontal & Vertical Scrollbars & Sticky Header -->
+        <div class="accounts-table-container" style="flex: 1; min-height: 280px; max-height: calc(100vh - 200px); background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; overflow-x: auto; overflow-y: auto; position: relative;">
+          <table id="rentBillsTable-${tabId}" class="accounts-table" style="width: 100%; min-width: 1350px; border-collapse: separate; border-spacing: 0; font-size: 0.82rem; text-align: center;">
             <thead>
-              <tr style="background: #f8fafc; border-bottom: 2px solid #cbd5e1; color: #334155; font-weight: 800;">
-                <th style="padding: 10px 8px; width: 60px;">الرقم</th>
-                <th style="padding: 10px 10px; width: 100px;">التاريخ</th>
-                <th style="padding: 10px 14px; width: 130px;">المركز المالي</th>
-                <th style="padding: 10px 16px; text-align: right;">البيان</th>
-                <th style="padding: 10px 10px; width: 70px;">النوع</th>
-                <th style="padding: 10px 12px; width: 120px; text-align: right;">الاجمالي</th>
-                <th style="padding: 10px 8px; width: 60px;">العملة</th>
-                <th style="padding: 10px 8px; width: 60px;">مرحل</th>
-                <th style="padding: 10px 10px; width: 100px;">تاريخ المرجع</th>
-                <th style="padding: 10px 10px; width: 100px;">اسم العملة</th>
-                <th style="padding: 10px 8px; width: 75px;">رقم المرجع</th>
-                <th style="padding: 10px 8px; width: 75px;">رقم ID</th>
-                <th style="padding: 10px 14px; text-align: right;">اسم الحساب</th>
+              <tr style="position: sticky; top: 0; z-index: 10; background: #f8fafc; border-bottom: 2px solid #cbd5e1; color: #334155; font-weight: 800;">
+                <th style="padding: 6px 8px; width: 65px; position: sticky; top: 0; background: #f8fafc;">الرقم</th>
+                <th style="padding: 6px 8px; width: 95px; position: sticky; top: 0; background: #f8fafc;">التاريخ</th>
+                <th style="padding: 6px 12px; width: 140px; position: sticky; top: 0; background: #f8fafc;">المركز المالي</th>
+                <th style="padding: 6px 14px; min-width: 250px; text-align: right; position: sticky; top: 0; background: #f8fafc;">البيان</th>
+                <th style="padding: 6px 6px; width: 50px; position: sticky; top: 0; background: #f8fafc;">مرحل</th>
+                <th style="padding: 6px 10px; width: 130px; text-align: right; position: sticky; top: 0; background: #f8fafc;">الاجمالي</th>
+                <th style="padding: 6px 6px; width: 55px; position: sticky; top: 0; background: #f8fafc;">العملة</th>
+                <th style="padding: 6px 8px; width: 75px; position: sticky; top: 0; background: #f8fafc;">النوع</th>
+                <th style="padding: 6px 8px; width: 95px; position: sticky; top: 0; background: #f8fafc;">تاريخ المرجع</th>
+                <th style="padding: 6px 8px; width: 80px; position: sticky; top: 0; background: #f8fafc;">رقم المرجع</th>
+                <th style="padding: 6px 8px; width: 75px; position: sticky; top: 0; background: #f8fafc;">رقم ID</th>
+                <th style="padding: 6px 12px; min-width: 170px; text-align: right; position: sticky; top: 0; background: #f8fafc;">اسم الحساب</th>
+                <th style="padding: 6px 8px; width: 85px; position: sticky; top: 0; background: #f8fafc;">المحلات</th>
               </tr>
             </thead>
             <tbody id="rentBillsTableBody-${tabId}">

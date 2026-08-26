@@ -1634,8 +1634,8 @@ function getScreenContent(tabId, tabTitle, iconClass, colorClass) {
               <button type="button" onclick="clearRentInvoiceLines('${tabId}')" style="padding: 3px 6px; height: 24px; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 4px; font-weight: bold; font-size: 0.74rem; cursor: pointer; text-align: center;">
                 حذف الكشف
               </button>
-              <button type="button" onclick="showToast('اصدار فاتورة فردية قيد التفعيل', 'info')" style="padding: 3px 6px; height: 24px; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 4px; font-weight: bold; font-size: 0.74rem; cursor: pointer; text-align: center;">
-                اصدار فاتورة فرديه
+              <button type="button" onclick="printSelectedShopRentInvoice('${tabId}')" style="padding: 3px 6px; height: 24px; background: #e0f2fe; color: #0369a1; border: 1px solid #7dd3fc; border-radius: 4px; font-weight: bold; font-size: 0.74rem; cursor: pointer; text-align: center;" title="طباعة فاتورة للمحل المحدد فقط">
+                <i class="fa-solid fa-print"></i> فاتورة فرديه
               </button>
               <button type="button" onclick="calculateRentInvoiceTotals('${tabId}')" style="padding: 3px 6px; height: 24px; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 4px; font-weight: bold; font-size: 0.74rem; cursor: pointer; text-align: center;">
                 تحديث الرصيد
@@ -31688,18 +31688,36 @@ window.handleRentCurrencyChange = function(tabId) {
 
 
 // =============================================================================
-// RENT INVOICE PRINT MODEL (A5 Paper Size & Printer Selection)
+// RENT INVOICE PRINT MODEL (A5 Paper Size, Printer Selection, All vs Single Shop)
 // Matching media_1787742584071.png & media_1787742614151.png
 // =============================================================================
 
 state.rentInvoicePrintSettings = state.rentInvoicePrintSettings || {
   paperSize: localStorage.getItem('rent_bill_papersize') || 'A5 landscape',
   selectedPrinter: localStorage.getItem('rent_bill_printer') || '',
+  currentScope: 'all',
   copies: 1,
   printersList: []
 };
 
+window.printSelectedShopRentInvoice = function(tabId) {
+  const lines = state.rentInvoices[tabId]?.lines || [];
+  if (lines.length === 0) {
+    showToast("لا توجد محلات مسجلة في الفاتورة للطباعة.", "warning");
+    return;
+  }
+
+  // Get active row or first line
+  const activeIdx = state.rentInvoices[tabId]?.selectedRowIndex !== undefined ? state.rentInvoices[tabId].selectedRowIndex : 0;
+  openRentInvoicePrintModal(tabId, activeIdx);
+};
+
 window.openRentInvoicePrintModal = async function(tabId, targetShopIdx = null) {
+  state.rentInvoicePrintSettings.currentScope = (targetShopIdx !== null) ? String(targetShopIdx) : 'all';
+  await renderRentInvoicePrintModalContent(tabId);
+};
+
+window.renderRentInvoicePrintModalContent = async function(tabId) {
   const transNo = document.getElementById(`rentHdrTransNo-${tabId}`)?.value || '0';
   const rawDate = document.getElementById(`rentHdrDate-${tabId}`)?.value || new Date().toISOString().split('T')[0];
   const description = document.getElementById(`rentHdrDesc-${tabId}`)?.value || 'فاتورة ايجار شهري';
@@ -31734,8 +31752,19 @@ window.openRentInvoicePrintModal = async function(tabId, targetShopIdx = null) {
     state.rentInvoicePrintSettings.printersList = ['Microsoft Print to PDF', 'Default Printer'];
   }
 
-  // Filter lines if targetShopIdx specified
-  const printLines = (targetShopIdx !== null && lines[targetShopIdx]) ? [lines[targetShopIdx]] : lines.filter(l => l.fldIsActive !== false);
+  // Scope filter
+  const currentScope = state.rentInvoicePrintSettings.currentScope;
+  let printLines = [];
+  if (currentScope === 'all') {
+    printLines = lines.filter(l => l.fldIsActive !== false);
+  } else {
+    const sIdx = parseInt(currentScope);
+    if (!isNaN(sIdx) && lines[sIdx]) {
+      printLines = [lines[sIdx]];
+    } else {
+      printLines = lines.filter(l => l.fldIsActive !== false);
+    }
+  }
   const totalPages = printLines.length;
 
   // Retrieve report header image from localStorage or API
@@ -31754,12 +31783,12 @@ window.openRentInvoicePrintModal = async function(tabId, targetShopIdx = null) {
   }
 
   const headerImgHtml = savedHeaderImage
-    ? `<img src="${savedHeaderImage}" class="print-header-image" alt="ترويسة التقرير" style="width: 100%; max-height: 130px; object-fit: contain; display: block; margin: 0 auto;">`
+    ? `<img src="${savedHeaderImage}" class="print-header-image" alt="ترويسة التقرير" style="width: 100%; max-height: 125px; object-fit: contain; display: block; margin: 0 auto;">`
     : `<div style="border: 2px solid #000; border-radius: 10px; padding: 10px; text-align: center; font-weight: 900; font-size: 1.25rem; color: #b91c1c;">مركز الحريبي التجاري</div>`;
 
   let slipsHtml = '';
   printLines.forEach((l, idx) => {
-    const pageNum = (targetShopIdx !== null) ? 1 : (idx + 1);
+    const pageNum = (currentScope !== 'all') ? 1 : (idx + 1);
     const shopNum = l.fldShopNumber || '';
     const customerName = (l.fldCustomerName || l.fldShopName || '').trim();
     const rentVal = parseFloat(l.fldTotalPrice || l.fldRent || 0);
@@ -31838,6 +31867,15 @@ window.openRentInvoicePrintModal = async function(tabId, targetShopIdx = null) {
   const currentPrinter = state.rentInvoicePrintSettings.selectedPrinter;
   const currentPaper = state.rentInvoicePrintSettings.paperSize;
 
+  // Build shop options for scope selector
+  let scopeOptionsHtml = `<option value="all" ${currentScope === 'all' ? 'selected' : ''}>📁 طباعة كافة المحلات (الكل - ${lines.filter(l => l.fldIsActive !== false).length} فاتورة)</option>`;
+  lines.forEach((l, idx) => {
+    const sNum = l.fldShopNumber || (idx + 1);
+    const sName = (l.fldCustomerName || l.fldShopName || '').trim();
+    const isSel = (String(currentScope) === String(idx));
+    scopeOptionsHtml += `<option value="${idx}" ${isSel ? 'selected' : ''}>📄 محل ${sNum}: ${sName} (${parseFloat(l.fldTotalPrice || l.fldRent || 0)} ${currencyName})</option>`;
+  });
+
   // Create or update Modal
   let modal = document.getElementById('rentInvoicePrintModal');
   if (!modal) {
@@ -31860,42 +31898,45 @@ window.openRentInvoicePrintModal = async function(tabId, targetShopIdx = null) {
   }
 
   modal.innerHTML = `
-    <div style="background: #ffffff; width: 95%; max-width: 950px; height: 95vh; border-radius: 8px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.4); display: flex; flex-direction: column; overflow: hidden; border: 1px solid #cbd5e1;">
+    <div style="background: #ffffff; width: 95%; max-width: 1000px; height: 95vh; border-radius: 8px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.4); display: flex; flex-direction: column; overflow: hidden; border: 1px solid #cbd5e1;">
       
       <!-- Top Action & Settings Bar -->
       <div style="background: #f1f5f9; padding: 8px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #cbd5e1; flex-wrap: wrap; gap: 8px;">
         
-        <!-- Title -->
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <h3 style="margin: 0; font-size: 1.05rem; font-weight: 900; color: #1e293b;">
-            <i class="fa-solid fa-print" style="color: #0284c7;"></i> طباعة فواتير الإيجار (${totalPages} فاتورة)
-          </h3>
+        <!-- Scope Selector (All vs Specific Shop) -->
+        <div style="display: flex; align-items: center; gap: 6px;">
+          <label style="font-size: 0.8rem; font-weight: 800; color: #1e293b; white-space: nowrap;">
+            <i class="fa-solid fa-list-check" style="color: #0284c7;"></i> خيار الطباعة:
+          </label>
+          <select id="rentPrintScopeSelect" onchange="onRentPrintScopeChange('${tabId}', this.value)" style="height: 28px; padding: 0 8px; font-size: 0.8rem; font-weight: bold; border: 1.5px solid #0284c7; border-radius: 4px; background: #f0f9ff; color: #0369a1; max-width: 320px;">
+            ${scopeOptionsHtml}
+          </select>
         </div>
 
         <!-- Controls: Printer Selection & Paper Size A5 -->
-        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
           
           <!-- Printer Selector -->
           <div style="display: flex; align-items: center; gap: 4px;">
             <label style="font-size: 0.78rem; font-weight: bold; color: #334155;">الطابعة:</label>
-            <select id="rentPrintSelectPrinter" onchange="onRentPrinterSelectChange(this.value)" style="height: 28px; padding: 0 6px; font-size: 0.78rem; font-weight: bold; border: 1.5px solid #0284c7; border-radius: 4px; background: #fff;">
+            <select id="rentPrintSelectPrinter" onchange="onRentPrinterSelectChange(this.value)" style="height: 28px; padding: 0 6px; font-size: 0.78rem; font-weight: bold; border: 1px solid #94a3b8; border-radius: 4px; background: #fff; max-width: 170px;">
               ${printers.map(p => `<option value="${p}" ${p === currentPrinter ? 'selected' : ''}>${p}</option>`).join('')}
             </select>
           </div>
 
           <!-- Paper Size Selector (A5 default) -->
           <div style="display: flex; align-items: center; gap: 4px;">
-            <label style="font-size: 0.78rem; font-weight: bold; color: #334155;">حجم الورق:</label>
+            <label style="font-size: 0.78rem; font-weight: bold; color: #334155;">الورق:</label>
             <select id="rentPrintSelectPaper" onchange="onRentPaperSizeChange(this.value)" style="height: 28px; padding: 0 6px; font-size: 0.78rem; font-weight: bold; border: 1.5px solid #059669; border-radius: 4px; background: #f0fdf4; color: #065f46;">
-              <option value="A5 landscape" ${currentPaper === 'A5 landscape' ? 'selected' : ''}>A5 أفقي (Landscape) - موصى به</option>
-              <option value="A5 portrait" ${currentPaper === 'A5 portrait' ? 'selected' : ''}>A5 عمودي (Portrait)</option>
-              <option value="A4 portrait" ${currentPaper === 'A4 portrait' ? 'selected' : ''}>A4 عادي (Portrait)</option>
+              <option value="A5 landscape" ${currentPaper === 'A5 landscape' ? 'selected' : ''}>A5 أفقي</option>
+              <option value="A5 portrait" ${currentPaper === 'A5 portrait' ? 'selected' : ''}>A5 عمودي</option>
+              <option value="A4 portrait" ${currentPaper === 'A4 portrait' ? 'selected' : ''}>A4 عادي</option>
             </select>
           </div>
 
           <!-- Print Action Buttons -->
           <button type="button" onclick="executeRentInvoicePrint()" style="background: #0284c7; color: #ffffff; border: none; border-radius: 4px; padding: 4px 14px; font-weight: 800; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; gap: 6px; height: 28px; box-shadow: 0 2px 4px rgba(2,132,199,0.2);">
-            <i class="fa-solid fa-print"></i> طباعة الآن
+            <i class="fa-solid fa-print"></i> طباعة (${totalPages})
           </button>
           <button type="button" onclick="closeRentInvoicePrintModal()" style="background: #ef4444; color: #ffffff; border: none; border-radius: 4px; width: 28px; height: 28px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.9rem;" title="إغلاق">
             <i class="fa-solid fa-xmark"></i>
@@ -31913,6 +31954,11 @@ window.openRentInvoicePrintModal = async function(tabId, targetShopIdx = null) {
   `;
 
   modal.style.display = 'flex';
+};
+
+window.onRentPrintScopeChange = function(tabId, scopeVal) {
+  state.rentInvoicePrintSettings.currentScope = scopeVal;
+  renderRentInvoicePrintModalContent(tabId);
 };
 
 window.onRentPrinterSelectChange = function(printerName) {

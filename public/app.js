@@ -1575,17 +1575,20 @@ function getScreenContent(tabId, tabTitle, iconClass, colorClass) {
               <tr style="position: sticky; top: 0; z-index: 10; background: #f8fafc; border-bottom: 2px solid #cbd5e1; color: #334155; font-weight: 800;">
                 <th style="padding: 6px 8px; width: 65px; position: sticky; top: 0; background: #f8fafc;">الرقم</th>
                 <th style="padding: 6px 8px; width: 95px; position: sticky; top: 0; background: #f8fafc;">التاريخ</th>
-                <th style="padding: 6px 12px; width: 140px; position: sticky; top: 0; background: #f8fafc;">المركز المالي</th>
+                <th style="padding: 6px 12px; width: 130px; position: sticky; top: 0; background: #f8fafc;">المركز المالي</th>
                 <th style="padding: 6px 14px; min-width: 250px; text-align: right; position: sticky; top: 0; background: #f8fafc;">البيان</th>
                 <th style="padding: 6px 6px; width: 50px; position: sticky; top: 0; background: #f8fafc;">مرحل</th>
-                <th style="padding: 6px 10px; width: 130px; text-align: right; position: sticky; top: 0; background: #f8fafc;">الاجمالي</th>
+                <th style="padding: 6px 10px; width: 120px; text-align: right; position: sticky; top: 0; background: #f8fafc;">الاجمالي</th>
                 <th style="padding: 6px 6px; width: 55px; position: sticky; top: 0; background: #f8fafc;">العملة</th>
                 <th style="padding: 6px 8px; width: 75px; position: sticky; top: 0; background: #f8fafc;">النوع</th>
                 <th style="padding: 6px 8px; width: 95px; position: sticky; top: 0; background: #f8fafc;">تاريخ المرجع</th>
                 <th style="padding: 6px 8px; width: 80px; position: sticky; top: 0; background: #f8fafc;">رقم المرجع</th>
                 <th style="padding: 6px 8px; width: 75px; position: sticky; top: 0; background: #f8fafc;">رقم ID</th>
+                <th style="padding: 6px 12px; width: 120px; position: sticky; top: 0; background: #f8fafc;">نوع الحركة</th>
+                <th style="padding: 6px 8px; width: 90px; position: sticky; top: 0; background: #f8fafc;">اسم العملة</th>
                 <th style="padding: 6px 12px; min-width: 170px; text-align: right; position: sticky; top: 0; background: #f8fafc;">اسم الحساب</th>
-                <th style="padding: 6px 8px; width: 85px; position: sticky; top: 0; background: #f8fafc;">المحلات</th>
+                <th style="padding: 6px 8px; width: 80px; position: sticky; top: 0; background: #f8fafc;">المحلات</th>
+                <th style="padding: 6px 6px; width: 50px; position: sticky; top: 0; background: #f8fafc;">مغلق</th>
               </tr>
             </thead>
             <tbody id="rentBillsTableBody-${tabId}">
@@ -30155,28 +30158,35 @@ window.renderRentBillsTable = function(tabId, list) {
   let html = '';
   list.forEach((item, idx) => {
     const formattedDate = item.fldDate ? item.fldDate.split('T')[0] : '';
+    const formattedRefDate = item.fldRefDate ? item.fldRefDate.split('T')[0] : '';
     const formattedTotal = parseFloat(item.fldVoisherTotal || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     
     html += `
-      <tr class="rent-bill-row" data-id="${item.fldID}" onclick="selectRentBillRow('${tabId}', ${item.fldID}, this)" ondblclick="openRentInvoiceTab(${item.fldID})" style="cursor: pointer; border-bottom: 1px solid #e2e8f0; transition: background 0.15s;">
-        <td style="padding: 8px 10px; font-weight: bold; font-family: monospace; color: #1e3a8a;">${item.fldTransNo}</td>
-        <td style="padding: 8px 10px; font-family: monospace;">${formattedDate}</td>
-        <td style="padding: 8px 12px; font-weight: 600; color: #334155;">${item.fldBranchName || 'الفرع الرئيسي'}</td>
-        <td style="padding: 8px 14px; text-align: right; font-weight: bold; color: #0f172a;">${item.fldDescription || ''}</td>
-        <td style="padding: 8px 10px; text-align: center;"><span class="badge" style="background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 4px; font-weight: bold;">${item.fldTypeName || 'اجل'}</span></td>
-        <td style="padding: 8px 12px; text-align: right; font-weight: 900; font-family: monospace; color: #059669; font-size: 0.95rem;">${item.fldsymbol || '$'} ${formattedTotal}</td>
-        <td style="padding: 8px 8px; text-align: center; color: #64748b;">${item.fldsymbol || '$'}</td>
-        <td style="padding: 8px 8px; text-align: center;"><input type="checkbox" ${item.fldOK ? 'checked' : ''} disabled></td>
-        <td style="padding: 8px 10px; font-family: monospace; color: #64748b;">${item.fldRefDate || formattedDate}</td>
-        <td style="padding: 8px 10px; color: #475569;">${item.fldMoneyName || 'دولار امريكي'}</td>
-        <td style="padding: 8px 8px; font-family: monospace; color: #64748b;">${item.fldRefNo || 0}</td>
-        <td style="padding: 8px 8px; font-family: monospace; font-weight: bold; color: #475569;">${item.fldID}</td>
-        <td style="padding: 8px 12px; text-align: right; color: #334155;">${item.fldAccBoxName || 'صندوق الايجارات'}</td>
+      <tr class="rent-bill-row" id="rentBillRow-${tabId}-${idx}" data-idx="${idx}" data-id="${item.fldID}" onclick="selectRentBillRow('${tabId}', ${item.fldID}, this)" ondblclick="openRentInvoiceTab(${item.fldID})" style="cursor: pointer; border-bottom: 1px solid #e2e8f0; transition: background 0.15s; background: ${idx % 2 === 0 ? '#ffffff' : '#f8fafc'};">
+        <td style="padding: 5px 8px; font-weight: bold; font-family: monospace; color: #1e3a8a;">${item.fldTransNo}</td>
+        <td style="padding: 5px 8px; font-family: monospace;">${formattedDate}</td>
+        <td style="padding: 5px 12px; font-weight: 600; color: #334155; white-space: nowrap;">${item.fldBranchName || 'الفرع الرئيسي'}</td>
+        <td style="padding: 5px 14px; text-align: right; font-weight: bold; color: #0f172a;">${item.fldDescription || ''}</td>
+        <td style="padding: 5px 6px; text-align: center;"><input type="checkbox" ${item.fldOK ? 'checked' : ''} disabled></td>
+        <td style="padding: 5px 10px; text-align: right; font-weight: 900; font-family: monospace; color: #059669; font-size: 0.92rem;">${formattedTotal}</td>
+        <td style="padding: 5px 6px; text-align: center; color: #64748b;">${item.fldsymbol || 'YR'}</td>
+        <td style="padding: 5px 8px; text-align: center;"><span class="badge" style="background: #e0f2fe; color: #0369a1; padding: 2px 6px; border-radius: 4px; font-weight: bold;">${item.fldTypeName || 'اجل'}</span></td>
+        <td style="padding: 5px 8px; font-family: monospace; color: #64748b;">${formattedRefDate}</td>
+        <td style="padding: 5px 8px; font-family: monospace;">${item.fldRefNo || '0'}</td>
+        <td style="padding: 5px 8px; font-family: monospace; font-weight: bold; color: #475569;">${item.fldID}</td>
+        <td style="padding: 5px 12px; text-align: center; color: #334155; font-weight: 600;">فاتورة ايجار شهري</td>
+        <td style="padding: 5px 8px; color: #475569;">${item.fldMoneyName || 'ريال يمني1'}</td>
+        <td style="padding: 5px 12px; text-align: right; color: #334155; white-space: nowrap;">${item.fldAccBoxName || 'ايراد خدمة الايجار'}</td>
+        <td style="padding: 5px 8px; font-family: monospace; color: #0284c7; font-weight: bold;">${item.fldLinesCount || 0} محل</td>
+        <td style="padding: 5px 6px; text-align: center;"><input type="checkbox" ${item.fldClosed ? 'checked' : ''} disabled></td>
       </tr>
     `;
   });
 
   tbody.innerHTML = html;
+  if (typeof setupRentExplorerKeyboardNavigation === 'function') {
+    setupRentExplorerKeyboardNavigation(tabId);
+  }
 };
 
 window.selectRentBillRow = function(tabId, id, rowEl) {

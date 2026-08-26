@@ -1625,96 +1625,97 @@ function getScreenContent(tabId, tabTitle, iconClass, colorClass) {
           </button>
         </div>
 
-        <!-- Ultra-Compact Form Header with 0-gap margins -->
-        <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 6px 12px; margin-bottom: 2px;">
-          <div style="display: grid; grid-template-columns: 170px 1fr; gap: 10px; align-items: center;">
+        <!-- Zero-Gap Ultra-Compact Form Header (Right=0, Left=0, Top=0, Bottom=0) -->
+        <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 4px; padding: 2px 4px; margin: 0 0 2px 0;">
+          <div style="display: grid; grid-template-columns: 145px 1fr; gap: 0; align-items: stretch; margin: 0; padding: 0;">
             
             <!-- Side Quick Actions -->
-            <div style="display: flex; flex-direction: column; gap: 4px; border-left: 1px solid #e2e8f0; padding-left: 10px;">
-              <button type="button" onclick="clearRentInvoiceLines('${tabId}')" style="padding: 3px 6px; height: 24px; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 4px; font-weight: bold; font-size: 0.74rem; cursor: pointer; text-align: center;">
+            <div style="display: flex; flex-direction: column; gap: 2px; border-left: 1px solid #cbd5e1; padding: 0 4px; margin: 0; justify-content: center;">
+              <button type="button" onclick="clearRentInvoiceLines('${tabId}')" style="padding: 2px 4px; height: 22px; margin: 0; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 3px; font-weight: bold; font-size: 0.72rem; cursor: pointer; text-align: center;">
                 حذف الكشف
               </button>
-              <button type="button" onclick="printSelectedShopRentInvoice('${tabId}')" style="padding: 3px 6px; height: 24px; background: #e0f2fe; color: #0369a1; border: 1px solid #7dd3fc; border-radius: 4px; font-weight: bold; font-size: 0.74rem; cursor: pointer; text-align: center;" title="طباعة فاتورة للمحل المحدد فقط">
+              <button type="button" onclick="printSelectedShopRentInvoice('${tabId}')" style="padding: 2px 4px; height: 22px; margin: 0; background: #e0f2fe; color: #0369a1; border: 1px solid #7dd3fc; border-radius: 3px; font-weight: bold; font-size: 0.72rem; cursor: pointer; text-align: center;" title="طباعة فاتورة للمحل المحدد فقط">
                 <i class="fa-solid fa-print"></i> فاتورة فرديه
               </button>
-              <button type="button" onclick="calculateRentInvoiceTotals('${tabId}')" style="padding: 3px 6px; height: 24px; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 4px; font-weight: bold; font-size: 0.74rem; cursor: pointer; text-align: center;">
+              <button type="button" onclick="calculateRentInvoiceTotals('${tabId}')" style="padding: 2px 4px; height: 22px; margin: 0; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 3px; font-weight: bold; font-size: 0.72rem; cursor: pointer; text-align: center;">
                 تحديث الرصيد
               </button>
-              <label style="font-size: 0.72rem; font-weight: bold; color: #475569; display: flex; align-items: center; gap: 4px; cursor: pointer; margin-top: 1px;">
-                <input type="checkbox"> الطباعة مباشره
+              <label style="font-size: 0.7rem; font-weight: bold; color: #475569; display: flex; align-items: center; gap: 2px; cursor: pointer; margin: 0; padding: 0;">
+                <input type="checkbox" style="margin: 0;"> الطباعة مباشره
               </label>
             </div>
 
-            <!-- Fields Grid: Zero top margin between rows -->
-            <div style="display: flex; flex-direction: column; gap: 3px;">
+            <!-- Fields Grid: Zero margin and zero gap (يمين=0, يسار=0, اعلى=0, اسفل=0) -->
+            <div style="display: flex; flex-direction: column; gap: 0; margin: 0; padding: 0 4px 0 0;">
               
-              <!-- Row 1: Branch, Pay Type, Date, Number, Currency, Rate -->
-              <div style="display: grid; grid-template-columns: 1.5fr 1fr 1.1fr 0.8fr 1.1fr 0.8fr; gap: 8px; align-items: center;">
-                <div>
-                  <label style="font-size: 0.75rem; font-weight: bold; color: #334155; display: block; margin: 0 0 1px 0;">الفرع:</label>
-                  <select id="rentHdrBranch-${tabId}" class="rent-nav-field" data-next="rentHdrType-${tabId}" style="width: 100%; height: 28px; padding: 0 6px; border: 1px solid #94a3b8; border-radius: 4px; font-weight: bold; font-family: var(--font-arabic); font-size: 0.82rem;">
+              <!-- Row 1: Branch, Pay Type, Date, Number, Currency, Rate (gap=0) -->
+              <div style="display: grid; grid-template-columns: 1.4fr 1fr 1.1fr 0.8fr 1.1fr 0.8fr; gap: 0; margin: 0; padding: 0; align-items: stretch;">
+                <div style="margin: 0; padding: 0 1px 0 0;">
+                  <label style="font-size: 0.72rem; font-weight: 800; color: #334155; display: block; margin: 0; padding: 0; line-height: 1.1;">الفرع:</label>
+                  <select id="rentHdrBranch-${tabId}" class="rent-nav-field" data-next="rentHdrType-${tabId}" style="width: 100%; height: 26px; margin: 0; padding: 0 4px; border: 1px solid #94a3b8; border-radius: 2px; font-weight: bold; font-family: var(--font-arabic); font-size: 0.8rem;">
                   </select>
                 </div>
-                <div>
-                  <label style="font-size: 0.75rem; font-weight: bold; color: #334155; display: block; margin: 0 0 1px 0;">طريقة الدفع:</label>
-                  <select id="rentHdrType-${tabId}" class="rent-nav-field" data-next="rentHdrDate-${tabId}" style="width: 100%; height: 28px; padding: 0 6px; border: 1px solid #94a3b8; border-radius: 4px; font-weight: bold; font-family: var(--font-arabic); font-size: 0.82rem;">
+                <div style="margin: 0; padding: 0 1px;">
+                  <label style="font-size: 0.72rem; font-weight: 800; color: #334155; display: block; margin: 0; padding: 0; line-height: 1.1;">طريقة الدفع:</label>
+                  <select id="rentHdrType-${tabId}" class="rent-nav-field" data-next="rentHdrDate-${tabId}" style="width: 100%; height: 26px; margin: 0; padding: 0 4px; border: 1px solid #94a3b8; border-radius: 2px; font-weight: bold; font-family: var(--font-arabic); font-size: 0.8rem;">
                     <option value="3">اجل</option>
                     <option value="1">نقدا</option>
                   </select>
                 </div>
-                <div>
-                  <label style="font-size: 0.75rem; font-weight: bold; color: #334155; display: block; margin: 0 0 1px 0;">التاريخ:</label>
-                  <input type="date" id="rentHdrDate-${tabId}" class="rent-nav-field" data-next="rentHdrMoney-${tabId}" style="width: 100%; height: 28px; padding: 0 6px; border: 1px solid #94a3b8; border-radius: 4px; font-family: monospace; font-size: 0.82rem;">
+                <div style="margin: 0; padding: 0 1px;">
+                  <label style="font-size: 0.72rem; font-weight: 800; color: #334155; display: block; margin: 0; padding: 0; line-height: 1.1;">التاريخ:</label>
+                  <input type="date" id="rentHdrDate-${tabId}" class="rent-nav-field" data-next="rentHdrMoney-${tabId}" style="width: 100%; height: 26px; margin: 0; padding: 0 4px; border: 1px solid #94a3b8; border-radius: 2px; font-family: monospace; font-size: 0.8rem;">
                 </div>
-                <div>
-                  <label style="font-size: 0.75rem; font-weight: bold; color: #334155; display: block; margin: 0 0 1px 0;">الرقم:</label>
-                  <input type="number" id="rentHdrTransNo-${tabId}" value="0" readonly style="width: 100%; height: 28px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 4px; font-family: monospace; font-weight: bold; text-align: center; color: #1e3a8a; font-size: 0.85rem;">
+                <div style="margin: 0; padding: 0 1px;">
+                  <label style="font-size: 0.72rem; font-weight: 800; color: #334155; display: block; margin: 0; padding: 0; line-height: 1.1;">الرقم:</label>
+                  <input type="number" id="rentHdrTransNo-${tabId}" value="0" readonly style="width: 100%; height: 26px; margin: 0; padding: 0 2px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 2px; font-family: monospace; font-weight: bold; text-align: center; color: #1e3a8a; font-size: 0.82rem;">
                 </div>
-                <div>
-                  <label style="font-size: 0.75rem; font-weight: bold; color: #334155; display: block; margin: 0 0 1px 0;">العملة:</label>
-                  <select id="rentHdrMoney-${tabId}" class="rent-nav-field" data-next="rentHdrRate-${tabId}" onchange="handleRentCurrencyChange('${tabId}')" style="width: 100%; height: 28px; padding: 0 6px; border: 1px solid #94a3b8; border-radius: 4px; font-weight: bold; font-family: var(--font-arabic); font-size: 0.82rem;">
+                <div style="margin: 0; padding: 0 1px;">
+                  <label style="font-size: 0.72rem; font-weight: 800; color: #334155; display: block; margin: 0; padding: 0; line-height: 1.1;">العملة:</label>
+                  <select id="rentHdrMoney-${tabId}" class="rent-nav-field" data-next="rentHdrRate-${tabId}" onchange="handleRentCurrencyChange('${tabId}')" style="width: 100%; height: 26px; margin: 0; padding: 0 4px; border: 1px solid #94a3b8; border-radius: 2px; font-weight: bold; font-family: var(--font-arabic); font-size: 0.8rem;">
                     <option value="1">دولار امريكي</option>
                     <option value="2">ريال سعودي</option>
                     <option value="3">ريال يمني1</option>
                   </select>
                 </div>
-                <div>
-                  <label style="font-size: 0.75rem; font-weight: bold; color: #334155; display: block; margin: 0 0 1px 0;">الصرف:</label>
-                  <input type="number" id="rentHdrRate-${tabId}" class="rent-nav-field" data-next="rentHdrRefNo-${tabId}" value="1.00" step="0.01" style="width: 100%; height: 28px; padding: 0 6px; border: 1px solid #94a3b8; border-radius: 4px; font-family: monospace; text-align: center; font-size: 0.82rem;">
+                <div style="margin: 0; padding: 0 0 0 1px;">
+                  <label style="font-size: 0.72rem; font-weight: 800; color: #334155; display: block; margin: 0; padding: 0; line-height: 1.1;">الصرف:</label>
+                  <input type="number" id="rentHdrRate-${tabId}" class="rent-nav-field" data-next="rentHdrRefNo-${tabId}" value="1.00" step="0.01" style="width: 100%; height: 26px; margin: 0; padding: 0 4px; border: 1px solid #94a3b8; border-radius: 2px; font-family: monospace; text-align: center; font-size: 0.8rem;">
                 </div>
               </div>
 
-              <!-- Row 2: Ref No, Ref Date, Cost Center, Revenue Acc -->
-              <div style="display: grid; grid-template-columns: 1fr 1.2fr 1.4fr 1.4fr; gap: 8px; align-items: center;">
-                <div>
-                  <label style="font-size: 0.75rem; font-weight: bold; color: #334155; display: block; margin: 0 0 1px 0;">رقم المرجع:</label>
-                  <input type="number" id="rentHdrRefNo-${tabId}" class="rent-nav-field" data-next="rentHdrRefDate-${tabId}" value="0" style="width: 100%; height: 28px; padding: 0 6px; border: 1px solid #94a3b8; border-radius: 4px; font-family: monospace; text-align: center; font-size: 0.82rem;">
+              <!-- Row 2: Ref No, Ref Date, Cost Center, Revenue Acc (gap=0) -->
+              <div style="display: grid; grid-template-columns: 1fr 1.2fr 1.4fr 1.4fr; gap: 0; margin: 0; padding: 0; align-items: stretch;">
+                <div style="margin: 0; padding: 0 1px 0 0;">
+                  <label style="font-size: 0.72rem; font-weight: 800; color: #334155; display: block; margin: 0; padding: 0; line-height: 1.1;">رقم المرجع:</label>
+                  <input type="number" id="rentHdrRefNo-${tabId}" class="rent-nav-field" data-next="rentHdrRefDate-${tabId}" value="0" style="width: 100%; height: 26px; margin: 0; padding: 0 4px; border: 1px solid #94a3b8; border-radius: 2px; font-family: monospace; text-align: center; font-size: 0.8rem;">
                 </div>
-                <div>
-                  <label style="font-size: 0.75rem; font-weight: bold; color: #334155; display: block; margin: 0 0 1px 0;">تاريخ المرجع:</label>
-                  <input type="date" id="rentHdrRefDate-${tabId}" class="rent-nav-field" data-next="rentHdrCenterCost-${tabId}" style="width: 100%; height: 28px; padding: 0 6px; border: 1px solid #94a3b8; border-radius: 4px; font-family: monospace; font-size: 0.82rem;">
+                <div style="margin: 0; padding: 0 1px;">
+                  <label style="font-size: 0.72rem; font-weight: 800; color: #334155; display: block; margin: 0; padding: 0; line-height: 1.1;">تاريخ المرجع:</label>
+                  <input type="date" id="rentHdrRefDate-${tabId}" class="rent-nav-field" data-next="rentHdrCenterCost-${tabId}" style="width: 100%; height: 26px; margin: 0; padding: 0 4px; border: 1px solid #94a3b8; border-radius: 2px; font-family: monospace; font-size: 0.8rem;">
                 </div>
-                <div>
-                  <label style="font-size: 0.75rem; font-weight: bold; color: #b91c1c; display: block; margin: 0 0 1px 0;">م. الكلفة: * (إجباري)</label>
-                  <select id="rentHdrCenterCost-${tabId}" class="rent-nav-field" data-next="rentHdrDesc-${tabId}" style="width: 100%; height: 28px; padding: 0 6px; border: 1.5px solid #dc2626; background: #fff5f5; border-radius: 4px; font-weight: bold; font-family: var(--font-arabic); font-size: 0.82rem;">
+                <div style="margin: 0; padding: 0 1px;">
+                  <label style="font-size: 0.72rem; font-weight: 800; color: #b91c1c; display: block; margin: 0; padding: 0; line-height: 1.1;">م. الكلفة: * (إجباري)</label>
+                  <select id="rentHdrCenterCost-${tabId}" class="rent-nav-field" data-next="rentHdrDesc-${tabId}" style="width: 100%; height: 26px; margin: 0; padding: 0 4px; border: 1.5px solid #dc2626; background: #fff5f5; border-radius: 2px; font-weight: bold; font-family: var(--font-arabic); font-size: 0.8rem;">
                     <option value="">جاري تحميل مراكز التكلفة...</option>
                   </select>
                 </div>
-                <div>
-                  <label style="font-size: 0.75rem; font-weight: bold; color: #334155; display: block; margin: 0 0 1px 0;">حساب الايراد:</label>
-                  <select id="rentHdrAccBox-${tabId}" style="width: 100%; height: 28px; padding: 0 6px; border: 1px solid #94a3b8; border-radius: 4px; font-weight: bold; font-family: var(--font-arabic); font-size: 0.82rem;">
-                    <option value="265">ايراد خدمة الايجار</option>
+                <div style="margin: 0; padding: 0 0 0 1px;">
+                  <label style="font-size: 0.72rem; font-weight: 800; color: #334155; display: block; margin: 0; padding: 0; line-height: 1.1;">حساب الايراد:</label>
+                  <select id="rentHdrAccBox-${tabId}" style="width: 100%; height: 26px; margin: 0; padding: 0 4px; border: 1px solid #94a3b8; border-radius: 2px; font-weight: bold; font-family: var(--font-arabic); font-size: 0.8rem;">
+                    <option value="264">ايرادات الايجارات دولار</option>
+                    <option value="265">ايراد خدمة الكهرياء</option>
                   </select>
                 </div>
               </div>
 
-              <!-- Row 3: Description & Template Button -->
-              <div style="display: flex; gap: 8px; align-items: flex-end;">
-                <div style="flex: 1;">
-                  <label style="font-size: 0.75rem; font-weight: bold; color: #334155; display: block; margin: 0 0 1px 0;">البيان:</label>
-                  <input type="text" id="rentHdrDesc-${tabId}" class="rent-nav-field" data-action="insertShops" value="فاتورة ايجار شهري" style="width: 100%; height: 28px; padding: 0 8px; border: 1px solid #94a3b8; border-radius: 4px; font-family: var(--font-arabic); font-weight: bold; font-size: 0.85rem;">
+              <!-- Row 3: Description & Template Button (gap=0) -->
+              <div style="display: flex; gap: 2px; margin: 0; padding: 0; align-items: flex-end;">
+                <div style="flex: 1; margin: 0; padding: 0;">
+                  <label style="font-size: 0.72rem; font-weight: 800; color: #334155; display: block; margin: 0; padding: 0; line-height: 1.1;">البيان:</label>
+                  <input type="text" id="rentHdrDesc-${tabId}" class="rent-nav-field" data-action="insertShops" value="فاتورة ايجار شهري" style="width: 100%; height: 26px; margin: 0; padding: 0 6px; border: 1px solid #94a3b8; border-radius: 2px; font-family: var(--font-arabic); font-weight: bold; font-size: 0.82rem;">
                 </div>
-                <button type="button" id="btnRentInsertTemplate-${tabId}" onclick="loadShopsTemplateIntoRentInvoice('${tabId}')" style="height: 30px; padding: 0 16px; background: #0284c7; color: #ffffff; border: none; border-radius: 4px; font-weight: 800; font-size: 0.82rem; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 4px rgba(2,132,199,0.2);">
+                <button type="button" id="btnRentInsertTemplate-${tabId}" onclick="loadShopsTemplateIntoRentInvoice('${tabId}')" style="height: 26px; margin: 0; padding: 0 14px; background: #0284c7; color: #ffffff; border: none; border-radius: 2px; font-weight: 800; font-size: 0.8rem; cursor: pointer; display: flex; align-items: center; gap: 4px; box-shadow: 0 1px 3px rgba(2,132,199,0.2);">
                   <i class="fa-solid fa-file-import"></i> ادراج الكشف
                 </button>
               </div>

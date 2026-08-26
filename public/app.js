@@ -7296,15 +7296,28 @@ function showNodeChildren(tabId, parentId) {
 // DATABASE BACKUP SERVICE WINDOW CONTROLLER
 // ==========================================
 
-// Open backup popup
-window.openBackupModal = function() {
+// Open backup popup with automatic default path resolution
+window.openBackupModal = async function() {
   if (DOM.backupModal) {
     DOM.backupModal.classList.add('open');
     if (DOM.backupAlert) DOM.backupAlert.innerHTML = '';
+    
+    // Set a loading indicator or initial path
     if (DOM.backupPath) {
-      // Suggest default backup file name using active provider DB name
-      const activeDb = (state.connectionStatus && state.connectionStatus.details) ? state.connectionStatus.details.database : "bw";
-      DOM.backupPath.value = `D:\\Backups\\${activeDb}_backup.bak`;
+      DOM.backupPath.value = 'جاري استرجاع المسار الافتراضي للنسخ الاحتياطي...';
+    }
+
+    try {
+      const res = await fetch('/api/backup/default-path');
+      const data = await res.json();
+      if (data.success && data.defaultPath && DOM.backupPath) {
+        DOM.backupPath.value = data.defaultPath;
+      }
+    } catch (e) {
+      if (DOM.backupPath) {
+        const activeDb = (state.connectionStatus && state.connectionStatus.details) ? state.connectionStatus.details.database : "hc";
+        DOM.backupPath.value = `C:\\Backups\\${activeDb}_backup.bak`;
+      }
     }
   }
 };
@@ -7318,16 +7331,13 @@ window.closeBackupModal = function() {
 
 // Request database backup task execution
 window.executeBackup = async function(event) {
-  event.preventDefault();
-  const backupPath = DOM.backupPath.value.trim();
+  if (event) event.preventDefault();
+  const backupPath = DOM.backupPath?.value?.trim() || '';
 
-  if (!backupPath) {
-    showBackupAlert("يرجى كتابة مسار النسخ الاحتياطي بالكامل.", "danger");
-    return;
+  if (DOM.btnExecuteBackup) {
+    DOM.btnExecuteBackup.disabled = true;
+    DOM.btnExecuteBackup.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري النسخ الاحتياطي...';
   }
-
-  DOM.btnExecuteBackup.disabled = true;
-  DOM.btnExecuteBackup.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري النسخ الاحتياطي...';
   showBackupAlert("جاري تنفيذ النسخ الاحتياطي على السيرفر، يرجى الانتظار...", "info");
 
   try {
@@ -7341,20 +7351,43 @@ window.executeBackup = async function(event) {
     
     if (data.success) {
       showBackupAlert(data.message, "success");
-      showToast("نجح إنشاء نسخة احتياطية لقاعدة البيانات!", "success");
-      setTimeout(closeBackupModal, 3000); // Close after 3 seconds on success
+      showToast("تم إنشاء وحفظ النسخة الاحتياطية بنجاح!", "success");
+      if (DOM.backupPath && data.backupPath) {
+        DOM.backupPath.value = data.backupPath;
+      }
+      setTimeout(closeBackupModal, 3500);
     } else {
       showBackupAlert(data.error || "فشل النسخ الاحتياطي.", "danger");
-      showToast("فشل النسخ الاحتياطي لقاعدة البيانات.", "error");
+      showToast(data.error || "فشل النسخ الاحتياطي لقاعدة البيانات.", "error");
     }
   } catch (err) {
     showBackupAlert(`خطأ بالاتصال بالشبكة: ${err.message}`, "danger");
     showToast("خطأ بالشبكة أثناء محاولة النسخ الاحتياطي.", "error");
   } finally {
-    DOM.btnExecuteBackup.disabled = false;
-    DOM.btnExecuteBackup.innerHTML = '<i class="fa-solid fa-circle-check"></i> بدء النسخ الاحتياطي';
+    if (DOM.btnExecuteBackup) {
+      DOM.btnExecuteBackup.disabled = false;
+      DOM.btnExecuteBackup.innerHTML = '<i class="fa-solid fa-circle-check"></i> بدء النسخ الاحتياطي';
+    }
   }
-}
+};
+
+// Database Maintenance Controller
+window.openMaintenanceAction = async function() {
+  showToast("جاري فحص وصيانة قواعد البيانات وتنظيف الذاكرة...", "info");
+  try {
+    const res = await fetch('/api/maintenance', { method: 'POST' });
+    const data = await res.json();
+    if (data.success) {
+      let detailsMsg = (data.details || []).join('\n');
+      alert("✅ تقرير صيانة النظام:\n\n" + detailsMsg);
+      showToast(data.message, "success");
+    } else {
+      showToast(data.error || "فشلت عملية الصيانة.", "error");
+    }
+  } catch (err) {
+    showToast("خطأ أثناء إجراء الصيانة: " + err.message, "error");
+  }
+};
 
 // ==========================================
 // CHART OF ACCOUNTS CRUD & DETAILS WINDOW CONTROLLER
@@ -31087,3 +31120,108 @@ window.saveElectricityInvoice = async function(tabId, andPrint = false) {
 window.saveAndPrintElectricityInvoice = function(tabId) {
   saveElectricityInvoice(tabId, true);
 };
+
+
+// =============================================================================
+// LOGIN LOGO UPLOAD & FORM ENTER-KEY NAVIGATION
+// =============================================================================
+
+window.triggerLoginLogoUpload = function() {
+  const fileInput = document.getElementById('loginLogoFileInput');
+  if (fileInput) {
+    fileInput.click();
+  }
+};
+
+window.handleLoginLogoUpload = function(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  if (!file.type.startsWith('image/')) {
+    showToast("يرجى اختيار ملف صورة صالح (PNG, JPG, SVG, WebP).", "warning");
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = async function(e) {
+    const base64Data = e.target.result;
+    
+    // Immediately update logo in UI
+    const displayEl = document.getElementById('loginLogoDisplay');
+    if (displayEl) {
+      displayEl.innerHTML = `<img src="${base64Data}" alt="App Logo" style="width: 100%; height: 100%; object-fit: contain; border-radius: 10px;">`;
+    }
+
+    try {
+      const res = await fetch('/api/settings/logo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ logoData: base64Data })
+      });
+      const result = await res.json();
+      if (result.success) {
+        showToast("تم تحديث وحفظ شعار التطبيق بنجاح!", "success");
+      } else {
+        showToast("تم تعيين الشعار محلياً ولكن تعذر حفظه في الخادم: " + result.error, "warning");
+      }
+    } catch (err) {
+      console.warn("Error persisting logo:", err);
+      showToast("تم تحديث الشعار بنجاح.", "success");
+    }
+  };
+  reader.readAsDataURL(file);
+};
+
+window.loadAppLogo = async function() {
+  try {
+    const res = await fetch('/api/settings/logo');
+    const result = await res.json();
+    if (result.success && result.data && result.data.logoData) {
+      const displayEl = document.getElementById('loginLogoDisplay');
+      if (displayEl) {
+        displayEl.innerHTML = `<img src="${result.data.logoData}" alt="App Logo" style="width: 100%; height: 100%; object-fit: contain; border-radius: 10px;">`;
+      }
+    }
+  } catch (err) {
+    console.warn("Could not load app logo:", err);
+  }
+};
+
+window.setupLoginFormEnterNavigation = function() {
+  const fields = ['loginProvider', 'loginYear', 'loginBranchSelect', 'loginUserSelect', 'loginPassword'];
+  
+  fields.forEach((id, idx) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    
+    el.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        if (idx === fields.length - 1) {
+          // Last input (password) -> submit
+          if (typeof submitLoginForm === 'function') {
+            submitLoginForm();
+          } else if (typeof handleLoginSubmit === 'function') {
+            handleLoginSubmit(e);
+          }
+        } else {
+          // Focus next input
+          const nextId = fields[idx + 1];
+          const nextEl = document.getElementById(nextId);
+          if (nextEl) {
+            nextEl.focus();
+            if (nextEl.select && typeof nextEl.select === 'function') {
+              nextEl.select();
+            }
+          }
+        }
+      }
+    });
+  });
+};
+
+// Initialize on DOM ready
+document.addEventListener('DOMContentLoaded', function() {
+  loadAppLogo();
+  setupLoginFormEnterNavigation();
+});

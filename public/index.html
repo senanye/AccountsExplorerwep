@@ -104,49 +104,47 @@
 
         <!-- Right Side: Branding Logo & Version -->
         <div class="login-branding-side">
-          <div class="login-logo-container">
-            <div class="branding-logo-circle">
-              <i class="fa-solid fa-circle-nodes"></i>
+          <div class="login-logo-container" ondblclick="triggerLoginLogoUpload()" title="انقر مرتين لاختيار وتعيين شعار التطبيق" style="cursor: pointer; display: flex; flex-direction: column; align-items: center;">
+            <input type="file" id="loginLogoFileInput" accept="image/*" style="display:none;" onchange="handleLoginLogoUpload(event)">
+            <div class="branding-logo-circle" id="loginLogoDisplay" title="انقر مرتين لاختيار صورة اللوجو">
+              <i class="fa-solid fa-circle-nodes" style="font-size: 3.5rem; color: #94a3b8;"></i>
             </div>
             <div class="branding-title">Ali Senan</div>
           </div>
-          <div class="login-version-text">تم الاصدار بتاريخ 19/08/2026</div>
+          <div style="font-size: 0.8rem; font-weight: bold; color: #475569; text-align: center; margin-top: 4px;">الحقوق محفوظة م / علي سنان</div>
+          <div class="login-version-text" style="color: #ef4444; font-weight: 800; font-size: 0.82rem; margin-top: 3px; text-align: center;">نسخة إصدار 26-08-2026</div>
         </div>
       </div>
       
-      <!-- Footer Buttons Row -->
+      <!-- Footer Buttons Row (Uniform aligned POS style matching user image) -->
       <div class="login-footer">
         <div class="login-footer-right">
-          <button type="button" class="btn-login-action" onclick="openDbModal()" title="إعدادات الاتصال بقاعدة البيانات">
-            <i class="fa-solid fa-database"></i>
-            <span>بيانات الاتصال</span>
+          <button type="button" class="btn-login-action" onclick="openDbModal()" title="إعدادات بيانات الاتصال بقاعدة البيانات">
+            <div>بيانات</div>
+            <div>الاتصال</div>
           </button>
-          <button type="button" class="btn-login-action" id="updaterLoginBtn" onclick="openSystemUpdateModal()" title="تحديث النظام التلقائي عبر GitHub والروابط المباشرة">
-            <i class="fa-solid fa-cloud-arrow-down" style="color: #38bdf8;"></i>
-            <span>تحديث النظام</span>
+          <button type="button" class="btn-login-action" id="updaterLoginBtn" onclick="openSystemUpdateModal()" title="تحديث النظام التلقائي">
+            <div>تحديث</div>
+            <div>النظام</div>
             <span class="updater-badge-dot hidden" id="updaterLoginBadgeDot" title="يتوفر إصدار جديد!"></span>
           </button>
-          <button type="button" class="btn-login-action" onclick="showToast('شاشة الصيانة محمية بكلمة مرور خاصة بمسؤول النظام', 'warning')">
-            <i class="fa-solid fa-user-gear"></i>
-            <span>صيانه</span>
+          <button type="button" class="btn-login-action" onclick="openMaintenanceAction()" title="صيانة وتحسين أداء قواعد البيانات">
+            <div>صيانه</div>
           </button>
-          <button type="button" class="btn-login-action" onclick="fetchAndDisplayIP()">
-            <i class="fa-solid fa-network-wired"></i>
-            <span>GetIp</span>
+          <button type="button" class="btn-login-action" onclick="fetchAndDisplayIP()" title="عرض عنوان IP ورابط الاتصال الخارجي">
+            <div>GetIp</div>
           </button>
           <button type="button" class="btn-login-action" onclick="openBackupModal()" title="إنشاء نسخة احتياطية لقاعدة البيانات">
-            <i class="fa-solid fa-copy"></i>
-            <span>نسخه احتياطيه</span>
+            <div>نسخه</div>
+            <div>احتياطيه</div>
           </button>
         </div>
         <div class="login-footer-left">
-          <button type="button" id="loginSubmitBtn" class="btn-login-submit" onclick="submitLoginForm()">
-            <i class="fa-solid fa-check"></i>
-            <span>موافق</span>
+          <button type="button" id="loginSubmitBtn" class="btn-login-submit" onclick="submitLoginForm()" title="موافق - تسجيل الدخول">
+            <div>موافق</div>
           </button>
-          <button type="button" class="btn-login-cancel" onclick="resetLoginForm()">
-            <i class="fa-solid fa-xmark"></i>
-            <span>الغاء</span>
+          <button type="button" class="btn-login-cancel" onclick="resetLoginForm()" title="إلغاء">
+            <div>الغاء</div>
           </button>
         </div>
       </div>

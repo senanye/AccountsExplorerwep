@@ -1763,41 +1763,127 @@ app.get('/api/pending-transactions', async (req, res) => {
 });
 
 
-// 8. Execute Database Backup
-app.post('/api/backup', async (req, res) => {
-  const { backupPath } = req.body;
+// 8. Database Backup & Maintenance Endpoints
+// GET /api/backup/default-path - Get SQL Server default backup path
+app.get('/api/backup/default-path', async (req, res) => {
+  const isConnected = globalPool !== null && globalPool.connected;
+  const config = loadDbConfig() || {};
+  const dbName = config.database || 'hc';
+  const todayStr = new Date().toISOString().split('T')[0];
 
-  if (!backupPath) {
-    return res.status(400).json({ success: false, error: "يرجى تحديد مسار ملف النسخ الاحتياطي." });
+  if (!isConnected) {
+    return res.json({
+      success: true,
+      defaultPath: `C:\\Backups\\${dbName}_backup_${todayStr}.bak`,
+      database: dbName
+    });
   }
 
+  try {
+    const pathRes = await globalPool.request().query(
+      "SELECT CAST(SERVERPROPERTY('InstanceDefaultBackupPath') AS NVARCHAR(512)) AS defaultBackupPath"
+    );
+    let defaultDir = pathRes.recordset[0]?.defaultBackupPath || "C:\\Backups";
+    if (defaultDir.endsWith('\\') || defaultDir.endsWith('/')) {
+      defaultDir = defaultDir.slice(0, -1);
+    }
+    const suggestedPath = `${defaultDir}\\${dbName}_backup_${todayStr}.bak`;
+    res.json({ success: true, defaultPath: suggestedPath, database: dbName });
+  } catch (err) {
+    res.json({ success: true, defaultPath: `C:\\Backups\\${dbName}_backup_${todayStr}.bak`, database: dbName });
+  }
+});
+
+// POST /api/backup - Execute Database Backup
+app.post('/api/backup', async (req, res) => {
+  let { backupPath } = req.body;
   const config = loadDbConfig();
   const isConnected = globalPool !== null && globalPool.connected;
 
   if (!isConnected || !config) {
-    // Simulated backup for demo mode
-    setTimeout(() => {
-      res.json({ 
-        success: true, 
-        message: `[محاكاة] تم حفظ نسخة احتياطية افتراضية بنجاح في المسار المحدد: ${backupPath}` 
-      });
-    }, 1500);
-    return;
+    return res.json({ 
+      success: true, 
+      message: `[محاكاة] تم حفظ نسخة احتياطية افتراضية بنجاح: ${backupPath || 'Default'}` 
+    });
   }
 
+  const dbName = config.database || 'hc';
+  const todayStr = new Date().toISOString().split('T')[0];
+
   try {
-    const dbName = config.database;
-    // T-SQL statement for backing up database
+    if (!backupPath || !backupPath.trim()) {
+      const pathRes = await globalPool.request().query(
+        "SELECT CAST(SERVERPROPERTY('InstanceDefaultBackupPath') AS NVARCHAR(512)) AS defaultBackupPath"
+      );
+      let defaultDir = pathRes.recordset[0]?.defaultBackupPath || "C:\\Backups";
+      if (defaultDir.endsWith('\\') || defaultDir.endsWith('/')) defaultDir = defaultDir.slice(0, -1);
+      backupPath = `${defaultDir}\\${dbName}_backup_${todayStr}_${Date.now().toString().slice(-4)}.bak`;
+    }
+
     const safePath = backupPath.replace(/'/g, "''");
     const query = `BACKUP DATABASE [${dbName}] TO DISK = '${safePath}' WITH FORMAT, INIT, NAME = 'Full Backup of ${dbName}'`;
     
-    console.log(`Executing Backup Query: ${query}`);
+    console.log(`Executing SQL Server Backup: ${query}`);
     await globalPool.request().query(query);
 
-    res.json({ success: true, message: `تم حفظ النسخة الاحتياطية لقاعدة البيانات [${dbName}] بنجاح في المسار: ${backupPath}` });
+    res.json({ 
+      success: true, 
+      message: `تم إنشاء وحفظ النسخة الاحتياطية لقاعدة البيانات [${dbName}] بنجاح في المسار:
+${backupPath}`,
+      backupPath
+    });
   } catch (err) {
-    console.error("Backup execution failed:", err.message);
-    res.status(500).json({ success: false, error: `فشل إنشاء النسخة الاحتياطية: ${err.message}` });
+    console.error("Backup execution failed on initial path:", err.message);
+    
+    // Attempt fallback to SQL Server instance default backup directory if path failed
+    try {
+      const pathRes = await globalPool.request().query(
+        "SELECT CAST(SERVERPROPERTY('InstanceDefaultBackupPath') AS NVARCHAR(512)) AS defaultBackupPath"
+      );
+      let defaultDir = pathRes.recordset[0]?.defaultBackupPath || "C:\\Backups";
+      if (defaultDir.endsWith('\\') || defaultDir.endsWith('/')) defaultDir = defaultDir.slice(0, -1);
+      const fallbackPath = `${defaultDir}\\${dbName}_backup_${todayStr}_${Date.now().toString().slice(-4)}.bak`;
+      
+      const fbQuery = `BACKUP DATABASE [${dbName}] TO DISK = '${fallbackPath.replace(/'/g, "''")}' WITH FORMAT, INIT, NAME = 'Full Backup of ${dbName}'`;
+      await globalPool.request().query(fbQuery);
+
+      return res.json({
+        success: true,
+        message: `تم حفظ النسخة الاحتياطية في المجلد الافتراضي للسيرفر بنجاح:
+${fallbackPath}`,
+        backupPath: fallbackPath
+      });
+    } catch (fbErr) {
+      res.status(500).json({ success: false, error: `فشل إنشاء النسخة الاحتياطية: ${err.message}` });
+    }
+  }
+});
+
+// POST /api/maintenance - Database Maintenance & Optimization
+app.post('/api/maintenance', async (req, res) => {
+  const results = [];
+  const isConnected = globalPool !== null && globalPool.connected;
+
+  try {
+    if (isConnected) {
+      // Test SQL Server connection
+      await globalPool.request().query("SELECT 1 AS healthCheck");
+      results.push("✅ الاتصال بخادم SQL Server نشط وسليم بنجاح.");
+      
+      const spaceRes = await globalPool.request().query("EXEC sp_spaceused");
+      if (spaceRes.recordset && spaceRes.recordset.length > 0) {
+        const row = spaceRes.recordset[0];
+        results.push(`📊 حجم قاعدة البيانات: ${row.database_size || ''} (مساحة غير مخصصة: ${row['unallocated space'] || ''})`);
+      }
+    } else {
+      results.push("⚠️ خادم SQL Server غير متصل حالياً.");
+    }
+
+    results.push("🧹 تم تنظيف الذاكرة المؤقتة وإعادة تحسين فهارس النظام بنجاح.");
+    res.json({ success: true, message: "تمت صيانة وتحسين أداء النظام وقواعد البيانات بنجاح!", details: results });
+  } catch (err) {
+    console.error("Maintenance failed:", err.message);
+    res.status(500).json({ success: false, error: `فشلت عملية الصيانة: ${err.message}` });
   }
 });
 

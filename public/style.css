@@ -1472,78 +1472,116 @@ body {
   text-align: center;
 }
 
-/* Login Window Footer */
+/* Login Window Footer - Uniform Aligned POS Row */
 .login-footer {
-  background-color: #edf2f7;
+  background-color: #f1f5f9;
   border-top: 1px solid #cbd5e1;
-  padding: 8px 12px;
+  padding: 8px 10px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 8px;
+  direction: rtl;
+  box-sizing: border-box;
 }
 
-.login-footer-right,
+.login-footer-right {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex: 1;
+}
+
 .login-footer-left {
   display: flex;
   gap: 6px;
+  align-items: center;
 }
 
 .btn-login-action,
 .btn-login-submit,
 .btn-login-cancel {
   display: inline-flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 5px 12px;
-  border: 1px solid #b2b9c5;
-  border-radius: 3px;
+  height: 48px;
+  min-width: 68px;
+  padding: 3px 8px;
+  border: 1px solid #94a3b8;
+  border-radius: 4px;
   font-family: var(--font-arabic);
-  font-size: 0.75rem;
-  font-weight: 700;
-  background: linear-gradient(to bottom, #ffffff, #edf2f7);
-  color: #4a5568;
+  font-size: 0.78rem;
+  font-weight: 800;
+  line-height: 1.25;
+  background: #ffffff;
+  color: #334155;
   cursor: pointer;
-  min-width: 80px;
-  box-shadow: 0 1px 1px rgba(0,0,0,0.05);
-  transition: var(--transition-fast);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  transition: all 0.15s ease-in-out;
+  text-align: center;
+  box-sizing: border-box;
+  position: relative;
 }
 
-.btn-login-action:hover,
-.btn-login-submit:hover,
-.btn-login-cancel:hover {
-  background: linear-gradient(to bottom, #ffffff, #e2e8f0);
-  border-color: #a0aec0;
+.btn-login-action:hover {
+  background: #f8fafc;
+  border-color: #64748b;
+  color: #0f172a;
 }
 
 .btn-login-submit {
-  border-color: var(--success);
-  background: linear-gradient(to bottom, #ffffff, #f0fff4);
-  color: #22543d;
+  border: 1.5px solid #16a34a;
+  background: #ffffff;
+  color: #15803d;
+  min-width: 76px;
 }
 
 .btn-login-submit:hover {
-  background: linear-gradient(to bottom, #f0fff4, #c6f6d5);
-  border-color: #38a169;
-}
-
-.btn-login-submit i {
-  color: var(--success);
+  background: #f0fdf4;
+  border-color: #15803d;
+  color: #166534;
 }
 
 .btn-login-cancel {
-  border-color: var(--danger);
-  background: linear-gradient(to bottom, #ffffff, #fff5f5);
-  color: #742a2a;
+  border: 1.5px solid #dc2626;
+  background: #ffffff;
+  color: #b91c1c;
+  min-width: 76px;
 }
 
 .btn-login-cancel:hover {
-  background: linear-gradient(to bottom, #fff5f5, #fed7d7);
-  border-color: #e53e3e;
+  background: #fef2f2;
+  border-color: #b91c1c;
+  color: #991b1b;
 }
 
-.btn-login-cancel i {
-  color: var(--danger);
+.branding-logo-circle {
+  width: 140px;
+  height: 140px;
+  border-radius: 12px;
+  border: 2px solid #cbd5e1;
+  background-color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: transform 0.2s, border-color 0.2s;
+  position: relative;
+}
+
+.branding-logo-circle:hover {
+  border-color: #0284c7;
+  transform: scale(1.02);
+}
+
+.branding-logo-circle img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 /* ==========================================

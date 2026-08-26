@@ -1878,6 +1878,9 @@ function getScreenContent(tabId, tabTitle, iconClass, colorClass) {
           <button class="btn btn-secondary btn-sm" onclick="loadShopsTemplateIntoElecInvoice('${tabId}')" style="font-weight: bold; display: flex; align-items: center; gap: 6px;">
             <i class="fa-solid fa-copy"></i> نسخه من
           </button>
+          <button class="btn btn-warning btn-sm" onclick="showElectricityInvoiceJournalEntry('${tabId}')" style="font-weight: bold; display: flex; align-items: center; gap: 5px; height: 28px; padding: 0 10px; background: #f59e0b; color: #ffffff; border: none; border-radius: 4px; cursor: pointer;">
+            <i class="fa-solid fa-file-invoice-dollar"></i> القيد
+          </button>
           <button class="btn btn-danger btn-sm" onclick="clearElectricityInvoiceLines('${tabId}')" style="font-weight: bold; display: flex; align-items: center; gap: 6px;">
             <i class="fa-solid fa-trash-can"></i> حذف الكشف
           </button>
@@ -11480,7 +11483,7 @@ function formatDateTimeArabic(dateStr) {
   hours = hours ? hours : 12;
   const strHours = String(hours).padStart(2, '0');
   
-  return `${day}/${month}/${year} ${strHours}:${minutes}:${seconds} ${ampm}`;
+  return `${strHours}:${minutes}:${seconds} ${day}/${month}/${year} ${ampm}`;
 }
 
 function formatDecimal(val) {
@@ -31333,24 +31336,19 @@ document.addEventListener('DOMContentLoaded', function() {
 window.showRentInvoiceJournalEntry = async function(tabId) {
   const transId = document.getElementById(`rentTransId-${tabId}`)?.value || state.rentInvoices[tabId]?.rentId;
   if (!transId) {
-    showToast("يرجى حفظ الفاتورة أولاً لتكوين وعرض القيد المحاسبي.", "warning");
+    showToast("يرجى حفظ الفاتورة أولاً لتكوين وعرض القيد المحاسبي الخاص بها.", "warning");
     return;
   }
+  showJournalEntries(transId);
+};
 
-  showToast("جاري تحميل تفاصيل القيد المحاسبي...", "info");
-  try {
-    const res = await fetch(`/api/rent-bills/${transId}/journal-entry`);
-    const result = await res.json();
-    if (!result.success || !result.data) {
-      showToast(result.error || "لا يوجد قيد محاسبي مسجل لهذه الفاتورة.", "error");
-      return;
-    }
-
-    openJournalEntryModal(result.data);
-  } catch (err) {
-    console.error("Error loading journal entry:", err);
-    showToast("خطأ عند جلب تفاصيل القيد: " + err.message, "error");
+window.showElectricityInvoiceJournalEntry = async function(tabId) {
+  const transId = document.getElementById(`elecTransId-${tabId}`)?.value || state.electricityInvoices[tabId]?.elecId;
+  if (!transId) {
+    showToast("يرجى حفظ الفاتورة أولاً لتكوين وعرض القيد المحاسبي الخاص بها.", "warning");
+    return;
   }
+  showJournalEntries(transId);
 };
 
 window.openJournalEntryModal = function(journalData) {

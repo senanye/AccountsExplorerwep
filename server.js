@@ -2424,7 +2424,7 @@ app.get('/api/vouchers/:id/journal-entries', async (req, res) => {
       LEFT OUTER JOIN dbo.tblMoney curr ON m.fldMoneyID = curr.fldID
       LEFT OUTER JOIN dbo.tblAccount acc2 ON m.fldAccID2 = acc2.fldID
       WHERE m.fldTransID = @transID
-      ORDER BY m.fldRID ASC, m.fldID ASC
+      ORDER BY m.fldCredit ASC, m.fldRID ASC, m.fldID ASC
     `;
     const detailsRes = await request.query(detailsQuery);
 

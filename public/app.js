@@ -1596,129 +1596,143 @@ function getScreenContent(tabId, tabTitle, iconClass, colorClass) {
     `;
   } else if (isRentBillInvoice) {
     bodyHtml = `
-      <div class="voucher-screen" style="direction: rtl; text-align: right; font-family: var(--font-arabic); display: flex; flex-direction: column; gap: 12px; height: 100%;">
+      <div class="voucher-screen" style="direction: rtl; text-align: right; font-family: var(--font-arabic); display: flex; flex-direction: column; gap: 4px; height: 100%;">
         <input type="hidden" id="rentTransId-${tabId}" value="">
 
-        <!-- Top Toolbar matching Image 2 -->
-        <div class="accounts-toolbar" style="background-color: #f1f5f9; padding: 8px 15px; border-bottom: 2px solid #cbd5e1; display: flex; gap: 10px; align-items: center; border-radius: 6px; flex-wrap: wrap;">
-          <button class="btn btn-primary btn-sm" onclick="saveRentInvoice('${tabId}')" style="font-weight: bold; display: flex; align-items: center; gap: 6px;">
+        <!-- Compact Top Toolbar -->
+        <div class="accounts-toolbar" style="background-color: #f1f5f9; padding: 4px 10px; margin-bottom: 2px; border-bottom: 1.5px solid #cbd5e1; display: flex; gap: 8px; align-items: center; border-radius: 6px; flex-wrap: wrap;">
+          <button class="btn btn-primary btn-sm" onclick="saveRentInvoice('${tabId}')" style="font-weight: bold; display: flex; align-items: center; gap: 5px; height: 28px; padding: 0 10px;">
             <i class="fa-solid fa-floppy-disk"></i> حفظ
           </button>
-          <button class="btn btn-info btn-sm" onclick="saveAndPrintRentInvoice('${tabId}')" style="font-weight: bold; display: flex; align-items: center; gap: 6px;">
+          <button class="btn btn-info btn-sm" onclick="saveAndPrintRentInvoice('${tabId}')" style="font-weight: bold; display: flex; align-items: center; gap: 5px; height: 28px; padding: 0 10px;">
             <i class="fa-solid fa-print"></i> حفظ طباعه
           </button>
-          <button class="btn btn-secondary btn-sm" onclick="loadShopsTemplateIntoRentInvoice('${tabId}')" style="font-weight: bold; display: flex; align-items: center; gap: 6px;">
+          <button class="btn btn-secondary btn-sm" onclick="loadShopsTemplateIntoRentInvoice('${tabId}')" style="font-weight: bold; display: flex; align-items: center; gap: 5px; height: 28px; padding: 0 10px;">
             <i class="fa-solid fa-copy"></i> نسخه من
           </button>
-          <button class="btn btn-danger btn-sm" onclick="clearRentInvoiceLines('${tabId}')" style="font-weight: bold; display: flex; align-items: center; gap: 6px;">
+          <button class="btn btn-danger btn-sm" onclick="clearRentInvoiceLines('${tabId}')" style="font-weight: bold; display: flex; align-items: center; gap: 5px; height: 28px; padding: 0 10px;">
             <i class="fa-solid fa-trash-can"></i> حذف الكشف
           </button>
-          <button class="btn btn-secondary btn-sm" onclick="closeTab('${tabId}')" style="font-weight: bold; display: flex; align-items: center; gap: 6px;">
+          <button class="btn btn-secondary btn-sm" onclick="closeTab('${tabId}')" style="font-weight: bold; display: flex; align-items: center; gap: 5px; height: 28px; padding: 0 10px;">
             <i class="fa-solid fa-xmark"></i> إغلاق
           </button>
         </div>
 
-        <!-- Top Form Fields matching Image 2 -->
-        <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 14px; display: flex; flex-direction: column; gap: 10px;">
-          
-          <div style="display: grid; grid-template-columns: 200px 1fr; gap: 15px;">
-            <!-- Side Actions -->
-            <div style="display: flex; flex-direction: column; gap: 6px; border-left: 1px solid #e2e8f0; padding-left: 15px;">
-              <button type="button" onclick="clearRentInvoiceLines('${tabId}')" style="padding: 5px 10px; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 4px; font-weight: bold; font-size: 0.8rem; cursor: pointer; text-align: center;">
+        <!-- Ultra-Compact Form Header with 0-gap margins -->
+        <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 6px 12px; margin-bottom: 2px;">
+          <div style="display: grid; grid-template-columns: 170px 1fr; gap: 10px; align-items: center;">
+            
+            <!-- Side Quick Actions -->
+            <div style="display: flex; flex-direction: column; gap: 4px; border-left: 1px solid #e2e8f0; padding-left: 10px;">
+              <button type="button" onclick="clearRentInvoiceLines('${tabId}')" style="padding: 3px 6px; height: 24px; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 4px; font-weight: bold; font-size: 0.74rem; cursor: pointer; text-align: center;">
                 حذف الكشف
               </button>
-              <button type="button" onclick="showToast('اصدار فاتورة فردية قيد التفعيل', 'info')" style="padding: 5px 10px; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 4px; font-weight: bold; font-size: 0.8rem; cursor: pointer; text-align: center;">
+              <button type="button" onclick="showToast('اصدار فاتورة فردية قيد التفعيل', 'info')" style="padding: 3px 6px; height: 24px; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 4px; font-weight: bold; font-size: 0.74rem; cursor: pointer; text-align: center;">
                 اصدار فاتورة فرديه
               </button>
-              <button type="button" onclick="calculateRentInvoiceTotals('${tabId}')" style="padding: 5px 10px; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 4px; font-weight: bold; font-size: 0.8rem; cursor: pointer; text-align: center;">
+              <button type="button" onclick="calculateRentInvoiceTotals('${tabId}')" style="padding: 3px 6px; height: 24px; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 4px; font-weight: bold; font-size: 0.74rem; cursor: pointer; text-align: center;">
                 تحديث الرصيد
               </button>
-              <label style="font-size: 0.78rem; font-weight: bold; color: #475569; display: flex; align-items: center; gap: 5px; cursor: pointer; margin-top: 4px;">
+              <label style="font-size: 0.72rem; font-weight: bold; color: #475569; display: flex; align-items: center; gap: 4px; cursor: pointer; margin-top: 1px;">
                 <input type="checkbox"> الطباعة مباشره
               </label>
             </div>
 
-            <!-- Main Fields Grid -->
-            <div style="display: flex; flex-direction: column; gap: 10px;">
-              <!-- Row 1: Branch, Pay Type, Date, Number -->
-              <div style="display: grid; grid-template-columns: 1.5fr 1fr 1.2fr 0.8fr; gap: 10px; align-items: center;">
+            <!-- Fields Grid: Zero top margin between rows -->
+            <div style="display: flex; flex-direction: column; gap: 3px;">
+              
+              <!-- Row 1: Branch, Pay Type, Date, Number, Currency, Rate -->
+              <div style="display: grid; grid-template-columns: 1.5fr 1fr 1.1fr 0.8fr 1.1fr 0.8fr; gap: 8px; align-items: center;">
                 <div>
-                  <label style="font-size: 0.8rem; font-weight: bold; color: #334155; display: block; margin-bottom: 3px;">الفرع:</label>
-                  <select id="rentHdrBranch-${tabId}" style="width: 100%; height: 32px; padding: 0 8px; border: 1px solid #94a3b8; border-radius: 4px; font-weight: bold; font-family: var(--font-arabic);">
+                  <label style="font-size: 0.75rem; font-weight: bold; color: #334155; display: block; margin: 0 0 1px 0;">الفرع:</label>
+                  <select id="rentHdrBranch-${tabId}" class="rent-nav-field" data-next="rentHdrType-${tabId}" style="width: 100%; height: 28px; padding: 0 6px; border: 1px solid #94a3b8; border-radius: 4px; font-weight: bold; font-family: var(--font-arabic); font-size: 0.82rem;">
                   </select>
                 </div>
                 <div>
-                  <label style="font-size: 0.8rem; font-weight: bold; color: #334155; display: block; margin-bottom: 3px;">طريقة الدفع:</label>
-                  <select id="rentHdrType-${tabId}" style="width: 100%; height: 32px; padding: 0 8px; border: 1px solid #94a3b8; border-radius: 4px; font-weight: bold; font-family: var(--font-arabic);">
+                  <label style="font-size: 0.75rem; font-weight: bold; color: #334155; display: block; margin: 0 0 1px 0;">طريقة الدفع:</label>
+                  <select id="rentHdrType-${tabId}" class="rent-nav-field" data-next="rentHdrDate-${tabId}" style="width: 100%; height: 28px; padding: 0 6px; border: 1px solid #94a3b8; border-radius: 4px; font-weight: bold; font-family: var(--font-arabic); font-size: 0.82rem;">
                     <option value="3">اجل</option>
                     <option value="1">نقدا</option>
                   </select>
                 </div>
                 <div>
-                  <label style="font-size: 0.8rem; font-weight: bold; color: #334155; display: block; margin-bottom: 3px;">التاريخ:</label>
-                  <input type="date" id="rentHdrDate-${tabId}" style="width: 100%; height: 32px; padding: 0 8px; border: 1px solid #94a3b8; border-radius: 4px; font-family: monospace;">
+                  <label style="font-size: 0.75rem; font-weight: bold; color: #334155; display: block; margin: 0 0 1px 0;">التاريخ:</label>
+                  <input type="date" id="rentHdrDate-${tabId}" class="rent-nav-field" data-next="rentHdrMoney-${tabId}" style="width: 100%; height: 28px; padding: 0 6px; border: 1px solid #94a3b8; border-radius: 4px; font-family: monospace; font-size: 0.82rem;">
                 </div>
                 <div>
-                  <label style="font-size: 0.8rem; font-weight: bold; color: #334155; display: block; margin-bottom: 3px;">الرقم:</label>
-                  <input type="number" id="rentHdrTransNo-${tabId}" value="0" readonly style="width: 100%; height: 32px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 4px; font-family: monospace; font-weight: bold; text-align: center; color: #1e3a8a;">
-                </div>
-              </div>
-
-              <!-- Row 2: Ref No, Ref Date, Currency, Exchange Rate -->
-              <div style="display: grid; grid-template-columns: 1fr 1.2fr 1.2fr 0.8fr; gap: 10px; align-items: center;">
-                <div>
-                  <label style="font-size: 0.8rem; font-weight: bold; color: #334155; display: block; margin-bottom: 3px;">رقم المرجع:</label>
-                  <input type="number" id="rentHdrRefNo-${tabId}" value="0" style="width: 100%; height: 32px; padding: 0 8px; border: 1px solid #94a3b8; border-radius: 4px; font-family: monospace; text-align: center;">
+                  <label style="font-size: 0.75rem; font-weight: bold; color: #334155; display: block; margin: 0 0 1px 0;">الرقم:</label>
+                  <input type="number" id="rentHdrTransNo-${tabId}" value="0" readonly style="width: 100%; height: 28px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 4px; font-family: monospace; font-weight: bold; text-align: center; color: #1e3a8a; font-size: 0.85rem;">
                 </div>
                 <div>
-                  <label style="font-size: 0.8rem; font-weight: bold; color: #334155; display: block; margin-bottom: 3px;">تاريخ المرجع:</label>
-                  <input type="date" id="rentHdrRefDate-${tabId}" style="width: 100%; height: 32px; padding: 0 8px; border: 1px solid #94a3b8; border-radius: 4px; font-family: monospace;">
-                </div>
-                <div>
-                  <label style="font-size: 0.8rem; font-weight: bold; color: #334155; display: block; margin-bottom: 3px;">العملة:</label>
-                  <select id="rentHdrMoney-${tabId}" style="width: 100%; height: 32px; padding: 0 8px; border: 1px solid #94a3b8; border-radius: 4px; font-weight: bold; font-family: var(--font-arabic);">
+                  <label style="font-size: 0.75rem; font-weight: bold; color: #334155; display: block; margin: 0 0 1px 0;">العملة:</label>
+                  <select id="rentHdrMoney-${tabId}" class="rent-nav-field" data-next="rentHdrRate-${tabId}" style="width: 100%; height: 28px; padding: 0 6px; border: 1px solid #94a3b8; border-radius: 4px; font-weight: bold; font-family: var(--font-arabic); font-size: 0.82rem;">
+                    <option value="3">ريال يمني1</option>
                     <option value="1">دولار امريكي</option>
-                    <option value="2">ريال يمني</option>
-                    <option value="3">ريال سعودي</option>
+                    <option value="2">ريال سعودي</option>
                   </select>
                 </div>
                 <div>
-                  <label style="font-size: 0.8rem; font-weight: bold; color: #334155; display: block; margin-bottom: 3px;">الصرف:</label>
-                  <input type="number" id="rentHdrRate-${tabId}" value="1.00" step="0.01" style="width: 100%; height: 32px; padding: 0 8px; border: 1px solid #94a3b8; border-radius: 4px; font-family: monospace; text-align: center;">
+                  <label style="font-size: 0.75rem; font-weight: bold; color: #334155; display: block; margin: 0 0 1px 0;">الصرف:</label>
+                  <input type="number" id="rentHdrRate-${tabId}" class="rent-nav-field" data-next="rentHdrRefNo-${tabId}" value="1.00" step="0.01" style="width: 100%; height: 28px; padding: 0 6px; border: 1px solid #94a3b8; border-radius: 4px; font-family: monospace; text-align: center; font-size: 0.82rem;">
                 </div>
               </div>
 
-              <!-- Row 3: Description & Insert Template Button -->
-              <div style="display: flex; gap: 10px; align-items: flex-end;">
-                <div style="flex: 1;">
-                  <label style="font-size: 0.8rem; font-weight: bold; color: #334155; display: block; margin-bottom: 3px;">البيان:</label>
-                  <input type="text" id="rentHdrDesc-${tabId}" value="فاتورة ايجار شهري" style="width: 100%; height: 32px; padding: 0 10px; border: 1px solid #94a3b8; border-radius: 4px; font-family: var(--font-arabic); font-weight: bold;">
+              <!-- Row 2: Ref No, Ref Date, Cost Center, Revenue Acc -->
+              <div style="display: grid; grid-template-columns: 1fr 1.2fr 1.4fr 1.4fr; gap: 8px; align-items: center;">
+                <div>
+                  <label style="font-size: 0.75rem; font-weight: bold; color: #334155; display: block; margin: 0 0 1px 0;">رقم المرجع:</label>
+                  <input type="number" id="rentHdrRefNo-${tabId}" class="rent-nav-field" data-next="rentHdrRefDate-${tabId}" value="0" style="width: 100%; height: 28px; padding: 0 6px; border: 1px solid #94a3b8; border-radius: 4px; font-family: monospace; text-align: center; font-size: 0.82rem;">
                 </div>
-                <button type="button" onclick="loadShopsTemplateIntoRentInvoice('${tabId}')" style="height: 34px; padding: 0 16px; background: #0284c7; color: #ffffff; border: none; border-radius: 4px; font-weight: 800; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 4px rgba(2,132,199,0.2);">
+                <div>
+                  <label style="font-size: 0.75rem; font-weight: bold; color: #334155; display: block; margin: 0 0 1px 0;">تاريخ المرجع:</label>
+                  <input type="date" id="rentHdrRefDate-${tabId}" class="rent-nav-field" data-next="rentHdrDesc-${tabId}" style="width: 100%; height: 28px; padding: 0 6px; border: 1px solid #94a3b8; border-radius: 4px; font-family: monospace; font-size: 0.82rem;">
+                </div>
+                <div>
+                  <label style="font-size: 0.75rem; font-weight: bold; color: #334155; display: block; margin: 0 0 1px 0;">م. الكلفة:</label>
+                  <select id="rentHdrCenterCost-${tabId}" style="width: 100%; height: 28px; padding: 0 6px; border: 1px solid #94a3b8; border-radius: 4px; font-weight: bold; font-family: var(--font-arabic); font-size: 0.82rem;">
+                    <option value="0">عام</option>
+                  </select>
+                </div>
+                <div>
+                  <label style="font-size: 0.75rem; font-weight: bold; color: #334155; display: block; margin: 0 0 1px 0;">حساب الايراد:</label>
+                  <select id="rentHdrAccBox-${tabId}" style="width: 100%; height: 28px; padding: 0 6px; border: 1px solid #94a3b8; border-radius: 4px; font-weight: bold; font-family: var(--font-arabic); font-size: 0.82rem;">
+                    <option value="265">ايراد خدمة الايجار</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Row 3: Description & Template Button -->
+              <div style="display: flex; gap: 8px; align-items: flex-end;">
+                <div style="flex: 1;">
+                  <label style="font-size: 0.75rem; font-weight: bold; color: #334155; display: block; margin: 0 0 1px 0;">البيان:</label>
+                  <input type="text" id="rentHdrDesc-${tabId}" class="rent-nav-field" data-action="insertShops" value="فاتورة ايجار شهري" style="width: 100%; height: 28px; padding: 0 8px; border: 1px solid #94a3b8; border-radius: 4px; font-family: var(--font-arabic); font-weight: bold; font-size: 0.85rem;">
+                </div>
+                <button type="button" id="btnRentInsertTemplate-${tabId}" onclick="loadShopsTemplateIntoRentInvoice('${tabId}')" style="height: 30px; padding: 0 16px; background: #0284c7; color: #ffffff; border: none; border-radius: 4px; font-weight: 800; font-size: 0.82rem; cursor: pointer; display: flex; align-items: center; gap: 6px; box-shadow: 0 2px 4px rgba(2,132,199,0.2);">
                   <i class="fa-solid fa-file-import"></i> ادراج الكشف
                 </button>
               </div>
+
             </div>
           </div>
         </div>
 
-        <!-- Detail Lines Table matching Image 2 -->
-        <div class="accounts-table-container" style="flex: 1; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; overflow: auto;">
-          <table class="accounts-table" style="width: 100%; border-collapse: collapse; font-size: 0.82rem; text-align: center;">
+        <!-- Detail Lines Table with Horizontal & Vertical Scrollbars & Sticky Header -->
+        <div class="accounts-table-container" style="flex: 1; min-height: 250px; max-height: calc(100vh - 280px); background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; overflow-x: auto; overflow-y: auto; position: relative;">
+          <table class="accounts-table" id="rentTableGrid-${tabId}" style="width: 100%; min-width: 1250px; border-collapse: separate; border-spacing: 0; font-size: 0.82rem; text-align: center;">
             <thead>
-              <tr style="background: #f8fafc; border-bottom: 2px solid #cbd5e1; color: #334155; font-weight: 800;">
-                <th style="padding: 8px 6px; width: 45px;">نشط</th>
-                <th style="padding: 8px 8px; width: 80px;">رقم المحل</th>
-                <th style="padding: 8px 12px; text-align: right;">اسم المحل</th>
-                <th style="padding: 8px 12px; text-align: right;">اسم المستاجر</th>
-                <th style="padding: 8px 6px; width: 65px;">العدد</th>
-                <th style="padding: 8px 8px; width: 95px;">الايجار</th>
-                <th style="padding: 8px 8px; width: 95px;">مدين</th>
-                <th style="padding: 8px 8px; width: 80px;">م ضريبه</th>
-                <th style="padding: 8px 10px; width: 110px; text-align: right;">الاجمالي</th>
-                <th style="padding: 8px 8px; width: 80px;">رقم الحساب</th>
-                <th style="padding: 8px 12px; text-align: right;">اسم الحساب</th>
-                <th style="padding: 8px 6px; width: 40px;">حذف</th>
+              <tr style="position: sticky; top: 0; z-index: 10; background: #f8fafc; border-bottom: 2px solid #cbd5e1; color: #334155; font-weight: 800;">
+                <th style="padding: 6px 4px; width: 45px; position: sticky; top: 0; background: #f8fafc;">نشط</th>
+                <th style="padding: 6px 6px; width: 75px; position: sticky; top: 0; background: #f8fafc;">رقم المحل</th>
+                <th style="padding: 6px 12px; min-width: 150px; text-align: right; position: sticky; top: 0; background: #f8fafc;">اسم المحل</th>
+                <th style="padding: 6px 12px; min-width: 200px; text-align: right; position: sticky; top: 0; background: #f8fafc;">اسم المستاجر</th>
+                <th style="padding: 6px 6px; width: 70px; position: sticky; top: 0; background: #f8fafc;">العدد</th>
+                <th style="padding: 6px 8px; width: 110px; position: sticky; top: 0; background: #f8fafc;">الايجار</th>
+                <th style="padding: 6px 8px; width: 100px; position: sticky; top: 0; background: #f8fafc;">مدين</th>
+                <th style="padding: 6px 8px; width: 85px; position: sticky; top: 0; background: #f8fafc;">م ضريبه</th>
+                <th style="padding: 6px 10px; width: 120px; text-align: right; position: sticky; top: 0; background: #f8fafc;">الاجمالي</th>
+                <th style="padding: 6px 8px; width: 90px; position: sticky; top: 0; background: #f8fafc;">رقم الحساب</th>
+                <th style="padding: 6px 12px; min-width: 170px; text-align: right; position: sticky; top: 0; background: #f8fafc;">اسم الحساب</th>
+                <th style="padding: 6px 4px; width: 45px; position: sticky; top: 0; background: #f8fafc;">حذف</th>
               </tr>
             </thead>
             <tbody id="rentLinesTableBody-${tabId}">
@@ -1727,19 +1741,19 @@ function getScreenContent(tabId, tabTitle, iconClass, colorClass) {
           </table>
         </div>
 
-        <!-- Bottom Totals Bar matching Image 2 -->
-        <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; padding: 8px 16px; display: flex; justify-content: flex-end; gap: 20px; align-items: center;">
+        <!-- Bottom Totals Bar -->
+        <div style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; padding: 6px 16px; display: flex; justify-content: flex-end; gap: 20px; align-items: center;">
           <div style="display: flex; align-items: center; gap: 8px;">
-            <label style="font-weight: bold; font-size: 0.85rem; color: #334155;">اجمالي الايجار الشهري:</label>
-            <input type="text" id="rentTotalMonthlyRent-${tabId}" value="0.00" readonly style="width: 120px; height: 32px; padding: 0 8px; text-align: right; background: #ffffff; border: 1px solid #94a3b8; border-radius: 4px; font-family: monospace; font-weight: bold; color: #0f766e;">
+            <label style="font-weight: bold; font-size: 0.82rem; color: #334155;">اجمالي الايجار الشهري:</label>
+            <input type="text" id="rentTotalMonthlyRent-${tabId}" value="0.00" readonly style="width: 120px; height: 30px; padding: 0 8px; text-align: right; background: #ffffff; border: 1px solid #94a3b8; border-radius: 4px; font-family: monospace; font-weight: bold; color: #0f766e;">
           </div>
           <div style="display: flex; align-items: center; gap: 8px;">
-            <label style="font-weight: bold; font-size: 0.85rem; color: #334155;">المديونيه السابقة:</label>
-            <input type="text" id="rentTotalPrevDebit-${tabId}" value="0.00" readonly style="width: 120px; height: 32px; padding: 0 8px; text-align: right; background: #ffffff; border: 1px solid #94a3b8; border-radius: 4px; font-family: monospace; font-weight: bold; color: #b91c1c;">
+            <label style="font-weight: bold; font-size: 0.82rem; color: #334155;">المديونيه السابقة:</label>
+            <input type="text" id="rentTotalPrevDebit-${tabId}" value="0.00" readonly style="width: 120px; height: 30px; padding: 0 8px; text-align: right; background: #ffffff; border: 1px solid #94a3b8; border-radius: 4px; font-family: monospace; font-weight: bold; color: #b91c1c;">
           </div>
           <div style="display: flex; align-items: center; gap: 8px;">
-            <label style="font-weight: 800; font-size: 0.95rem; color: #1e3a8a;">الاجمالي المستحق:</label>
-            <input type="text" id="rentTotalNetDue-${tabId}" value="0.00" readonly style="width: 140px; height: 34px; padding: 0 10px; text-align: right; background: #e0f2fe; border: 2px solid #0284c7; border-radius: 4px; font-family: monospace; font-weight: 900; font-size: 1.05rem; color: #0369a1;">
+            <label style="font-weight: 800; font-size: 0.92rem; color: #1e3a8a;">الاجمالي المستحق:</label>
+            <input type="text" id="rentTotalNetDue-${tabId}" value="0.00" readonly style="width: 140px; height: 32px; padding: 0 10px; text-align: right; background: #e0f2fe; border: 2px solid #0284c7; border-radius: 4px; font-family: monospace; font-weight: 900; font-size: 1rem; color: #0369a1;">
           </div>
         </div>
       </div>
@@ -30264,6 +30278,8 @@ window.initRentInvoiceTab = async function(tabId, rentId = null) {
   if (dateEl && !dateEl.value) dateEl.value = today;
   if (refDateEl && !refDateEl.value) refDateEl.value = today;
 
+  setupRentInvoiceEnterNavigation(tabId);
+
   if (rentId) {
     // Load existing invoice
     await loadExistingRentInvoiceData(tabId, rentId);
@@ -30384,25 +30400,99 @@ window.renderRentInvoiceLinesTable = function(tabId) {
   let html = '';
   lines.forEach((line, idx) => {
     html += `
-      <tr id="rentLineRow-${tabId}-${idx}" style="border-bottom: 1px solid #e2e8f0; text-align: center; vertical-align: middle;">
-        <td style="padding: 6px 8px;"><input type="checkbox" ${line.fldIsActive !== false ? 'checked' : ''} onchange="updateRentLineField('${tabId}', ${idx}, 'fldIsActive', this.checked)"></td>
-        <td style="padding: 6px 8px; font-weight: bold; font-family: monospace; color: #1e3a8a;">#${line.fldShopNumber || ''}</td>
-        <td style="padding: 6px 12px; text-align: right; font-weight: bold; color: #1e293b;">${line.fldShopName || ''}</td>
-        <td style="padding: 6px 12px; text-align: right; color: #334155;">${line.fldCustomerName || ''}</td>
-        <td style="padding: 6px 6px;"><input type="number" value="${line.fldQTY || 1}" min="1" oninput="updateRentLineField('${tabId}', ${idx}, 'fldQTY', this.value)" style="width: 55px; padding: 4px; text-align: center; border: 1px solid #cbd5e1; border-radius: 4px; font-family: monospace; font-weight: bold;"></td>
-        <td style="padding: 6px 6px;"><input type="number" step="any" value="${line.fldRent || 0}" oninput="updateRentLineField('${tabId}', ${idx}, 'fldRent', this.value)" style="width: 85px; padding: 4px; text-align: right; border: 1px solid #cbd5e1; border-radius: 4px; font-family: monospace; font-weight: bold; color: #0f766e;"></td>
-        <td style="padding: 6px 6px;"><input type="number" step="any" value="${line.fldDebit || 0}" oninput="updateRentLineField('${tabId}', ${idx}, 'fldDebit', this.value)" style="width: 85px; padding: 4px; text-align: right; border: 1px solid #cbd5e1; border-radius: 4px; font-family: monospace; color: #b91c1c;"></td>
-        <td style="padding: 6px 6px;"><input type="number" step="any" value="${line.fldlTaxTota_D || 0}" oninput="updateRentLineField('${tabId}', ${idx}, 'fldlTaxTota_D', this.value)" style="width: 70px; padding: 4px; text-align: right; border: 1px solid #cbd5e1; border-radius: 4px; font-family: monospace;"></td>
-        <td style="padding: 6px 10px; text-align: right; font-weight: 900; font-family: monospace; color: #059669; font-size: 0.92rem;" id="rentLineTotal-${tabId}-${idx}">${parseFloat(line.fldTotalPrice || line.fldRent || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
-        <td style="padding: 6px 8px; font-family: monospace; color: #64748b;">${line.fldAccID || ''}</td>
-        <td style="padding: 6px 12px; text-align: right; font-size: 0.8rem; color: #475569;">${line.fldAccountName || ''}</td>
-        <td style="padding: 6px 6px;"><button type="button" onclick="removeRentInvoiceLine('${tabId}', ${idx})" style="background: none; border: none; color: #ef4444; cursor: pointer;"><i class="fa-solid fa-trash-can"></i></button></td>
+      <tr id="rentLineRow-${tabId}-${idx}" style="border-bottom: 1px solid #e2e8f0; text-align: center; vertical-align: middle; background: ${idx % 2 === 0 ? '#ffffff' : '#f8fafc'};">
+        <td style="padding: 4px 4px;"><input type="checkbox" ${line.fldIsActive !== false ? 'checked' : ''} onchange="updateRentLineField('${tabId}', ${idx}, 'fldIsActive', this.checked)"></td>
+        <td style="padding: 4px 6px; font-weight: bold; font-family: monospace; color: #1e3a8a;">#${line.fldShopNumber || ''}</td>
+        <td style="padding: 4px 10px; text-align: right; font-weight: bold; color: #1e293b; white-space: nowrap;">${line.fldShopName || ''}</td>
+        <td style="padding: 4px 10px; text-align: right; color: #334155; font-size: 0.78rem; white-space: nowrap;">${line.fldCustomerName || ''}</td>
+        <td style="padding: 4px 4px;">
+          <input type="number" id="rentCell-qty-${tabId}-${idx}" class="rent-grid-cell" data-row="${idx}" data-col="0" value="${line.fldQTY || 1}" min="1" oninput="updateRentLineField('${tabId}', ${idx}, 'fldQTY', this.value)" onkeydown="handleRentGridKeydown(event, '${tabId}', ${idx}, 0)" style="width: 55px; height: 26px; padding: 2px; text-align: center; border: 1px solid #cbd5e1; border-radius: 4px; font-family: monospace; font-weight: bold;">
+        </td>
+        <td style="padding: 4px 4px;">
+          <input type="number" id="rentCell-rent-${tabId}-${idx}" class="rent-grid-cell" data-row="${idx}" data-col="1" step="any" value="${line.fldRent || 0}" oninput="updateRentLineField('${tabId}', ${idx}, 'fldRent', this.value)" onkeydown="handleRentGridKeydown(event, '${tabId}', ${idx}, 1)" style="width: 95px; height: 26px; padding: 2px 6px; text-align: right; border: 1px solid #cbd5e1; border-radius: 4px; font-family: monospace; font-weight: bold; color: #0f766e; background: #f0fdf4;">
+        </td>
+        <td style="padding: 4px 4px;">
+          <input type="number" id="rentCell-debit-${tabId}-${idx}" class="rent-grid-cell" data-row="${idx}" data-col="2" step="any" value="${line.fldDebit || 0}" oninput="updateRentLineField('${tabId}', ${idx}, 'fldDebit', this.value)" onkeydown="handleRentGridKeydown(event, '${tabId}', ${idx}, 2)" style="width: 85px; height: 26px; padding: 2px 6px; text-align: right; border: 1px solid #cbd5e1; border-radius: 4px; font-family: monospace; color: #b91c1c;">
+        </td>
+        <td style="padding: 4px 4px;">
+          <input type="number" id="rentCell-tax-${tabId}-${idx}" class="rent-grid-cell" data-row="${idx}" data-col="3" step="any" value="${line.fldlTaxTota_D || 0}" oninput="updateRentLineField('${tabId}', ${idx}, 'fldlTaxTota_D', this.value)" onkeydown="handleRentGridKeydown(event, '${tabId}', ${idx}, 3)" style="width: 75px; height: 26px; padding: 2px 6px; text-align: right; border: 1px solid #cbd5e1; border-radius: 4px; font-family: monospace;">
+        </td>
+        <td style="padding: 4px 8px; text-align: right; font-weight: 900; font-family: monospace; color: #059669; font-size: 0.9rem;" id="rentLineTotal-${tabId}-${idx}">${parseFloat(line.fldTotalPrice || line.fldRent || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+        <td style="padding: 4px 6px; font-family: monospace; color: #64748b;">${line.fldAccID || ''}</td>
+        <td style="padding: 4px 10px; text-align: right; font-size: 0.78rem; color: #475569; white-space: nowrap;">${line.fldAccountName || ''}</td>
+        <td style="padding: 4px 4px;"><button type="button" onclick="removeRentInvoiceLine('${tabId}', ${idx})" style="background: none; border: none; color: #ef4444; cursor: pointer;" title="حذف السطر"><i class="fa-solid fa-trash-can"></i></button></td>
       </tr>
     `;
   });
 
   tbody.innerHTML = html;
   calculateRentInvoiceTotals(tabId);
+};
+
+// Enter key navigation inside Rent Invoice Form & Grid
+window.setupRentInvoiceEnterNavigation = function(tabId) {
+  const hdrFields = [
+    `rentHdrBranch-${tabId}`,
+    `rentHdrType-${tabId}`,
+    `rentHdrDate-${tabId}`,
+    `rentHdrMoney-${tabId}`,
+    `rentHdrRate-${tabId}`,
+    `rentHdrRefNo-${tabId}`,
+    `rentHdrRefDate-${tabId}`,
+    `rentHdrDesc-${tabId}`
+  ];
+
+  hdrFields.forEach((fId, idx) => {
+    const el = document.getElementById(fId);
+    if (!el) return;
+    el.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        if (idx === hdrFields.length - 1) {
+          // Last header field (Desc) -> trigger insert template or focus first row
+          const lines = state.rentInvoices[tabId]?.lines || [];
+          if (lines.length === 0) {
+            loadShopsTemplateIntoRentInvoice(tabId);
+          } else {
+            const firstCell = document.getElementById(`rentCell-qty-${tabId}-0`) || document.getElementById(`rentCell-rent-${tabId}-0`);
+            if (firstCell) { firstCell.focus(); firstCell.select?.(); }
+          }
+        } else {
+          const nextEl = document.getElementById(hdrFields[idx + 1]);
+          if (nextEl) {
+            nextEl.focus();
+            if (nextEl.select && typeof nextEl.select === 'function') nextEl.select();
+          }
+        }
+      }
+    });
+  });
+};
+
+window.handleRentGridKeydown = function(event, tabId, rowIdx, colIdx) {
+  const colKeys = ['qty', 'rent', 'debit', 'tax'];
+  const totalRows = state.rentInvoices[tabId]?.lines?.length || 0;
+
+  if (event.key === 'Enter' || event.key === 'Tab') {
+    event.preventDefault();
+    if (colIdx < colKeys.length - 1) {
+      // Move to next column in same row
+      const nextCell = document.getElementById(`rentCell-${colKeys[colIdx + 1]}-${tabId}-${rowIdx}`);
+      if (nextCell) { nextCell.focus(); nextCell.select?.(); }
+    } else if (rowIdx < totalRows - 1) {
+      // Move to first editable cell in next row
+      const nextRowCell = document.getElementById(`rentCell-rent-${tabId}-${rowIdx + 1}`) || document.getElementById(`rentCell-qty-${tabId}-${rowIdx + 1}`);
+      if (nextRowCell) { nextRowCell.focus(); nextRowCell.select?.(); }
+    }
+  } else if (event.key === 'ArrowDown' && rowIdx < totalRows - 1) {
+    event.preventDefault();
+    const downCell = document.getElementById(`rentCell-${colKeys[colIdx]}-${tabId}-${rowIdx + 1}`);
+    if (downCell) { downCell.focus(); downCell.select?.(); }
+  } else if (event.key === 'ArrowUp' && rowIdx > 0) {
+    event.preventDefault();
+    const upCell = document.getElementById(`rentCell-${colKeys[colIdx]}-${tabId}-${rowIdx - 1}`);
+    if (upCell) { upCell.focus(); upCell.select?.(); }
+  }
 };
 
 window.updateRentLineField = function(tabId, idx, field, value) {

@@ -2313,32 +2313,50 @@ FROM dbo.tblMenus LEFT OUTER JOIN
       </div>
     </div>
 
-    <!-- Opening Entry Settings Modal -->
+    <!-- Report Header & Logo Settings Modal -->
     <div class="modal-overlay" id="openingEntrySettingsModal">
-      <div class="modal-container modal-md">
-        <div class="modal-header">
-          <div class="modal-title-group">
-            <i class="fa-solid fa-gears modal-header-icon"></i>
-            <h2 id="openingEntrySettingsTitle">إعدادات ترويسة التقارير</h2>
+      <div class="modal-container modal-lg" style="max-width: 650px; width: 95%; direction: rtl; font-family: var(--font-arabic);">
+        <div class="modal-header" style="background: #1e293b; color: #fff; padding: 12px 18px; border-radius: 8px 8px 0 0; display: flex; justify-content: space-between; align-items: center;">
+          <div class="modal-title-group" style="display: flex; align-items: center; gap: 10px;">
+            <i class="fa-solid fa-stamp" style="color: #f59e0b; font-size: 1.2rem;"></i>
+            <h2 id="openingEntrySettingsTitle" style="margin: 0; font-size: 1.15rem; font-weight: 800; color: #fff;">تحديد شعار وترويسة التقارير والفواتير</h2>
           </div>
-          <button class="modal-close-btn" onclick="closeOpeningEntrySettingsModal()">&times;</button>
+          <button class="modal-close-btn" onclick="closeOpeningEntrySettingsModal()" style="color: #fff; background: none; border: none; font-size: 1.4rem; cursor: pointer;">&times;</button>
         </div>
-        <div class="modal-body">
-          <p class="modal-description">يمكنك رفع صورة ترويسة التقارير ليتم استخدامها كعنوان لطباعة القيود والأرصدة الافتتاحية. سيتم عرضها بعرض الورقة الكامل.</p>
+        <div class="modal-body" style="padding: 20px; background: #fff;">
+          <p style="color: #475569; font-size: 0.88rem; margin-top: 0; margin-bottom: 15px; line-height: 1.5;">
+            يمكنك اختيار صورة ترويسة التقارير والفواتير ليتم اعتمادها وطباعتها تلقائياً كعنوان رئيسي لجميع التقارير وفواتير الإيجار والكهرباء وسندات القبض والصرف.
+          </p>
           
-          <div style="margin: 15px 0; display: flex; flex-direction: column; gap: 10px; text-align: right; direction: rtl;">
-            <label style="font-weight: 700; color: #4a5568;">اختر صورة الترويسة:</label>
-            <input type="file" id="opHeaderImageFile" accept="image/*" onchange="handleHeaderImageUpload(event)" style="padding: 8px; border: 1px dashed #cbd5e1; border-radius: 4px; background: #fafbfc; cursor: pointer; font-family: var(--font-arabic); width: 100%;">
+          <div style="margin-bottom: 15px;">
+            <label style="font-weight: 700; color: #1e293b; font-size: 0.9rem; margin-bottom: 6px; display: block;">اختيار ملف صورة الترويسة من جهازك:</label>
+            <input type="file" id="opHeaderImageFile" accept="image/*" onchange="handleHeaderImageUpload(event)" style="padding: 8px; border: 1.5px dashed #0284c7; border-radius: 6px; background: #f0f9ff; cursor: pointer; font-family: var(--font-arabic); width: 100%; font-size: 0.85rem;">
           </div>
           
-          <div id="opHeaderImagePreviewContainer" style="margin-top: 15px; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px; text-align: center; background: #f8fafc; min-height: 100px; display: flex; align-items: center; justify-content: center;">
-            <span id="opHeaderImagePlaceholder" style="color: #a0aec0; font-size: 0.85rem; font-family: var(--font-arabic);">لا توجد ترويسة مضافة حالياً. سيتم إظهار صندوق فارغ في الطباعة.</span>
-            <img id="opHeaderImagePreview" src="" style="max-width: 100%; max-height: 180px; object-fit: contain; border-radius: 4px; display: none;">
+          <div style="margin-bottom: 15px;">
+            <label style="font-weight: 700; color: #1e293b; font-size: 0.9rem; margin-bottom: 6px; display: block;">أو مسار الصورة / الرابط المباشر:</label>
+            <div style="display: flex; gap: 8px;">
+              <input type="text" id="opHeaderImagePathInput" placeholder="مثال: C:\images\header.png أو رابط الصورة" style="flex: 1; height: 34px; padding: 0 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-family: var(--font-arabic); font-size: 0.85rem;">
+              <button type="button" class="btn btn-secondary btn-sm" onclick="applyHeaderImagePath()" style="font-weight: bold; padding: 0 12px; height: 34px;">تطبيق المسار</button>
+            </div>
+          </div>
+
+          <label style="font-weight: 700; color: #1e293b; font-size: 0.9rem; margin-bottom: 6px; display: block;">معاينة ترويسة التقارير الحالية:</label>
+          <div id="opHeaderImagePreviewContainer" style="border: 1.5px solid #cbd5e1; border-radius: 6px; padding: 12px; text-align: center; background: #f8fafc; min-height: 120px; display: flex; align-items: center; justify-content: center;">
+            <span id="opHeaderImagePlaceholder" style="color: #94a3b8; font-size: 0.88rem; font-family: var(--font-arabic);">لا توجد ترويسة محددة حالياً.</span>
+            <img id="opHeaderImagePreview" src="" style="max-width: 100%; max-height: 150px; object-fit: contain; border-radius: 4px; display: none;" alt="معاينة الترويسة">
           </div>
         </div>
-        <div class="modal-footer" style="padding: 10px 15px; background: #edf2f7; border-top: 1px solid #cbd5e1; display: flex; justify-content: space-between; direction: rtl;">
-          <button type="button" class="btn btn-danger" onclick="removeReportHeaderImage()"><i class="fa-solid fa-trash-can"></i> حذف الترويسة</button>
-          <button type="button" class="btn btn-secondary" onclick="closeOpeningEntrySettingsModal()">إغلاق</button>
+        <div class="modal-footer" style="padding: 12px 18px; background: #f1f5f9; border-top: 1px solid #cbd5e1; display: flex; justify-content: space-between; align-items: center; direction: rtl;">
+          <button type="button" class="btn btn-danger btn-sm" onclick="removeReportHeaderImage()" style="font-weight: bold; display: flex; align-items: center; gap: 6px; padding: 6px 14px;">
+            <i class="fa-solid fa-trash-can"></i> حذف الترويسة
+          </button>
+          <div style="display: flex; gap: 8px;">
+            <button type="button" class="btn btn-primary btn-sm" onclick="saveReportHeaderImageModal()" style="font-weight: bold; display: flex; align-items: center; gap: 6px; padding: 6px 16px;">
+              <i class="fa-solid fa-floppy-disk"></i> حفظ الترويسة
+            </button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="closeOpeningEntrySettingsModal()" style="font-weight: bold; padding: 6px 14px;">إغلاق</button>
+          </div>
         </div>
       </div>
     </div>

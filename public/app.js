@@ -10592,16 +10592,36 @@ window.clearOpeningEntry = function(tabId) {
 // REPORT HEADER SETTINGS & PRINT LAYOUT
 // ==========================================
 
-window.openOpeningEntrySettingsModal = function(tabId) {
+window.openReportHeaderModal = async function(tabId) {
   const modal = document.getElementById('openingEntrySettingsModal');
-  if (!modal) return;
+  if (!modal) {
+    openTab('menu-1085', 'تحديد شعار وترويسة التقارير');
+    return;
+  }
 
-  const headerImage = localStorage.getItem('reportHeaderImage');
+  // Fetch current logo from server or localStorage
+  let headerImage = localStorage.getItem('reportHeaderImage') || (state.logoSettings && state.logoSettings.logoData);
+  if (!headerImage) {
+    try {
+      const res = await fetch('/api/settings/logo');
+      const d = await res.json();
+      if (d.success && d.data && d.data.logoData) {
+        headerImage = d.data.logoData;
+        localStorage.setItem('reportHeaderImage', headerImage);
+        state.logoSettings = d.data;
+      }
+    } catch (e) {
+      console.warn("Could not fetch server logo:", e);
+    }
+  }
+
   const previewImg = document.getElementById('opHeaderImagePreview');
   const placeholder = document.getElementById('opHeaderImagePlaceholder');
   const fileInput = document.getElementById('opHeaderImageFile');
+  const pathInput = document.getElementById('opHeaderImagePathInput');
 
   if (fileInput) fileInput.value = '';
+  if (pathInput) pathInput.value = (headerImage && !headerImage.startsWith('data:image')) ? headerImage : '';
 
   if (headerImage) {
     if (previewImg) {
@@ -10620,6 +10640,10 @@ window.openOpeningEntrySettingsModal = function(tabId) {
   modal.classList.add('open');
 };
 
+window.openOpeningEntrySettingsModal = function(tabId) {
+  window.openReportHeaderModal(tabId);
+};
+
 window.closeOpeningEntrySettingsModal = function() {
   const modal = document.getElementById('openingEntrySettingsModal');
   if (modal) modal.classList.remove('open');
@@ -10630,10 +10654,14 @@ window.handleHeaderImageUpload = function(event) {
   if (!file) return;
 
   const reader = new FileReader();
-  reader.onload = function(e) {
+  reader.onload = async function(e) {
     const base64Data = e.target.result;
-    localStorage.setItem('reportHeaderImage', base64Data);
     
+    // Save to localStorage
+    localStorage.setItem('reportHeaderImage', base64Data);
+    state.logoSettings = { logoData: base64Data };
+    
+    // Update preview
     const previewImg = document.getElementById('opHeaderImagePreview');
     const placeholder = document.getElementById('opHeaderImagePlaceholder');
     
@@ -10642,30 +10670,102 @@ window.handleHeaderImageUpload = function(event) {
       previewImg.style.display = 'block';
     }
     if (placeholder) placeholder.style.display = 'none';
-    
-    showToast("تم تحميل ترويسة التقارير بنجاح.", "success");
+
+    // Persist to server
+    try {
+      await fetch('/api/settings/logo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ logoData: base64Data })
+      });
+      showToast("تم تحميل وحفظ ترويسة التقارير في الخادم بنجاح.", "success");
+    } catch (err) {
+      console.warn("Could not save logo to server:", err);
+      showToast("تم تحميل الترويسة محلياً بنجاح.", "success");
+    }
   };
   
   reader.readAsDataURL(file);
 };
 
-window.removeReportHeaderImage = function() {
+window.applyHeaderImagePath = async function() {
+  const pathInput = document.getElementById('opHeaderImagePathInput');
+  const pathVal = pathInput ? pathInput.value.trim() : '';
+  if (!pathVal) {
+    showToast("يرجى إدخال مسار أو رابط الصورة أولاً.", "warning");
+    return;
+  }
+
+  localStorage.setItem('reportHeaderImage', pathVal);
+  localStorage.setItem('reportHeaderImagePath', pathVal);
+  state.logoSettings = { logoData: pathVal };
+
+  const previewImg = document.getElementById('opHeaderImagePreview');
+  const placeholder = document.getElementById('opHeaderImagePlaceholder');
+  if (previewImg) {
+    previewImg.src = pathVal;
+    previewImg.style.display = 'block';
+  }
+  if (placeholder) placeholder.style.display = 'none';
+
+  try {
+    await fetch('/api/settings/logo', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ logoData: pathVal })
+    });
+    showToast("تم حفظ مسار الترويسة بنجاح.", "success");
+  } catch (err) {
+    showToast("تم حفظ المسار محلياً.", "info");
+  }
+};
+
+window.saveReportHeaderImageModal = async function() {
+  const previewImg = document.getElementById('opHeaderImagePreview');
+  const currentSrc = previewImg ? previewImg.src : '';
+  if (currentSrc && currentSrc !== window.location.href) {
+    localStorage.setItem('reportHeaderImage', currentSrc);
+    try {
+      await fetch('/api/settings/logo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ logoData: currentSrc })
+      });
+    } catch (e) {}
+    showToast("تم حفظ ترويسة التقارير بنجاح.", "success");
+    closeOpeningEntrySettingsModal();
+  } else {
+    showToast("يرجى اختيار صورة الترويسة أولاً.", "warning");
+  }
+};
+
+window.removeReportHeaderImage = async function() {
   if (!confirm("هل أنت متأكد من رغبتك في حذف ترويسة التقارير؟")) return;
   
   localStorage.removeItem('reportHeaderImage');
+  localStorage.removeItem('reportHeaderImagePath');
+  state.logoSettings = { logoData: null };
   
   const previewImg = document.getElementById('opHeaderImagePreview');
   const placeholder = document.getElementById('opHeaderImagePlaceholder');
   const fileInput = document.getElementById('opHeaderImageFile');
+  const pathInput = document.getElementById('opHeaderImagePathInput');
   
   if (fileInput) fileInput.value = '';
+  if (pathInput) pathInput.value = '';
   if (previewImg) {
     previewImg.src = '';
     previewImg.style.display = 'none';
   }
   if (placeholder) placeholder.style.display = 'block';
+
+  try {
+    await fetch('/api/settings/logo', {
+      method: 'DELETE'
+    });
+  } catch (err) {}
   
-  showToast("تم إزالة ترويسة التقارير.", "info");
+  showToast("تم حذف ترويسة التقارير بنجاح.", "info");
 };
 
 window.printOpeningEntry = function(tabId) {

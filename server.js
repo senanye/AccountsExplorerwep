@@ -664,7 +664,7 @@ app.get('/api/printers', async (req, res) => {
     'Default Printer'
   ];
 
-  exec('powershell -Command "Get-Printer | Select-Object -ExpandProperty Name"', (err, stdout, stderr) => {
+  exec('[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; Get-Printer | Select-Object -ExpandProperty Name', { shell: 'powershell.exe', encoding: 'utf8' }, (err, stdout, stderr) => {
     if (err || !stdout) {
       return res.json({ success: true, printers: defaultPrinters });
     }

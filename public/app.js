@@ -1614,6 +1614,9 @@ function getScreenContent(tabId, tabTitle, iconClass, colorClass) {
           <button class="btn btn-secondary btn-sm" onclick="loadShopsTemplateIntoRentInvoice('${tabId}')" style="font-weight: bold; display: flex; align-items: center; gap: 5px; height: 28px; padding: 0 10px;">
             <i class="fa-solid fa-copy"></i> نسخه من
           </button>
+          <button class="btn btn-warning btn-sm" onclick="showRentInvoiceJournalEntry('${tabId}')" style="font-weight: bold; display: flex; align-items: center; gap: 5px; height: 28px; padding: 0 10px; background: #f59e0b; color: #ffffff; border: none; border-radius: 4px; cursor: pointer;">
+            <i class="fa-solid fa-file-invoice-dollar"></i> القيد
+          </button>
           <button class="btn btn-danger btn-sm" onclick="clearRentInvoiceLines('${tabId}')" style="font-weight: bold; display: flex; align-items: center; gap: 5px; height: 28px; padding: 0 10px;">
             <i class="fa-solid fa-trash-can"></i> حذف الكشف
           </button>
@@ -31322,3 +31325,170 @@ document.addEventListener('DOMContentLoaded', function() {
   loadAppLogo();
   setupLoginFormEnterNavigation();
 });
+
+// =============================================================================
+// JOURNAL ENTRY MODAL CONTROLLER (تفاصيل قيد - Matching media_1787719382368.png)
+// =============================================================================
+
+window.showRentInvoiceJournalEntry = async function(tabId) {
+  const transId = document.getElementById(`rentTransId-${tabId}`)?.value || state.rentInvoices[tabId]?.rentId;
+  if (!transId) {
+    showToast("يرجى حفظ الفاتورة أولاً لتكوين وعرض القيد المحاسبي.", "warning");
+    return;
+  }
+
+  showToast("جاري تحميل تفاصيل القيد المحاسبي...", "info");
+  try {
+    const res = await fetch(`/api/rent-bills/${transId}/journal-entry`);
+    const result = await res.json();
+    if (!result.success || !result.data) {
+      showToast(result.error || "لا يوجد قيد محاسبي مسجل لهذه الفاتورة.", "error");
+      return;
+    }
+
+    openJournalEntryModal(result.data);
+  } catch (err) {
+    console.error("Error loading journal entry:", err);
+    showToast("خطأ عند جلب تفاصيل القيد: " + err.message, "error");
+  }
+};
+
+window.openJournalEntryModal = function(journalData) {
+  let modal = document.getElementById('journalEntryModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'journalEntryModal';
+    modal.style.position = 'fixed';
+    modal.style.top = '0';
+    modal.style.left = '0';
+    modal.style.width = '100vw';
+    modal.style.height = '100vh';
+    modal.style.backgroundColor = 'rgba(15, 23, 42, 0.65)';
+    modal.style.backdropFilter = 'blur(3px)';
+    modal.style.zIndex = '99999';
+    modal.style.display = 'flex';
+    modal.style.alignItems = 'center';
+    modal.style.justifyContent = 'center';
+    modal.style.direction = 'rtl';
+    modal.style.fontFamily = 'var(--font-arabic)';
+    document.body.appendChild(modal);
+  }
+
+  const { header, lines } = journalData;
+  const totalDebitFmt = parseFloat(header.totalDebit || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const totalCreditFmt = parseFloat(header.totalCredit || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  let rowsHtml = '';
+  if (lines && lines.length > 0) {
+    lines.forEach((l, idx) => {
+      const isCredit = (l.credit > 0);
+      rowsHtml += `
+        <tr style="border-bottom: 1px solid #e2e8f0; background: ${isCredit ? '#fefce8' : (idx % 2 === 0 ? '#ffffff' : '#f8fafc')};">
+          <td style="padding: 5px 8px; font-family: monospace; font-weight: bold; color: ${isCredit ? '#b45309' : '#1e3a8a'};">${l.accNo || ''}</td>
+          <td style="padding: 5px 12px; text-align: right; font-weight: bold; color: #1e293b; white-space: nowrap;">${l.accName || ''}</td>
+          <td style="padding: 5px 8px; color: #475569;">${l.moneyName || 'دولار امريكي'}</td>
+          <td style="padding: 5px 6px; font-family: monospace;">${parseFloat(l.moneyValue || 1.0).toFixed(2)}</td>
+          <td style="padding: 5px 8px; text-align: right; font-family: monospace; font-weight: bold; color: ${l.debit > 0 ? '#0f766e' : '#94a3b8'};">${parseFloat(l.debit || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+          <td style="padding: 5px 8px; text-align: right; font-family: monospace; font-weight: bold; color: ${l.credit > 0 ? '#b91c1c' : '#94a3b8'};">${parseFloat(l.credit || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+          <td style="padding: 5px 8px; text-align: right; font-family: monospace; color: #334155;">${parseFloat(l.debitLocal || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+          <td style="padding: 5px 8px; text-align: right; font-family: monospace; color: #334155;">${parseFloat(l.creditLocal || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+          <td style="padding: 5px 12px; text-align: right; color: #334155; font-size: 0.8rem; white-space: nowrap;">${l.description || ''}</td>
+        </tr>
+      `;
+    });
+  } else {
+    rowsHtml = '<tr><td colspan="9" style="text-align: center; padding: 30px; color: #94a3b8;">لا توجد قيود مسجلة لهذه الفاتورة.</td></tr>';
+  }
+
+  modal.innerHTML = `
+    <div style="background: #ffffff; width: 95%; max-width: 1200px; height: 90vh; max-height: 700px; border-radius: 8px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.3); display: flex; flex-direction: column; overflow: hidden; border: 1px solid #cbd5e1;">
+      
+      <!-- Top Title Header matching Screenshot -->
+      <div style="background: #cbd5e1; padding: 8px 14px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #94a3b8;">
+        <div style="font-weight: 900; font-size: 0.95rem; color: #1e293b; display: flex; align-items: center; gap: 8px;">
+          <i class="fa-solid fa-receipt" style="color: #0284c7;"></i>
+          <span>تفاصيل قيد</span>
+          <span style="font-size: 0.8rem; font-weight: normal; color: #475569; margin-right: 15px;">(فاتورة رقم #${header.fldTransNo || ''} - تاريخ: ${header.fldDate || ''})</span>
+        </div>
+        <button type="button" onclick="closeJournalEntryModal()" style="background: #ef4444; color: #ffffff; border: none; border-radius: 4px; width: 26px; height: 26px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.85rem;" title="إغلاق">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Journal Grid Container with Scrollbars -->
+      <div style="flex: 1; overflow: auto; background: #ffffff; position: relative;">
+        <table style="width: 100%; min-width: 1100px; border-collapse: separate; border-spacing: 0; font-size: 0.82rem; text-align: center;">
+          <thead>
+            <tr style="position: sticky; top: 0; z-index: 10; background: #f1f5f9; border-bottom: 2px solid #94a3b8; color: #334155; font-weight: 800;">
+              <th style="padding: 6px 8px; width: 90px; position: sticky; top: 0; background: #f1f5f9;">رقم الحساب</th>
+              <th style="padding: 6px 12px; min-width: 220px; text-align: right; position: sticky; top: 0; background: #f1f5f9;">اسم الحساب</th>
+              <th style="padding: 6px 8px; width: 90px; position: sticky; top: 0; background: #f1f5f9;">العمله</th>
+              <th style="padding: 6px 6px; width: 65px; position: sticky; top: 0; background: #f1f5f9;">التحويل</th>
+              <th style="padding: 6px 8px; width: 95px; text-align: right; position: sticky; top: 0; background: #f1f5f9;">مدين</th>
+              <th style="padding: 6px 8px; width: 95px; text-align: right; position: sticky; top: 0; background: #f1f5f9;">دائن</th>
+              <th style="padding: 6px 8px; width: 95px; text-align: right; position: sticky; top: 0; background: #f1f5f9;">مدين محلي</th>
+              <th style="padding: 6px 8px; width: 95px; text-align: right; position: sticky; top: 0; background: #f1f5f9;">دائن محلي</th>
+              <th style="padding: 6px 12px; min-width: 200px; text-align: right; position: sticky; top: 0; background: #f1f5f9;">البيان</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rowsHtml}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Bottom Info Bar matching Screenshot -->
+      <div style="background: #e2e8f0; border-top: 2px solid #cbd5e1; padding: 6px 10px; display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; font-size: 0.76rem;">
+        
+        <!-- Totals (Right Side) -->
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <div style="display: flex; align-items: center; gap: 4px;">
+            <label style="font-weight: bold; color: #1e293b;">مدين:</label>
+            <input type="text" value="${totalDebitFmt}" readonly style="width: 100px; height: 26px; text-align: right; font-family: monospace; font-weight: 900; background: #ffffff; border: 1px solid #94a3b8; border-radius: 4px; padding: 0 6px; color: #0f766e;">
+          </div>
+          <div style="display: flex; align-items: center; gap: 4px;">
+            <label style="font-weight: bold; color: #1e293b;">دائن:</label>
+            <input type="text" value="${totalCreditFmt}" readonly style="width: 100px; height: 26px; text-align: right; font-family: monospace; font-weight: 900; background: #ffffff; border: 1px solid #94a3b8; border-radius: 4px; padding: 0 6px; color: #b91c1c;">
+          </div>
+        </div>
+
+        <!-- User & Metadata (Middle & Left Side) -->
+        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+          <div style="display: flex; align-items: center; gap: 4px;">
+            <label style="font-weight: bold; color: #334155;">المدخل:</label>
+            <input type="text" value="${header.userName || 'المدير'}" readonly style="width: 85px; height: 26px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 4px; padding: 0 4px; font-weight: bold;">
+          </div>
+          <div style="display: flex; align-items: center; gap: 4px;">
+            <label style="font-weight: bold; color: #334155;">المعدل:</label>
+            <input type="text" value="${header.userName || 'المدير'}" readonly style="width: 85px; height: 26px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 4px; padding: 0 4px;">
+          </div>
+          <div style="display: flex; align-items: center; gap: 4px;">
+            <label style="font-weight: bold; color: #334155;">تاريخ الادخال:</label>
+            <input type="text" value="${header.insertDate || ''}" readonly style="width: 130px; height: 26px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 4px; padding: 0 4px; font-family: monospace;">
+          </div>
+          <div style="display: flex; align-items: center; gap: 4px;">
+            <label style="font-weight: bold; color: #334155;">تاريخ التعديل:</label>
+            <input type="text" value="${header.updateDate || ''}" readonly style="width: 130px; height: 26px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 4px; padding: 0 4px; font-family: monospace;">
+          </div>
+          <div style="display: flex; align-items: center; gap: 4px;">
+            <label style="font-weight: bold; color: #334155;">مرات الطباعه:</label>
+            <input type="text" value="${header.printCount || 0}" readonly style="width: 35px; height: 26px; text-align: center; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 4px; font-family: monospace;">
+          </div>
+          <div style="display: flex; align-items: center; gap: 4px;">
+            <label style="font-weight: bold; color: #334155;">مرات التعديل:</label>
+            <input type="text" value="${header.updateCount || 0}" readonly style="width: 35px; height: 26px; text-align: center; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 4px; font-family: monospace;">
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  `;
+
+  modal.style.display = 'flex';
+};
+
+window.closeJournalEntryModal = function() {
+  const modal = document.getElementById('journalEntryModal');
+  if (modal) modal.style.display = 'none';
+};

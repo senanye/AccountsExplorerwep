@@ -17023,6 +17023,95 @@ app.get('/api/rent-bills/shops-template', async (req, res) => {
   }
 });
 
+
+// GET /api/rent-bills/:id/journal-entry - Get journal entry details for invoice (matching media_1787719382368.png)
+app.get('/api/rent-bills/:id/journal-entry', async (req, res) => {
+  const id = parseInt(req.params.id);
+  const isConnected = globalPool !== null && globalPool.connected;
+  if (!isConnected) {
+    return res.status(500).json({ success: false, error: "قاعدة البيانات غير متصلة." });
+  }
+
+  try {
+    const transReq = globalPool.request();
+    transReq.input('id', sql.Int, id);
+    const transRes = await transReq.query(`
+      SELECT 
+        t.fldID,
+        t.fldTransNo,
+        CONVERT(VARCHAR(10), t.fldDate, 120) AS fldDate,
+        RTRIM(LTRIM(ISNULL(t.fldDescription, ''))) AS fldDescription,
+        ISNULL(u.fldName, N'المدير') AS userName,
+        CONVERT(VARCHAR(19), ISNULL(t.fldDateINSERT, t.fldDate), 120) AS insertDate,
+        CONVERT(VARCHAR(19), ISNULL(t.fldDateUPDATE, t.fldDate), 120) AS updateDate,
+        ISNULL(t.fldUPDATECount, 0) AS updateCount,
+        ISNULL(t.fldprintCount, 0) AS printCount
+      FROM dbo.tblTransAction t
+      LEFT JOIN dbo.tblUser u ON t.fldUserID = u.fldID
+      WHERE t.fldID = @id
+    `);
+
+    if (!transRes.recordset || transRes.recordset.length === 0) {
+      return res.status(404).json({ success: false, error: "الفاتورة غير موجودة." });
+    }
+
+    const header = transRes.recordset[0];
+
+    const movesReq = globalPool.request();
+    movesReq.input('id', sql.Int, id);
+    const movesRes = await movesReq.query(`
+      SELECT 
+        m.fldID,
+        m.fldTransID,
+        m.fldAccID,
+        a.fldNumber AS accNo,
+        a.fldName AS accName,
+        ISNULL(cur.fldName, N'دولار امريكي') AS moneyName,
+        ISNULL(m.fldMoneyValue, 1.0) AS moneyValue,
+        ISNULL(m.fldDebit, 0) AS debit,
+        ISNULL(m.fldCredit, 0) AS credit,
+        ISNULL(m.Debit, 0) AS debitLocal,
+        ISNULL(m.Credit, 0) AS creditLocal,
+        RTRIM(LTRIM(ISNULL(m.fldNote, ''))) AS description
+      FROM dbo.tblMoneyMove m
+      LEFT JOIN dbo.tblAccount a ON m.fldAccID = a.fldID
+      LEFT JOIN dbo.tblMoney cur ON m.fldMoneyID = cur.fldID
+      WHERE m.fldTransID = @id
+      ORDER BY m.fldCredit ASC, a.fldNumber ASC
+    `);
+
+    const lines = movesRes.recordset;
+    let totalDebit = 0;
+    let totalCredit = 0;
+    let totalDebitLocal = 0;
+    let totalCreditLocal = 0;
+
+    lines.forEach(l => {
+      totalDebit += l.debit;
+      totalCredit += l.credit;
+      totalDebitLocal += l.debitLocal;
+      totalCreditLocal += l.creditLocal;
+    });
+
+    res.json({
+      success: true,
+      data: {
+        header: {
+          ...header,
+          totalDebit,
+          totalCredit,
+          totalDebitLocal,
+          totalCreditLocal
+        },
+        lines
+      }
+    });
+  } catch (err) {
+    console.error("Error fetching journal entry:", err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // GET /api/rent-bills/next-no - Get next rent bill transaction number
 app.get('/api/rent-bills/next-no', async (req, res) => {
   const isConnected = globalPool !== null && globalPool.connected;
@@ -17225,11 +17314,103 @@ app.post('/api/rent-bills', async (req, res) => {
           )
         `);
       }
+
+      // === CREATE DOUBLE-ENTRY JOURNAL IN tblMoneyMove (تكوين قيد محاسبي مزدوج لكل محل وحساب الايراد) ===
+      const delMovesReq = globalPool.request();
+      delMovesReq.input('transId', sql.Int, newTransID);
+      await delMovesReq.query("DELETE FROM dbo.tblMoneyMove WHERE fldTransID = @transId");
+
+      const rateNum = parseFloat(fldMoneyValue) || 1.0;
+      const moneyIdNum = parseInt(fldMoneyID) || 1;
+      const revAccId = parseInt(fldVoisherAccID) || 264;
+      const branchNum = parseInt(fldBranchNo) || 1;
+      const costCenterNum = parseInt(req.body.fldCenterCostID) || 0;
+      const billRefNo = parseInt(fldRefNo) || 0;
+      const billRefDate = fldRefDate || fldDate || new Date().toISOString().split('T')[0];
+      const billDesc = fldDescription || 'فاتورة ايجار شهري';
+
+      // 1. Debit lines: Each shop/customer account is Debited with line total price
+      for (const line of lines) {
+        if (line.fldIsActive === false) continue;
+        const lineTotal = parseFloat(line.fldTotalPrice || line.fldRent || 0);
+        if (lineTotal <= 0) continue;
+
+        let shopAccID = parseInt(line.fldAccID) || 0;
+        if (!shopAccID && line.fldShopID) {
+          const accLook = await globalPool.request()
+            .input('sId', sql.Int, parseInt(line.fldShopID))
+            .query("SELECT fldAccID FROM dbo.tblShopList WHERE fldID = @sId OR fldShopID = @sId");
+          if (accLook.recordset.length > 0) {
+            shopAccID = accLook.recordset[0].fldAccID || 0;
+          }
+        }
+
+        if (shopAccID > 0) {
+          const moveDebitReq = globalPool.request();
+          moveDebitReq.input('fldTransID', sql.Int, newTransID);
+          moveDebitReq.input('fldAccID', sql.Int, shopAccID);
+          moveDebitReq.input('fldDebit', sql.Float, lineTotal);
+          moveDebitReq.input('fldCredit', sql.Float, 0);
+          moveDebitReq.input('Debit', sql.Float, lineTotal * rateNum);
+          moveDebitReq.input('Credit', sql.Float, 0);
+          moveDebitReq.input('fldMoneyID', sql.Int, moneyIdNum);
+          moveDebitReq.input('fldMoneyValue', sql.Float, rateNum);
+          moveDebitReq.input('fldNote', sql.NVarChar, `عليكم ${billDesc}`);
+          moveDebitReq.input('fldAccID2', sql.Int, revAccId);
+          moveDebitReq.input('fldRefNo', sql.Int, billRefNo);
+          moveDebitReq.input('fldRefDate', sql.NVarChar, billRefDate);
+          moveDebitReq.input('fldCenterCostID', sql.Int, costCenterNum);
+          moveDebitReq.input('fldBranchNo', sql.Int, branchNum);
+
+          await moveDebitReq.query(`
+            INSERT INTO dbo.tblMoneyMove (
+              fldRID, fldTransID, fldAccID, fldDebit, fldCredit, Debit, Credit,
+              fldMoneyID, fldMoneyValue, fldNote, fldAccID2, fldRefNo, fldRefDate,
+              fldCenterCostID, fldBranchNo
+            ) VALUES (
+              0, @fldTransID, @fldAccID, @fldDebit, @fldCredit, @Debit, @Credit,
+              @fldMoneyID, @fldMoneyValue, @fldNote, @fldAccID2, @fldRefNo, @fldRefDate,
+              @fldCenterCostID, @fldBranchNo
+            )
+          `);
+        }
+      }
+
+      // 2. Credit line: Revenue Account is Credited with total sum
+      if (totalRent > 0 && revAccId > 0) {
+        const moveCreditReq = globalPool.request();
+        moveCreditReq.input('fldTransID', sql.Int, newTransID);
+        moveCreditReq.input('fldAccID', sql.Int, revAccId);
+        moveCreditReq.input('fldDebit', sql.Float, 0);
+        moveCreditReq.input('fldCredit', sql.Float, totalRent);
+        moveCreditReq.input('Debit', sql.Float, 0);
+        moveCreditReq.input('Credit', sql.Float, totalRent * rateNum);
+        moveCreditReq.input('fldMoneyID', sql.Int, moneyIdNum);
+        moveCreditReq.input('fldMoneyValue', sql.Float, rateNum);
+        moveCreditReq.input('fldNote', sql.NVarChar, `قيمة ${billDesc}`);
+        moveCreditReq.input('fldAccID2', sql.Int, 0);
+        moveCreditReq.input('fldRefNo', sql.Int, billRefNo);
+        moveCreditReq.input('fldRefDate', sql.NVarChar, billRefDate);
+        moveCreditReq.input('fldCenterCostID', sql.Int, costCenterNum);
+        moveCreditReq.input('fldBranchNo', sql.Int, branchNum);
+
+        await moveCreditReq.query(`
+          INSERT INTO dbo.tblMoneyMove (
+            fldRID, fldTransID, fldAccID, fldDebit, fldCredit, Debit, Credit,
+            fldMoneyID, fldMoneyValue, fldNote, fldAccID2, fldRefNo, fldRefDate,
+            fldCenterCostID, fldBranchNo
+          ) VALUES (
+            0, @fldTransID, @fldAccID, @fldDebit, @fldCredit, @Debit, @Credit,
+            @fldMoneyID, @fldMoneyValue, @fldNote, @fldAccID2, @fldRefNo, @fldRefDate,
+            @fldCenterCostID, @fldBranchNo
+          )
+        `);
+      }
     }
 
     res.json({ 
       success: true, 
-      message: `تم حفظ فاتورة الإيجار الشهري رقم (${nextTransNo}) بنجاح!`,
+      message: `تم حفظ فاتورة الإيجار الشهري رقم (${nextTransNo}) وتكوين القيد المحاسبي بنجاح!`,
       data: { id: newTransID, fldTransNo: nextTransNo, fldVoisherTotal: totalRent }
     });
   } catch (err) {
@@ -17322,9 +17503,101 @@ app.put('/api/rent-bills/:id', async (req, res) => {
           )
         `);
       }
+
+      // === RE-CREATE DOUBLE-ENTRY JOURNAL IN tblMoneyMove ===
+      const delMovesReq = globalPool.request();
+      delMovesReq.input('transId', sql.Int, id);
+      await delMovesReq.query("DELETE FROM dbo.tblMoneyMove WHERE fldTransID = @transId");
+
+      const rateNum = parseFloat(fldMoneyValue) || 1.0;
+      const moneyIdNum = parseInt(fldMoneyID) || 1;
+      const revAccId = parseInt(fldVoisherAccID) || 264;
+      const branchNum = parseInt(fldBranchNo) || 1;
+      const costCenterNum = parseInt(req.body.fldCenterCostID) || 0;
+      const billRefNo = parseInt(fldRefNo) || 0;
+      const billRefDate = fldRefDate || fldDate || new Date().toISOString().split('T')[0];
+      const billDesc = fldDescription || 'فاتورة ايجار شهري';
+
+      // 1. Debit lines: Each shop/customer account is Debited with line total price
+      for (const line of lines) {
+        if (line.fldIsActive === false) continue;
+        const lineTotal = parseFloat(line.fldTotalPrice || line.fldRent || 0);
+        if (lineTotal <= 0) continue;
+
+        let shopAccID = parseInt(line.fldAccID) || 0;
+        if (!shopAccID && line.fldShopID) {
+          const accLook = await globalPool.request()
+            .input('sId', sql.Int, parseInt(line.fldShopID))
+            .query("SELECT fldAccID FROM dbo.tblShopList WHERE fldID = @sId OR fldShopID = @sId");
+          if (accLook.recordset.length > 0) {
+            shopAccID = accLook.recordset[0].fldAccID || 0;
+          }
+        }
+
+        if (shopAccID > 0) {
+          const moveDebitReq = globalPool.request();
+          moveDebitReq.input('fldTransID', sql.Int, id);
+          moveDebitReq.input('fldAccID', sql.Int, shopAccID);
+          moveDebitReq.input('fldDebit', sql.Float, lineTotal);
+          moveDebitReq.input('fldCredit', sql.Float, 0);
+          moveDebitReq.input('Debit', sql.Float, lineTotal * rateNum);
+          moveDebitReq.input('Credit', sql.Float, 0);
+          moveDebitReq.input('fldMoneyID', sql.Int, moneyIdNum);
+          moveDebitReq.input('fldMoneyValue', sql.Float, rateNum);
+          moveDebitReq.input('fldNote', sql.NVarChar, `عليكم ${billDesc}`);
+          moveDebitReq.input('fldAccID2', sql.Int, revAccId);
+          moveDebitReq.input('fldRefNo', sql.Int, billRefNo);
+          moveDebitReq.input('fldRefDate', sql.NVarChar, billRefDate);
+          moveDebitReq.input('fldCenterCostID', sql.Int, costCenterNum);
+          moveDebitReq.input('fldBranchNo', sql.Int, branchNum);
+
+          await moveDebitReq.query(`
+            INSERT INTO dbo.tblMoneyMove (
+              fldRID, fldTransID, fldAccID, fldDebit, fldCredit, Debit, Credit,
+              fldMoneyID, fldMoneyValue, fldNote, fldAccID2, fldRefNo, fldRefDate,
+              fldCenterCostID, fldBranchNo
+            ) VALUES (
+              0, @fldTransID, @fldAccID, @fldDebit, @fldCredit, @Debit, @Credit,
+              @fldMoneyID, @fldMoneyValue, @fldNote, @fldAccID2, @fldRefNo, @fldRefDate,
+              @fldCenterCostID, @fldBranchNo
+            )
+          `);
+        }
+      }
+
+      // 2. Credit line: Revenue Account is Credited with total sum
+      if (totalRent > 0 && revAccId > 0) {
+        const moveCreditReq = globalPool.request();
+        moveCreditReq.input('fldTransID', sql.Int, id);
+        moveCreditReq.input('fldAccID', sql.Int, revAccId);
+        moveCreditReq.input('fldDebit', sql.Float, 0);
+        moveCreditReq.input('fldCredit', sql.Float, totalRent);
+        moveCreditReq.input('Debit', sql.Float, 0);
+        moveCreditReq.input('Credit', sql.Float, totalRent * rateNum);
+        moveCreditReq.input('fldMoneyID', sql.Int, moneyIdNum);
+        moveCreditReq.input('fldMoneyValue', sql.Float, rateNum);
+        moveCreditReq.input('fldNote', sql.NVarChar, `قيمة ${billDesc}`);
+        moveCreditReq.input('fldAccID2', sql.Int, 0);
+        moveCreditReq.input('fldRefNo', sql.Int, billRefNo);
+        moveCreditReq.input('fldRefDate', sql.NVarChar, billRefDate);
+        moveCreditReq.input('fldCenterCostID', sql.Int, costCenterNum);
+        moveCreditReq.input('fldBranchNo', sql.Int, branchNum);
+
+        await moveCreditReq.query(`
+          INSERT INTO dbo.tblMoneyMove (
+            fldRID, fldTransID, fldAccID, fldDebit, fldCredit, Debit, Credit,
+            fldMoneyID, fldMoneyValue, fldNote, fldAccID2, fldRefNo, fldRefDate,
+            fldCenterCostID, fldBranchNo
+          ) VALUES (
+            0, @fldTransID, @fldAccID, @fldDebit, @fldCredit, @Debit, @Credit,
+            @fldMoneyID, @fldMoneyValue, @fldNote, @fldAccID2, @fldRefNo, @fldRefDate,
+            @fldCenterCostID, @fldBranchNo
+          )
+        `);
+      }
     }
 
-    res.json({ success: true, message: "تم تحديث وحفظ بيانات فاتورة الإيجار الشهري بنجاح!" });
+    res.json({ success: true, message: "تم تحديث وحفظ بيانات فاتورة الإيجار الشهري وتحديث القيد المحاسبي بنجاح!" });
   } catch (err) {
     console.error("Error updating rent bill:", err.message);
     res.status(500).json({ success: false, error: err.message });
@@ -17340,6 +17613,10 @@ app.delete('/api/rent-bills/:id', async (req, res) => {
   }
 
   try {
+    const delMovesReq = globalPool.request();
+    delMovesReq.input('id', sql.Int, id);
+    await delMovesReq.query("DELETE FROM dbo.tblMoneyMove WHERE fldTransID = @id");
+
     const delLinesReq = globalPool.request();
     delLinesReq.input('id', sql.Int, id);
     await delLinesReq.query("DELETE FROM dbo.tblRentbill WHERE fldTransID = @id");

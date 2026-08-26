@@ -31638,8 +31638,24 @@ window.openRentInvoicePrintModal = async function(tabId, targetShopIdx = null) {
   const printLines = (targetShopIdx !== null && lines[targetShopIdx]) ? [lines[targetShopIdx]] : lines.filter(l => l.fldIsActive !== false);
   const totalPages = printLines.length;
 
-  // Retrieve logo from state or settings
-  const logoSrc = (state.appLogo && state.appLogo.startsWith('data:image')) ? state.appLogo : '/logo.png';
+  // Retrieve report header image from localStorage or API
+  let savedHeaderImage = localStorage.getItem('reportHeaderImage') || (state.logoSettings && state.logoSettings.logoData) || localStorage.getItem('logoHeaderSetting') || '';
+  if (!savedHeaderImage) {
+    try {
+      const res = await fetch('/api/settings/logo');
+      const d = await res.json();
+      if (d.data && d.data.logoData) {
+        savedHeaderImage = d.data.logoData;
+        localStorage.setItem('reportHeaderImage', savedHeaderImage);
+      }
+    } catch (e) {
+      console.warn("Could not fetch logo:", e);
+    }
+  }
+
+  const headerImgHtml = savedHeaderImage
+    ? `<img src="${savedHeaderImage}" class="print-header-image" alt="ترويسة التقرير" style="width: 100%; max-height: 130px; object-fit: contain; display: block; margin: 0 auto;">`
+    : `<div style="border: 2px solid #000; border-radius: 10px; padding: 10px; text-align: center; font-weight: 900; font-size: 1.25rem; color: #b91c1c;">مركز الحريبي التجاري</div>`;
 
   let slipsHtml = '';
   printLines.forEach((l, idx) => {
@@ -31651,33 +31667,11 @@ window.openRentInvoicePrintModal = async function(tabId, targetShopIdx = null) {
     const totalDueVal = rentVal + debitVal;
 
     slipsHtml += `
-      <div class="rent-print-page rent-a5-slip" style="page-break-after: always; padding: 10px 18px; margin: 0 auto 16px auto; background: #ffffff; border: 1.5px solid #000; border-radius: 8px; font-family: var(--font-arabic); direction: rtl; color: #000; box-sizing: border-box; width: 100%; max-width: 780px;">
+      <div class="rent-print-page rent-a5-slip" style="page-break-after: always; padding: 8px 16px; margin: 0 auto 16px auto; background: #ffffff; border: 1.5px solid #000; border-radius: 8px; font-family: var(--font-arabic); direction: rtl; color: #000; box-sizing: border-box; width: 100%; max-width: 780px;">
         
-        <!-- Header Box matching Image 2 -->
-        <div style="border: 1.5px solid #000; border-radius: 10px; padding: 4px 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
-          
-          <!-- Left: English Info -->
-          <div style="text-align: left; font-family: Arial, sans-serif; font-size: 0.76rem; line-height: 1.3; width: 33%;">
-            <div style="color: #c00; font-weight: 900; font-size: 0.95rem; white-space: nowrap;">AL-Horaibi Commercial Center</div>
-            <div>Tel No.: <u>02343531</u> &nbsp; <u>02343541</u></div>
-            <div><u>FAX NO</u></div>
-            <div><u>PO BOX</u></div>
-          </div>
-
-          <!-- Center: Logo -->
-          <div style="text-align: center; width: 33%;">
-            <img src="${logoSrc}" style="max-height: 42px; max-width: 110px; object-fit: contain;" alt="الشعار" onerror="this.style.display='none'">
-            <div style="color: #c00; font-weight: bold; font-size: 0.85rem; margin-top: 1px;">مركز الحريبي التجاري</div>
-          </div>
-
-          <!-- Right: Arabic Info -->
-          <div style="text-align: right; font-size: 0.78rem; line-height: 1.3; width: 33%;">
-            <div style="color: #c00; font-weight: 900; font-size: 1.05rem; white-space: nowrap;">مركز الحريبي التجاري</div>
-            <div>رقم التلفون: <u>02343531</u> &nbsp; <u>02343541</u></div>
-            <div><u>رقم الفاكس</u></div>
-            <div><u>صندوق البريد</u></div>
-          </div>
-
+        <!-- Report Header Image Banner (صورة الترويسة الموجودة في البرنامج) -->
+        <div class="rent-report-header-banner" style="width: 100%; text-align: center; margin-bottom: 8px; border-bottom: 2px solid #000; padding-bottom: 4px;">
+          ${headerImgHtml}
         </div>
 
         <!-- Identification Bar -->

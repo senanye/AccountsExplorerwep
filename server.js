@@ -16965,7 +16965,7 @@ app.get('/api/rent-bills', async (req, res) => {
       LEFT JOIN dbo.tblUser u ON t.fldUserID = u.fldID
       LEFT JOIN dbo.tblAccount acc ON t.fldVoisherAccID = acc.fldID
       WHERE ` + whereClauses.join(' AND ') + `
-      ORDER BY t.fldTransNo DESC, t.fldDate DESC
+      ORDER BY t.fldDate DESC, t.fldTransNo DESC, t.fldID DESC
     `;
 
     const result = await request.query(query);
@@ -17715,7 +17715,7 @@ app.get('/api/electricity-bills', async (req, res) => {
       LEFT JOIN dbo.tblUser u ON t.fldUserID = u.fldID
       LEFT JOIN dbo.tblAccount acc ON t.fldVoisherAccID = acc.fldID
       WHERE ` + whereClauses.join(' AND ') + `
-      ORDER BY t.fldTransNo DESC, t.fldDate DESC
+      ORDER BY t.fldDate DESC, t.fldTransNo DESC, t.fldID DESC
     `;
 
     const result = await request.query(query);

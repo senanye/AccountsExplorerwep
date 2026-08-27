@@ -1894,14 +1894,17 @@ function getScreenContent(tabId, tabTitle, iconClass, colorClass) {
               <button type="button" onclick="clearElectricityInvoiceLines('${tabId}')" style="padding: 2px 4px; height: 22px; margin: 0; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 3px; font-weight: bold; font-size: 0.72rem; cursor: pointer; text-align: center;">
                 حذف الكشف
               </button>
-              <button type="button" onclick="showToast('اصدار كشف استهلاك قيد التفعيل', 'info')" style="padding: 2px 4px; height: 22px; margin: 0; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 3px; font-weight: bold; font-size: 0.72rem; cursor: pointer; text-align: center;">
-                اصدار كشف استهلاك
+              <button type="button" onclick="openElectricityInvoicePrintModal('${tabId}', null, 'a4-statement')" style="padding: 2px 4px; height: 22px; margin: 0; background: #e0f2fe; color: #0369a1; border: 1px solid #7dd3fc; border-radius: 3px; font-weight: bold; font-size: 0.72rem; cursor: pointer; text-align: center;" title="طباعة كشف استهلاك إجمالي A4 لكافة المحلات">
+                <i class="fa-solid fa-file-invoice"></i> كشف استهلاك
+              </button>
+              <button type="button" onclick="printSelectedShopElectricityInvoice('${tabId}')" style="padding: 2px 4px; height: 22px; margin: 0; background: #f0fdf4; color: #166534; border: 1px solid #86efac; border-radius: 3px; font-weight: bold; font-size: 0.72rem; cursor: pointer; text-align: center;" title="طباعة فاتورة للمحل المحدد فقط">
+                <i class="fa-solid fa-print"></i> فاتورة فرديه
               </button>
               <button type="button" onclick="calculateElectricityInvoiceTotals('${tabId}')" style="padding: 2px 4px; height: 22px; margin: 0; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 3px; font-weight: bold; font-size: 0.72rem; cursor: pointer; text-align: center;">
                 تحديث الرصيد
               </button>
               <label style="font-size: 0.7rem; font-weight: bold; color: #475569; display: flex; align-items: center; gap: 2px; cursor: pointer; margin: 0; padding: 0;">
-                <input type="checkbox" style="margin: 0;"> الطباعة مباشره
+                <input type="checkbox" id="elecAutoPrint-${tabId}" style="margin: 0;"> الطباعة مباشره
               </label>
             </div>
 
@@ -30744,7 +30747,7 @@ window.saveRentInvoice = async function(tabId, andPrint = false) {
         if (noEl) noEl.value = result.data.fldTransNo;
       }
       if (andPrint) {
-        window.print();
+        openElectricityInvoicePrintModal(tabId);
       }
     } else {
       showToast(result.error || "فشل حفظ فاتورة الإيجار.", "error");
@@ -30993,7 +30996,14 @@ window.deleteSelectedElectricityBill = async function(tabId) {
 };
 
 window.printElectricityBillsList = function(tabId) {
-  window.print();
+  if (state.selectedElectricityBillId) {
+    openElectricityInvoiceTab(state.selectedElectricityBillId);
+    setTimeout(() => {
+      openElectricityInvoicePrintModal(`elec-inv-${state.selectedElectricityBillId}`);
+    }, 600);
+  } else {
+    window.print();
+  }
 };
 
 window.exportElectricityBillsListExcel = function(tabId) {
@@ -31459,7 +31469,7 @@ window.saveElectricityInvoice = async function(tabId, andPrint = false) {
         if (noEl) noEl.value = result.data.fldTransNo;
       }
       if (andPrint) {
-        window.print();
+        openElectricityInvoicePrintModal(tabId);
       }
     } else {
       showToast(result.error || "فشل حفظ فاتورة الكهرباء.", "error");
@@ -32179,6 +32189,713 @@ window.executeRentInvoicePrint = function() {
           setTimeout(function() { window.close(); }, 500);
         };
       <\/script>
+    </body>
+    </html>
+  `);
+  printWindow.document.close();
+};
+
+// =============================================================================
+// MULTI-TEMPLATE ELECTRICITY INVOICE PRINT SYSTEM (A5 Detailed, 80mm POS, A5 Portrait, A4 Statement)
+// =============================================================================
+
+state.elecInvoicePrintSettings = state.elecInvoicePrintSettings || {
+  template: localStorage.getItem('elec_bill_template') || 'a5-detailed',
+  paperSize: localStorage.getItem('elec_bill_papersize') || 'A5 landscape',
+  selectedPrinter: localStorage.getItem('elec_bill_printer') || '',
+  currentScope: 'all',
+  printersList: []
+};
+
+window.printSelectedShopElectricityInvoice = function(tabId) {
+  const lines = state.elecInvoices[tabId]?.lines || [];
+  if (lines.length === 0) {
+    showToast("لا توجد محلات مسجلة في الفاتورة للطباعة.", "warning");
+    return;
+  }
+  const activeIdx = state.elecInvoices[tabId]?.selectedRowIndex !== undefined ? state.elecInvoices[tabId].selectedRowIndex : 0;
+  openElectricityInvoicePrintModal(tabId, activeIdx);
+};
+
+window.openElectricityInvoicePrintModal = async function(tabId, targetShopIdx = null, preferredTemplate = null) {
+  if (preferredTemplate) {
+    state.elecInvoicePrintSettings.template = preferredTemplate;
+    if (preferredTemplate === 'a4-statement') {
+      state.elecInvoicePrintSettings.paperSize = 'A4 portrait';
+    } else if (preferredTemplate === 'thermal-80mm') {
+      state.elecInvoicePrintSettings.paperSize = '80mm auto';
+    } else if (preferredTemplate === 'a5-portrait') {
+      state.elecInvoicePrintSettings.paperSize = 'A5 portrait';
+    } else {
+      state.elecInvoicePrintSettings.paperSize = 'A5 landscape';
+    }
+  }
+
+  state.elecInvoicePrintSettings.currentScope = (targetShopIdx !== null) ? String(targetShopIdx) : 'all';
+  await renderElectricityInvoicePrintModalContent(tabId);
+};
+
+window.renderElectricityInvoicePrintModalContent = async function(tabId) {
+  const transNo = document.getElementById(`elecHdrTransNo-${tabId}`)?.value || '0';
+  const rawDate = document.getElementById(`elecHdrDate-${tabId}`)?.value || new Date().toISOString().split('T')[0];
+  const description = document.getElementById(`elecHdrDesc-${tabId}`)?.value || 'فاتورة استهلاك كهرباء';
+  const moneySelect = document.getElementById(`elecHdrMoney-${tabId}`);
+  const currencyName = moneySelect ? moneySelect.options[moneySelect.selectedIndex]?.text : 'ريال يمني1';
+  
+  // Format Date DD/MM/YYYY
+  const dParts = rawDate.split('-');
+  const formattedDate = dParts.length === 3 ? `${dParts[2]}/${dParts[1]}/${dParts[0]}` : rawDate;
+  
+  const monthNamesAr = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
+  const dObj = new Date(rawDate);
+  const arabicDateStr = `${dObj.getDate()} ${monthNamesAr[dObj.getMonth()]} ${dObj.getFullYear()}`;
+
+  const lines = state.elecInvoices[tabId]?.lines || [];
+  if (lines.length === 0) {
+    showToast("لا توجد سطور عدادات للطباعة في هذه الفاتورة.", "warning");
+    return;
+  }
+
+  // Fetch printers list
+  try {
+    const res = await fetch('/api/printers');
+    const d = await res.json();
+    state.elecInvoicePrintSettings.printersList = d.printers || ['Microsoft Print to PDF'];
+    if (!state.elecInvoicePrintSettings.selectedPrinter && state.elecInvoicePrintSettings.printersList.length > 0) {
+      state.elecInvoicePrintSettings.selectedPrinter = state.elecInvoicePrintSettings.printersList[0];
+    }
+  } catch (e) {
+    console.warn("Could not fetch printers:", e);
+    state.elecInvoicePrintSettings.printersList = ['Microsoft Print to PDF', 'Default Printer'];
+  }
+
+  const currentScope = state.elecInvoicePrintSettings.currentScope;
+  const currentTemplate = state.elecInvoicePrintSettings.template || 'a5-detailed';
+  let printLines = [];
+  if (currentScope === 'all') {
+    printLines = lines.filter(l => l.fldIsActive !== false);
+  } else {
+    const sIdx = parseInt(currentScope);
+    if (!isNaN(sIdx) && lines[sIdx]) {
+      printLines = [lines[sIdx]];
+    } else {
+      printLines = lines.filter(l => l.fldIsActive !== false);
+    }
+  }
+  const totalPages = printLines.length;
+
+  // Retrieve report header image
+  let savedHeaderImage = localStorage.getItem('reportHeaderImage') || (state.logoSettings && state.logoSettings.logoData) || '';
+  if (!savedHeaderImage) {
+    try {
+      const res = await fetch('/api/settings/logo');
+      const d = await res.json();
+      if (d.data && d.data.logoData) {
+        savedHeaderImage = d.data.logoData;
+        localStorage.setItem('reportHeaderImage', savedHeaderImage);
+      }
+    } catch (e) {}
+  }
+
+  const headerImgHtml = savedHeaderImage
+    ? `<img src="${savedHeaderImage}" class="print-header-image" alt="ترويسة التقرير" style="width: 100%; max-height: 120px; object-fit: contain; display: block; margin: 0 auto;">`
+    : `<div style="border: 2px solid #000; border-radius: 8px; padding: 8px; text-align: center; font-weight: 900; font-size: 1.2rem; color: #1e3a8a;">مركز الحريبي التجاري - خدمات الكهرباء</div>`;
+
+  let printableContentHtml = '';
+
+  // ---------------------------------------------------------------------------
+  // TEMPLATE 1: A5 LANDSCAPE DETAILED (نموذج A5 أفقي تفصيلي)
+  // ---------------------------------------------------------------------------
+  if (currentTemplate === 'a5-detailed') {
+    printLines.forEach((l, idx) => {
+      const pageNum = (currentScope !== 'all') ? 1 : (idx + 1);
+      const shopNum = l.fldShopNumber || '';
+      const customerName = (l.fldCustomerName || l.fldShopName || '').trim();
+      const theCounter = l.fldtheCounter || '-';
+      const prev = parseFloat(l.fldPreviousReading || 0);
+      const curr = parseFloat(l.fldCurrentreading || 0);
+      const units = parseFloat(l.fldUnits || 0);
+      const unitCost = parseFloat(l.fldUnitCost || 0);
+      const usageVal = parseFloat(l.fldTotalPrice || 0);
+      
+      const srv = parseFloat(l.fldServicesCostElectricity || 0);
+      const clean = parseFloat(l.fldCleaningFees || 0);
+      const local = parseFloat(l.fldLocalFees || 0);
+      const fuel = parseFloat(l.fldFuel || 0);
+      const tax = parseFloat(l.fldlTaxTota_D || 0);
+      const totalFees = srv + clean + local + fuel + tax;
+      const netDue = usageVal + totalFees;
+
+      printableContentHtml += `
+        <div class="elec-print-page elec-a5-slip" style="page-break-after: always; padding: 8px 16px; margin: 0 auto 16px auto; background: #ffffff; border: 1.5px solid #000; border-radius: 8px; font-family: var(--font-arabic); direction: rtl; color: #000; box-sizing: border-box; width: 100%; max-width: 780px;">
+          
+          <!-- Banner -->
+          <div style="width: 100%; text-align: center; margin-bottom: 6px; border-bottom: 2px solid #000; padding-bottom: 4px;">
+            ${headerImgHtml}
+          </div>
+
+          <!-- Doc Header -->
+          <div style="display: flex; justify-content: space-between; align-items: center; margin: 4px 0 8px 0; font-size: 0.88rem; font-weight: bold;">
+            <div style="width: 25%; text-align: right;">رقم الفاتورة: &nbsp; <span style="font-family: monospace; font-size: 1.05rem; font-weight: 900;">${transNo}</span></div>
+            <div style="width: 50%; text-align: center; font-size: 1.15rem; font-weight: 900; color: #1e293b;">فاتورة استهلاك كهرباء</div>
+            <div style="width: 25%; text-align: left;">تاريخ الاصدار: &nbsp; <span style="font-family: monospace; font-size: 0.9rem;">${formattedDate}</span></div>
+          </div>
+
+          <!-- Subscriber & Meter Info -->
+          <div style="display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; font-size: 0.86rem; background: #f8fafc; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div><span style="font-weight: bold;">اسم المشترك:</span> &nbsp; <strong style="font-size: 0.95rem;">${customerName} المحترم</strong></div>
+              <div><span style="font-weight: bold;">رقم المحل:</span> &nbsp; <strong style="font-family: monospace; font-size: 1rem;">#${shopNum}</strong></div>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div><span style="font-weight: bold;">البيان:</span> &nbsp; <span>${description}</span></div>
+              <div><span style="font-weight: bold;">رقم العداد:</span> &nbsp; <strong style="font-family: monospace; color: #0284c7;">${theCounter}</strong></div>
+            </div>
+          </div>
+
+          <!-- Main Detailed Calculations Table -->
+          <table style="width: 100%; border-collapse: collapse; text-align: center; font-size: 0.8rem; margin-bottom: 8px; border: 1.5px solid #000;">
+            <thead>
+              <tr style="background-color: #dbeafe; border-bottom: 1.5px solid #000;">
+                <th style="padding: 5px; border: 1px solid #000;">العملة</th>
+                <th style="padding: 5px; border: 1px solid #000;">السابقة</th>
+                <th style="padding: 5px; border: 1px solid #000;">الحالية</th>
+                <th style="padding: 5px; border: 1px solid #000;">الاستهلاك</th>
+                <th style="padding: 5px; border: 1px solid #000;">كلفة الكيلو</th>
+                <th style="padding: 5px; border: 1px solid #000;">قيمة الاستهلاك</th>
+                <th style="padding: 5px; border: 1px solid #000;">خدمات</th>
+                <th style="padding: 5px; border: 1px solid #000;">نظافة</th>
+                <th style="padding: 5px; border: 1px solid #000;">محلي</th>
+                <th style="padding: 5px; border: 1px solid #000;">محروقات</th>
+                <th style="padding: 5px; border: 1px solid #000;">م ضريبة</th>
+                <th style="padding: 5px; border: 1px solid #000; background-color: #bfdbfe; font-weight: 900;">المبلغ المستحق</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="padding: 6px 4px; border: 1px solid #000; font-weight: bold;">${currencyName}</td>
+                <td style="padding: 6px 4px; border: 1px solid #000; font-family: monospace;">${prev.toLocaleString('en-US')}</td>
+                <td style="padding: 6px 4px; border: 1px solid #000; font-family: monospace; font-weight: bold;">${curr.toLocaleString('en-US')}</td>
+                <td style="padding: 6px 4px; border: 1px solid #000; font-family: monospace; font-weight: bold; color: #b45309;">${units.toLocaleString('en-US')}</td>
+                <td style="padding: 6px 4px; border: 1px solid #000; font-family: monospace;">${unitCost.toLocaleString('en-US')}</td>
+                <td style="padding: 6px 4px; border: 1px solid #000; font-family: monospace; font-weight: bold; color: #047857;">${usageVal.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+                <td style="padding: 6px 4px; border: 1px solid #000; font-family: monospace;">${srv > 0 ? srv.toFixed(2) : '-'}</td>
+                <td style="padding: 6px 4px; border: 1px solid #000; font-family: monospace;">${clean > 0 ? clean.toFixed(2) : '-'}</td>
+                <td style="padding: 6px 4px; border: 1px solid #000; font-family: monospace;">${local > 0 ? local.toFixed(2) : '-'}</td>
+                <td style="padding: 6px 4px; border: 1px solid #000; font-family: monospace;">${fuel > 0 ? fuel.toFixed(2) : '-'}</td>
+                <td style="padding: 6px 4px; border: 1px solid #000; font-family: monospace;">${tax > 0 ? tax.toFixed(2) : '-'}</td>
+                <td style="padding: 6px 6px; border: 1.5px solid #000; font-family: monospace; font-weight: 900; font-size: 1.05rem; background-color: #f0fdf4; color: #15803d;">${netDue.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <!-- Warning Notice -->
+          <div style="text-align: center; font-weight: 800; font-size: 0.9rem; color: #000; margin: 10px 0;">
+            يتم التسديد خلال ثلاثة ايام و الا سوف يتم اتخاذ الاجراءات اللازمة
+          </div>
+
+          <!-- Footer -->
+          <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.78rem; font-weight: bold; border-top: 1px dashed #94a3b8; padding-top: 4px;">
+            <div>ص ${pageNum} الى ${totalPages}</div>
+            <div>${arabicDateStr}</div>
+          </div>
+
+        </div>
+      `;
+    });
+  } 
+
+  // ---------------------------------------------------------------------------
+  // TEMPLATE 2: THERMAL POS 80MM (نموذج إيصال حراري 80 مم)
+  // ---------------------------------------------------------------------------
+  else if (currentTemplate === 'thermal-80mm') {
+    printLines.forEach((l, idx) => {
+      const shopNum = l.fldShopNumber || '';
+      const customerName = (l.fldCustomerName || l.fldShopName || '').trim();
+      const theCounter = l.fldtheCounter || '-';
+      const prev = parseFloat(l.fldPreviousReading || 0);
+      const curr = parseFloat(l.fldCurrentreading || 0);
+      const units = parseFloat(l.fldUnits || 0);
+      const unitCost = parseFloat(l.fldUnitCost || 0);
+      const usageVal = parseFloat(l.fldTotalPrice || 0);
+      
+      const srv = parseFloat(l.fldServicesCostElectricity || 0);
+      const clean = parseFloat(l.fldCleaningFees || 0);
+      const local = parseFloat(l.fldLocalFees || 0);
+      const fuel = parseFloat(l.fldFuel || 0);
+      const tax = parseFloat(l.fldlTaxTota_D || 0);
+      const totalFees = srv + clean + local + fuel + tax;
+      const netDue = usageVal + totalFees;
+
+      printableContentHtml += `
+        <div class="elec-print-page elec-thermal-slip" style="page-break-after: always; padding: 10px; margin: 0 auto 16px auto; background: #ffffff; border: 1px dashed #64748b; font-family: monospace, var(--font-arabic); direction: rtl; color: #000; box-sizing: border-box; width: 100%; max-width: 320px; font-size: 0.82rem;">
+          
+          <div style="text-align: center; margin-bottom: 6px;">
+            <div style="font-weight: 900; font-size: 1.05rem;">مركز الحريبي التجاري</div>
+            <div style="font-weight: bold; font-size: 0.95rem; margin-top: 2px;">فاتورة استهلاك كهرباء</div>
+            <div style="font-size: 0.76rem; color: #475569;">${formattedDate}</div>
+          </div>
+
+          <div style="border-top: 1px dashed #000; border-bottom: 1px dashed #000; padding: 6px 0; margin: 6px 0;">
+            <div><strong>رقم الفاتورة:</strong> #${transNo}</div>
+            <div><strong>المشترك:</strong> ${customerName}</div>
+            <div><strong>المحل:</strong> #${shopNum} &nbsp;|&nbsp; <strong>العداد:</strong> ${theCounter}</div>
+          </div>
+
+          <table style="width: 100%; border-collapse: collapse; margin: 6px 0; font-size: 0.8rem;">
+            <tr>
+              <td style="padding: 2px 0;">القراءة السابقة:</td>
+              <td style="text-align: left; font-weight: bold;">${prev}</td>
+            </tr>
+            <tr>
+              <td style="padding: 2px 0;">القراءة الحالية:</td>
+              <td style="text-align: left; font-weight: bold;">${curr}</td>
+            </tr>
+            <tr>
+              <td style="padding: 2px 0;">الاستهلاك (ك.و):</td>
+              <td style="text-align: left; font-weight: 900; color: #b45309;">${units} ك.و</td>
+            </tr>
+            <tr>
+              <td style="padding: 2px 0;">كلفة الكيلو:</td>
+              <td style="text-align: left;">${unitCost}</td>
+            </tr>
+            <tr style="border-top: 1px dotted #000;">
+              <td style="padding: 3px 0; font-weight: bold;">قيمة الاستهلاك:</td>
+              <td style="text-align: left; font-weight: bold;">${usageVal.toFixed(2)}</td>
+            </tr>
+            ${totalFees > 0 ? `
+            <tr>
+              <td style="padding: 2px 0;">إجمالي الرسوم والخدمات:</td>
+              <td style="text-align: left;">${totalFees.toFixed(2)}</td>
+            </tr>
+            ` : ''}
+          </table>
+
+          <div style="border: 2px solid #000; border-radius: 4px; padding: 6px; text-align: center; margin: 8px 0; background: #f8fafc;">
+            <div style="font-size: 0.78rem; font-weight: bold;">المبلغ المستحق للدفع:</div>
+            <div style="font-size: 1.25rem; font-weight: 900; color: #000;">${netDue.toLocaleString('en-US', { minimumFractionDigits: 2 })} ${currencyName}</div>
+          </div>
+
+          <div style="text-align: center; font-size: 0.72rem; font-weight: bold; margin-top: 8px;">
+            يرجى السداد خلال 3 أيام لتفادي الفصل<br>
+            *** شكراً لتعاونكم ***
+          </div>
+
+        </div>
+      `;
+    });
+  }
+
+  // ---------------------------------------------------------------------------
+  // TEMPLATE 3: A5 PORTRAIT ELEGANT (نموذج A5 عمودي أنيق ومدمج)
+  // ---------------------------------------------------------------------------
+  else if (currentTemplate === 'a5-portrait') {
+    printLines.forEach((l, idx) => {
+      const pageNum = (currentScope !== 'all') ? 1 : (idx + 1);
+      const shopNum = l.fldShopNumber || '';
+      const customerName = (l.fldCustomerName || l.fldShopName || '').trim();
+      const theCounter = l.fldtheCounter || '-';
+      const prev = parseFloat(l.fldPreviousReading || 0);
+      const curr = parseFloat(l.fldCurrentreading || 0);
+      const units = parseFloat(l.fldUnits || 0);
+      const unitCost = parseFloat(l.fldUnitCost || 0);
+      const usageVal = parseFloat(l.fldTotalPrice || 0);
+      
+      const srv = parseFloat(l.fldServicesCostElectricity || 0);
+      const clean = parseFloat(l.fldCleaningFees || 0);
+      const local = parseFloat(l.fldLocalFees || 0);
+      const fuel = parseFloat(l.fldFuel || 0);
+      const tax = parseFloat(l.fldlTaxTota_D || 0);
+      const totalFees = srv + clean + local + fuel + tax;
+      const netDue = usageVal + totalFees;
+
+      printableContentHtml += `
+        <div class="elec-print-page elec-a5-portrait-slip" style="page-break-after: always; padding: 14px; margin: 0 auto 16px auto; background: #ffffff; border: 1.5px solid #1e293b; border-radius: 8px; font-family: var(--font-arabic); direction: rtl; color: #000; box-sizing: border-box; width: 100%; max-width: 520px;">
+          
+          <div style="width: 100%; text-align: center; margin-bottom: 8px; border-bottom: 2px solid #0284c7; padding-bottom: 6px;">
+            ${headerImgHtml}
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; margin: 8px 0; background: #0284c7; color: #fff; padding: 6px 12px; border-radius: 4px;">
+            <span style="font-weight: 800; font-size: 1rem;">فاتورة استهلاك كهرباء</span>
+            <span style="font-family: monospace; font-weight: bold;">رقم: #${transNo}</span>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; font-size: 0.84rem; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; padding: 8px;">
+            <div><strong>المشترك:</strong> ${customerName}</div>
+            <div><strong>رقم المحل:</strong> #${shopNum}</div>
+            <div><strong>رقم العداد:</strong> <span style="font-family: monospace; color: #0284c7; font-weight: bold;">${theCounter}</span></div>
+            <div><strong>التاريخ:</strong> <span style="font-family: monospace;">${formattedDate}</span></div>
+          </div>
+
+          <table style="width: 100%; border-collapse: collapse; text-align: center; font-size: 0.82rem; margin-bottom: 10px; border: 1px solid #cbd5e1;">
+            <thead>
+              <tr style="background: #e2e8f0;">
+                <th style="padding: 6px; border: 1px solid #cbd5e1;">البيان</th>
+                <th style="padding: 6px; border: 1px solid #cbd5e1;">القراءة / القيمة</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="padding: 5px; border: 1px solid #cbd5e1; text-align: right;">القراءة السابقة</td>
+                <td style="padding: 5px; border: 1px solid #cbd5e1; font-family: monospace;">${prev}</td>
+              </tr>
+              <tr>
+                <td style="padding: 5px; border: 1px solid #cbd5e1; text-align: right;">القراءة الحالية</td>
+                <td style="padding: 5px; border: 1px solid #cbd5e1; font-family: monospace; font-weight: bold;">${curr}</td>
+              </tr>
+              <tr style="background: #fef3c7;">
+                <td style="padding: 5px; border: 1px solid #cbd5e1; text-align: right; font-weight: bold;">كمية الاستهلاك</td>
+                <td style="padding: 5px; border: 1px solid #cbd5e1; font-family: monospace; font-weight: 900; color: #b45309;">${units} ك.و (سعر الكيلو: ${unitCost})</td>
+              </tr>
+              <tr>
+                <td style="padding: 5px; border: 1px solid #cbd5e1; text-align: right;">قيمة الاستهلاك</td>
+                <td style="padding: 5px; border: 1px solid #cbd5e1; font-family: monospace; font-weight: bold;">${usageVal.toFixed(2)}</td>
+              </tr>
+              <tr>
+                <td style="padding: 5px; border: 1px solid #cbd5e1; text-align: right;">إجمالي الرسوم والخدمات</td>
+                <td style="padding: 5px; border: 1px solid #cbd5e1; font-family: monospace;">${totalFees.toFixed(2)}</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div style="background: #f0fdf4; border: 2px solid #16a34a; border-radius: 6px; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <span style="font-weight: 900; font-size: 0.95rem; color: #166534;">الإجمالي المستحق (${currencyName}):</span>
+            <span style="font-family: monospace; font-size: 1.25rem; font-weight: 900; color: #15803d;">${netDue.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+          </div>
+
+          <div style="text-align: center; font-size: 0.8rem; font-weight: bold; margin-bottom: 14px;">
+            يتم التسديد خلال ثلاثة أيام لتجنب فصل التيار الكهربائي
+          </div>
+
+          <div style="display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: bold; border-top: 1px solid #cbd5e1; padding-top: 8px;">
+            <div>توقيع المحصل: ...................</div>
+            <div>توقيع المستلم: ...................</div>
+          </div>
+
+        </div>
+      `;
+    });
+  }
+
+  // ---------------------------------------------------------------------------
+  // TEMPLATE 4: A4 STATEMENT (كشف استهلاك إجمالي شامل A4)
+  // ---------------------------------------------------------------------------
+  else if (currentTemplate === 'a4-statement') {
+    let tableRowsHtml = '';
+    let grandUsage = 0;
+    let grandUnits = 0;
+    let grandFees = 0;
+    let grandNetDue = 0;
+
+    printLines.forEach((l, idx) => {
+      const shopNum = l.fldShopNumber || (idx + 1);
+      const customerName = (l.fldCustomerName || l.fldShopName || '').trim();
+      const theCounter = l.fldtheCounter || '-';
+      const prev = parseFloat(l.fldPreviousReading || 0);
+      const curr = parseFloat(l.fldCurrentreading || 0);
+      const units = parseFloat(l.fldUnits || 0);
+      const unitCost = parseFloat(l.fldUnitCost || 0);
+      const usageVal = parseFloat(l.fldTotalPrice || 0);
+      
+      const srv = parseFloat(l.fldServicesCostElectricity || 0);
+      const clean = parseFloat(l.fldCleaningFees || 0);
+      const local = parseFloat(l.fldLocalFees || 0);
+      const fuel = parseFloat(l.fldFuel || 0);
+      const tax = parseFloat(l.fldlTaxTota_D || 0);
+      const totalFees = srv + clean + local + fuel + tax;
+      const netDue = usageVal + totalFees;
+
+      grandUnits += units;
+      grandUsage += usageVal;
+      grandFees += totalFees;
+      grandNetDue += netDue;
+
+      tableRowsHtml += `
+        <tr style="border-bottom: 1px solid #cbd5e1; font-size: 0.8rem;">
+          <td style="padding: 5px; border: 1px solid #cbd5e1; font-family: monospace;">${idx + 1}</td>
+          <td style="padding: 5px; border: 1px solid #cbd5e1; font-family: monospace; font-weight: bold;">#${shopNum}</td>
+          <td style="padding: 5px 8px; border: 1px solid #cbd5e1; text-align: right; font-weight: bold; white-space: nowrap;">${customerName}</td>
+          <td style="padding: 5px; border: 1px solid #cbd5e1; font-family: monospace; color: #0284c7;">${theCounter}</td>
+          <td style="padding: 5px; border: 1px solid #cbd5e1; font-family: monospace;">${prev}</td>
+          <td style="padding: 5px; border: 1px solid #cbd5e1; font-family: monospace;">${curr}</td>
+          <td style="padding: 5px; border: 1px solid #cbd5e1; font-family: monospace; font-weight: bold; color: #b45309;">${units}</td>
+          <td style="padding: 5px; border: 1px solid #cbd5e1; font-family: monospace;">${unitCost}</td>
+          <td style="padding: 5px; border: 1px solid #cbd5e1; font-family: monospace; font-weight: bold;">${usageVal.toFixed(2)}</td>
+          <td style="padding: 5px; border: 1px solid #cbd5e1; font-family: monospace;">${totalFees.toFixed(2)}</td>
+          <td style="padding: 5px; border: 1px solid #cbd5e1; font-family: monospace; font-weight: 900; background: #f0fdf4; color: #15803d;">${netDue.toFixed(2)}</td>
+        </tr>
+      `;
+    });
+
+    printableContentHtml = `
+      <div class="elec-print-page elec-a4-statement" style="padding: 16px; margin: 0 auto; background: #ffffff; border: 1.5px solid #000; font-family: var(--font-arabic); direction: rtl; color: #000; box-sizing: border-box; width: 100%; max-width: 900px;">
+        
+        <div style="width: 100%; text-align: center; margin-bottom: 8px; border-bottom: 2px solid #000; padding-bottom: 4px;">
+          ${headerImgHtml}
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <div><strong>رقم الفاتورة:</strong> #${transNo}</div>
+          <div style="font-size: 1.2rem; font-weight: 900; color: #1e3a8a;">كشف استهلاك كهرباء المشتركين الإجمالي</div>
+          <div><strong>تاريخ الإصدار:</strong> ${formattedDate}</div>
+        </div>
+
+        <table style="width: 100%; border-collapse: collapse; text-align: center; border: 1.5px solid #000; margin-bottom: 12px;">
+          <thead>
+            <tr style="background: #dbeafe; font-size: 0.82rem;">
+              <th style="padding: 6px; border: 1px solid #000; width: 35px;">م</th>
+              <th style="padding: 6px; border: 1px solid #000; width: 55px;">المحل</th>
+              <th style="padding: 6px; border: 1px solid #000; text-align: right;">اسم المشترك</th>
+              <th style="padding: 6px; border: 1px solid #000; width: 75px;">العداد</th>
+              <th style="padding: 6px; border: 1px solid #000; width: 60px;">السابقة</th>
+              <th style="padding: 6px; border: 1px solid #000; width: 60px;">الحالية</th>
+              <th style="padding: 6px; border: 1px solid #000; width: 65px;">الاستهلاك</th>
+              <th style="padding: 6px; border: 1px solid #000; width: 60px;">الكلفة</th>
+              <th style="padding: 6px; border: 1px solid #000; width: 85px;">قيمة الاستهلاك</th>
+              <th style="padding: 6px; border: 1px solid #000; width: 80px;">الرسوم</th>
+              <th style="padding: 6px; border: 1px solid #000; width: 95px; background: #bfdbfe;">المستحق (${currencyName})</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${tableRowsHtml}
+          </tbody>
+          <tfoot>
+            <tr style="background: #f1f5f9; font-weight: 900; font-size: 0.85rem; border-top: 2px solid #000;">
+              <td colspan="6" style="padding: 8px; border: 1px solid #000; text-align: center;">الإجمالي العام (${printLines.length} مشترك)</td>
+              <td style="padding: 8px; border: 1px solid #000; font-family: monospace; color: #b45309;">${grandUnits.toLocaleString('en-US')}</td>
+              <td style="padding: 8px; border: 1px solid #000;">-</td>
+              <td style="padding: 8px; border: 1px solid #000; font-family: monospace;">${grandUsage.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+              <td style="padding: 8px; border: 1px solid #000; font-family: monospace;">${grandFees.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+              <td style="padding: 8px; border: 1.5px solid #000; font-family: monospace; font-size: 1rem; color: #15803d; background: #dcfce7;">${grandNetDue.toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+            </tr>
+          </tfoot>
+        </table>
+
+        <div style="display: flex; justify-content: space-between; margin-top: 20px; font-weight: bold; font-size: 0.85rem; padding: 0 20px;">
+          <div>توقيع المسؤول: .........................</div>
+          <div>المدير المالي: .........................</div>
+          <div>الختم الرسمي: .........................</div>
+        </div>
+
+      </div>
+    `;
+  }
+
+  const printers = state.elecInvoicePrintSettings.printersList;
+  const currentPrinter = state.elecInvoicePrintSettings.selectedPrinter;
+  const currentPaper = state.elecInvoicePrintSettings.paperSize;
+
+  // Build shop options for scope selector
+  let scopeOptionsHtml = `<option value="all" ${currentScope === 'all' ? 'selected' : ''}>📁 طباعة كافة المحلات (الكل - ${lines.filter(l => l.fldIsActive !== false).length} فاتورة)</option>`;
+  lines.forEach((l, idx) => {
+    const sNum = l.fldShopNumber || (idx + 1);
+    const sName = (l.fldCustomerName || l.fldShopName || '').trim();
+    const isSel = (String(currentScope) === String(idx));
+    scopeOptionsHtml += `<option value="${idx}" ${isSel ? 'selected' : ''}>📄 محل ${sNum}: ${sName}</option>`;
+  });
+
+  // Create or update Modal
+  let modal = document.getElementById('elecInvoicePrintModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'elecInvoicePrintModal';
+    modal.style.position = 'fixed';
+    modal.style.top = '0';
+    modal.style.left = '0';
+    modal.style.width = '100vw';
+    modal.style.height = '100vh';
+    modal.style.backgroundColor = 'rgba(15, 23, 42, 0.75)';
+    modal.style.backdropFilter = 'blur(4px)';
+    modal.style.zIndex = '999999';
+    modal.style.display = 'flex';
+    modal.style.alignItems = 'center';
+    modal.style.justifyContent = 'center';
+    modal.style.direction = 'rtl';
+    modal.style.fontFamily = 'var(--font-arabic)';
+    document.body.appendChild(modal);
+  }
+
+  modal.innerHTML = `
+    <div style="background: #ffffff; width: 96%; max-width: 1050px; height: 96vh; border-radius: 8px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.4); display: flex; flex-direction: column; overflow: hidden; border: 1px solid #cbd5e1;">
+      
+      <!-- Top Action & Settings Bar -->
+      <div style="background: #f1f5f9; padding: 6px 14px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #cbd5e1; flex-wrap: wrap; gap: 6px;">
+        
+        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+          
+          <!-- Template Selector -->
+          <div style="display: flex; align-items: center; gap: 4px;">
+            <label style="font-size: 0.78rem; font-weight: 800; color: #1e293b;">
+              <i class="fa-solid fa-palette" style="color: #f59e0b;"></i> نموذج التصميم:
+            </label>
+            <select id="elecPrintTemplateSelect" onchange="onElecPrintTemplateChange('${tabId}', this.value)" style="height: 28px; padding: 0 8px; font-size: 0.8rem; font-weight: bold; border: 1.5px solid #f59e0b; border-radius: 4px; background: #fffbeb; color: #b45309;">
+              <option value="a5-detailed" ${currentTemplate === 'a5-detailed' ? 'selected' : ''}>📄 نموذج A5 أفقي تفصيلي (رسمي)</option>
+              <option value="thermal-80mm" ${currentTemplate === 'thermal-80mm' ? 'selected' : ''}>🧾 إيصال حراري (80mm POS)</option>
+              <option value="a5-portrait" ${currentTemplate === 'a5-portrait' ? 'selected' : ''}>📑 نموذج A5 عمودي أنيق</option>
+              <option value="a4-statement" ${currentTemplate === 'a4-statement' ? 'selected' : ''}>📊 كشف استهلاك إجمالي شامل (A4)</option>
+            </select>
+          </div>
+
+          <!-- Scope Selector -->
+          <div style="display: flex; align-items: center; gap: 4px;">
+            <label style="font-size: 0.78rem; font-weight: 800; color: #1e293b;">النطاق:</label>
+            <select id="elecPrintScopeSelect" onchange="onElecPrintScopeChange('${tabId}', this.value)" style="height: 28px; padding: 0 8px; font-size: 0.8rem; font-weight: bold; border: 1.5px solid #0284c7; border-radius: 4px; background: #f0f9ff; color: #0369a1; max-width: 260px;">
+              ${scopeOptionsHtml}
+            </select>
+          </div>
+
+        </div>
+
+        <!-- Controls: Printer & Paper -->
+        <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+          
+          <!-- Printer Selector -->
+          <div style="display: flex; align-items: center; gap: 4px;">
+            <label style="font-size: 0.76rem; font-weight: bold; color: #334155;">الطابعة:</label>
+            <select id="elecPrintSelectPrinter" onchange="onElecPrinterSelectChange(this.value)" style="height: 28px; padding: 0 6px; font-size: 0.76rem; font-weight: bold; border: 1px solid #94a3b8; border-radius: 4px; background: #fff; max-width: 150px;">
+              ${printers.map(p => `<option value="${p}" ${p === currentPrinter ? 'selected' : ''}>${p}</option>`).join('')}
+            </select>
+          </div>
+
+          <!-- Paper Size Selector -->
+          <div style="display: flex; align-items: center; gap: 4px;">
+            <label style="font-size: 0.76rem; font-weight: bold; color: #334155;">الورق:</label>
+            <select id="elecPrintSelectPaper" onchange="onElecPaperSizeChange(this.value)" style="height: 28px; padding: 0 6px; font-size: 0.76rem; font-weight: bold; border: 1.5px solid #059669; border-radius: 4px; background: #f0fdf4; color: #065f46;">
+              <option value="A5 landscape" ${currentPaper === 'A5 landscape' ? 'selected' : ''}>A5 أفقي</option>
+              <option value="A5 portrait" ${currentPaper === 'A5 portrait' ? 'selected' : ''}>A5 عمودي</option>
+              <option value="80mm auto" ${currentPaper === '80mm auto' ? 'selected' : ''}>80mm حراري</option>
+              <option value="A4 portrait" ${currentPaper === 'A4 portrait' ? 'selected' : ''}>A4 عادي</option>
+              <option value="A4 landscape" ${currentPaper === 'A4 landscape' ? 'selected' : ''}>A4 أفقي</option>
+            </select>
+          </div>
+
+          <!-- Action Buttons -->
+          <button type="button" onclick="executeElectricityInvoicePrint()" style="background: #0284c7; color: #ffffff; border: none; border-radius: 4px; padding: 4px 12px; font-weight: 800; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; gap: 5px; height: 28px; box-shadow: 0 2px 4px rgba(2,132,199,0.2);">
+            <i class="fa-solid fa-print"></i> طباعة (${currentTemplate === 'a4-statement' ? 'كشف' : totalPages})
+          </button>
+          <button type="button" onclick="closeElectricityInvoicePrintModal()" style="background: #ef4444; color: #ffffff; border: none; border-radius: 4px; width: 28px; height: 28px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.9rem;" title="إغلاق">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+
+        </div>
+
+      </div>
+
+      <!-- Preview Container -->
+      <div id="elecPrintableContainer" style="flex: 1; overflow-y: auto; padding: 16px; background: #cbd5e1;">
+        ${printableContentHtml}
+      </div>
+
+    </div>
+  `;
+
+  modal.style.display = 'flex';
+};
+
+window.onElecPrintTemplateChange = function(tabId, templateVal) {
+  state.elecInvoicePrintSettings.template = templateVal;
+  localStorage.setItem('elec_bill_template', templateVal);
+  
+  // Auto-adjust paper size
+  if (templateVal === 'thermal-80mm') {
+    state.elecInvoicePrintSettings.paperSize = '80mm auto';
+  } else if (templateVal === 'a5-portrait') {
+    state.elecInvoicePrintSettings.paperSize = 'A5 portrait';
+  } else if (templateVal === 'a4-statement') {
+    state.elecInvoicePrintSettings.paperSize = 'A4 portrait';
+  } else {
+    state.elecInvoicePrintSettings.paperSize = 'A5 landscape';
+  }
+  localStorage.setItem('elec_bill_papersize', state.elecInvoicePrintSettings.paperSize);
+
+  renderElectricityInvoicePrintModalContent(tabId);
+};
+
+window.onElecPrintScopeChange = function(tabId, scopeVal) {
+  state.elecInvoicePrintSettings.currentScope = scopeVal;
+  renderElectricityInvoicePrintModalContent(tabId);
+};
+
+window.onElecPrinterSelectChange = function(printerName) {
+  state.elecInvoicePrintSettings.selectedPrinter = printerName;
+  localStorage.setItem('elec_bill_printer', printerName);
+  showToast(`تم تحديد الطابعة: ${printerName}`, "info");
+};
+
+window.onElecPaperSizeChange = function(paperSize) {
+  state.elecInvoicePrintSettings.paperSize = paperSize;
+  localStorage.setItem('elec_bill_papersize', paperSize);
+  showToast(`تم ضبط حجم الورق: ${paperSize}`, "info");
+};
+
+window.closeElectricityInvoicePrintModal = function() {
+  const modal = document.getElementById('elecInvoicePrintModal');
+  if (modal) modal.style.display = 'none';
+};
+
+window.executeElectricityInvoicePrint = function() {
+  const container = document.getElementById('elecPrintableContainer');
+  if (!container) return;
+
+  const printer = state.elecInvoicePrintSettings.selectedPrinter || 'Default';
+  const paper = state.elecInvoicePrintSettings.paperSize || 'A5 landscape';
+  const template = state.elecInvoicePrintSettings.template || 'a5-detailed';
+
+  const printWindow = window.open('', '_blank', 'width=850,height=650');
+  if (!printWindow) {
+    window.print();
+    return;
+  }
+
+  printWindow.document.write(`
+    <!DOCTYPE html>
+    <html dir="rtl" lang="ar">
+    <head>
+      <meta charset="utf-8">
+      <title>فاتورة استهلاك كهرباء - ${printer}</title>
+      <style>
+        @page {
+          size: ${paper};
+          margin: ${template === 'thermal-80mm' ? '2mm' : '6mm'};
+        }
+        body {
+          margin: 0;
+          padding: 0;
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          direction: rtl;
+          background: #fff;
+          color: #000;
+        }
+        .elec-print-page {
+          page-break-after: always;
+          box-sizing: border-box;
+        }
+        .elec-print-page:last-child {
+          page-break-after: auto;
+        }
+        table {
+          width: 100%;
+          border-collapse: collapse;
+        }
+        th, td {
+          text-align: center;
+        }
+        th {
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
+        }
+      </style>
+    </head>
+    <body>
+      ${container.innerHTML}
+      <script>
+        window.onload = function() {
+          window.focus();
+          window.print();
+          setTimeout(function() { window.close(); }, 500);
+        };
+      <` + `/script>
     </body>
     </html>
   `);

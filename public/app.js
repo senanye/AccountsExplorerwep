@@ -1988,24 +1988,27 @@ function getScreenContent(tabId, tabTitle, iconClass, colorClass) {
 
         <!-- Detail Lines Table with Horizontal & Vertical Scrollbars & Sticky Header -->
         <div class="accounts-table-container" style="flex: 1; min-height: 250px; max-height: calc(100vh - 275px); background: #ffffff; border: 1px solid #cbd5e1; border-radius: 4px; overflow-x: auto; overflow-y: auto; position: relative;">
-          <table class="accounts-table" id="elecTableGrid-${tabId}" style="width: 100%; min-width: 1600px; border-collapse: separate; border-spacing: 0; font-size: 0.82rem; text-align: center;">
+          <table class="accounts-table" id="elecTableGrid-${tabId}" style="width: 100%; min-width: 1650px; border-collapse: separate; border-spacing: 0; font-size: 0.82rem; text-align: center;">
             <thead>
               <tr style="position: sticky; top: 0; z-index: 10; background: #f8fafc; border-bottom: 2px solid #cbd5e1; color: #334155; font-weight: 800;">
-                <th style="padding: 6px 4px; width: 40px; position: sticky; top: 0; background: #f8fafc;">نشط</th>
-                <th style="padding: 6px 6px; width: 75px; position: sticky; top: 0; background: #f8fafc;">رقم المحل</th>
-                <th style="padding: 6px 12px; min-width: 160px; text-align: right; position: sticky; top: 0; background: #f8fafc;">اسم المحل</th>
-                <th style="padding: 6px 12px; min-width: 200px; text-align: right; position: sticky; top: 0; background: #f8fafc;">اسم المستاجر</th>
-                <th style="padding: 6px 6px; width: 95px; position: sticky; top: 0; background: #f8fafc;">العداد</th>
-                <th style="padding: 6px 6px; width: 80px; position: sticky; top: 0; background: #f8fafc;">كلفه الكيلو</th>
-                <th style="padding: 6px 6px; width: 85px; position: sticky; top: 0; background: #f8fafc;">السابقة</th>
-                <th style="padding: 6px 6px; width: 85px; position: sticky; top: 0; background: #f8fafc;">الحالية</th>
-                <th style="padding: 6px 6px; width: 85px; position: sticky; top: 0; background: #f8fafc;">الاستهلاك</th>
-                <th style="padding: 6px 8px; width: 115px; text-align: right; position: sticky; top: 0; background: #f8fafc;">اجمالي الاستهلاك</th>
-                <th style="padding: 6px 6px; width: 75px; position: sticky; top: 0; background: #f8fafc;">خدمات</th>
-                <th style="padding: 6px 6px; width: 70px; position: sticky; top: 0; background: #f8fafc;">نظافة</th>
-                <th style="padding: 6px 6px; width: 70px; position: sticky; top: 0; background: #f8fafc;">محلي</th>
-                <th style="padding: 6px 6px; width: 70px; position: sticky; top: 0; background: #f8fafc;">محروقات</th>
-                <th style="padding: 6px 6px; width: 75px; position: sticky; top: 0; background: #f8fafc;">م ضريبه</th>
+                <th style="padding: 6px 2px; width: 45px; min-width: 45px; position: sticky; top: 0; background: #f8fafc; text-align: center; white-space: nowrap;">
+                  <button type="button" onclick="clearElectricityInvoiceLines('${tabId}')" class="btn btn-danger btn-xs" style="padding: 1px 4px; font-size: 0.68rem; border-radius: 2px;" title="حذف كل السجلات"><i class="fa-solid fa-trash-can"></i></button>
+                </th>
+                <th style="padding: 6px 4px; width: 40px; min-width: 40px; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">نشط</th>
+                <th style="padding: 6px 6px; width: 75px; min-width: 75px; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">رقم المحل</th>
+                <th style="padding: 6px 12px; width: 160px; min-width: 160px; text-align: right; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">اسم المحل</th>
+                <th style="padding: 6px 12px; width: 220px; min-width: 220px; text-align: right; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">اسم المستاجر</th>
+                <th style="padding: 6px 6px; width: 95px; min-width: 95px; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">العداد</th>
+                <th style="padding: 6px 6px; width: 80px; min-width: 80px; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">كلفه الكيلو</th>
+                <th style="padding: 6px 6px; width: 85px; min-width: 85px; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">السابقة</th>
+                <th style="padding: 6px 6px; width: 85px; min-width: 85px; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">الحالية</th>
+                <th style="padding: 6px 6px; width: 85px; min-width: 85px; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">الاستهلاك</th>
+                <th style="padding: 6px 8px; width: 115px; min-width: 115px; text-align: right; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">اجمالي الاستهلاك</th>
+                <th style="padding: 6px 6px; width: 75px; min-width: 75px; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">خدمات</th>
+                <th style="padding: 6px 6px; width: 70px; min-width: 70px; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">نظافة</th>
+                <th style="padding: 6px 6px; width: 70px; min-width: 70px; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">محلي</th>
+                <th style="padding: 6px 6px; width: 70px; min-width: 70px; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">محروقات</th>
+                <th style="padding: 6px 6px; width: 75px; min-width: 75px; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">م ضريبه</th>
               </tr>
             </thead>
             <tbody id="elecLinesTableBody-${tabId}">
@@ -31269,7 +31272,12 @@ window.renderElectricityInvoiceLinesTable = function(tabId) {
   lines.forEach((line, idx) => {
     html += `
       <tr id="elecLineRow-${tabId}-${idx}" style="border-bottom: 1px solid #e2e8f0; text-align: center; vertical-align: middle;">
-        <td style="padding: 3px 4px; width: 40px;"><input type="checkbox" ${line.fldIsActive !== false ? 'checked' : ''} onchange="updateElecLineField('${tabId}', ${idx}, 'fldIsActive', this.checked)"></td>
+        <td style="padding: 2px 2px; width: 45px; min-width: 45px; text-align: center;">
+          <button type="button" onclick="removeElectricityInvoiceLine('${tabId}', ${idx})" class="btn btn-danger btn-xs" style="padding: 2px 6px; font-size: 0.72rem; border-radius: 3px; background: #fee2e2; color: #ef4444; border: 1px solid #fca5a5; cursor: pointer;" title="حذف هذا السطر">
+            <i class="fa-solid fa-trash-can"></i>
+          </button>
+        </td>
+        <td style="padding: 3px 4px; width: 40px; min-width: 40px;"><input type="checkbox" ${line.fldIsActive !== false ? 'checked' : ''} onchange="updateElecLineField('${tabId}', ${idx}, 'fldIsActive', this.checked)"></td>
         <td style="padding: 3px 6px; font-weight: bold; font-family: monospace; color: #1e3a8a; width: 75px;">#${line.fldShopNumber || ''}</td>
         <td style="padding: 3px 12px; text-align: right; font-weight: bold; color: #1e293b; min-width: 160px; white-space: nowrap;">${line.fldShopName || ''}</td>
         <td style="padding: 3px 12px; text-align: right; color: #334155; font-size: 0.8rem; min-width: 200px; white-space: nowrap;">${line.fldCustomerName || ''}</td>

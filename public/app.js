@@ -1570,25 +1570,25 @@ function getScreenContent(tabId, tabTitle, iconClass, colorClass) {
 
         <!-- Explorer Table with Horizontal & Vertical Scrollbars & Sticky Header -->
         <div class="accounts-table-container" style="flex: 1; min-height: 280px; max-height: calc(100vh - 200px); background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; overflow-x: auto; overflow-y: auto; position: relative;">
-          <table id="rentBillsTable-${tabId}" class="accounts-table" style="width: 100%; min-width: 1350px; border-collapse: separate; border-spacing: 0; font-size: 0.82rem; text-align: center;">
+          <table id="rentBillsTable-${tabId}" class="accounts-table" style="width: 100%; min-width: 1800px; border-collapse: separate; border-spacing: 0; font-size: 0.82rem; text-align: center;">
             <thead>
               <tr style="position: sticky; top: 0; z-index: 10; background: #f8fafc; border-bottom: 2px solid #cbd5e1; color: #334155; font-weight: 800;">
-                <th style="padding: 6px 8px; width: 65px; position: sticky; top: 0; background: #f8fafc;">الرقم</th>
-                <th style="padding: 6px 8px; width: 95px; position: sticky; top: 0; background: #f8fafc;">التاريخ</th>
-                <th style="padding: 6px 12px; width: 130px; position: sticky; top: 0; background: #f8fafc;">المركز المالي</th>
-                <th style="padding: 6px 14px; min-width: 250px; text-align: right; position: sticky; top: 0; background: #f8fafc;">البيان</th>
-                <th style="padding: 6px 6px; width: 50px; position: sticky; top: 0; background: #f8fafc;">مرحل</th>
-                <th style="padding: 6px 10px; width: 120px; text-align: right; position: sticky; top: 0; background: #f8fafc;">الاجمالي</th>
-                <th style="padding: 6px 6px; width: 55px; position: sticky; top: 0; background: #f8fafc;">العملة</th>
-                <th style="padding: 6px 8px; width: 75px; position: sticky; top: 0; background: #f8fafc;">النوع</th>
-                <th style="padding: 6px 8px; width: 95px; position: sticky; top: 0; background: #f8fafc;">تاريخ المرجع</th>
-                <th style="padding: 6px 8px; width: 80px; position: sticky; top: 0; background: #f8fafc;">رقم المرجع</th>
-                <th style="padding: 6px 8px; width: 75px; position: sticky; top: 0; background: #f8fafc;">رقم ID</th>
-                <th style="padding: 6px 12px; width: 120px; position: sticky; top: 0; background: #f8fafc;">نوع الحركة</th>
-                <th style="padding: 6px 8px; width: 90px; position: sticky; top: 0; background: #f8fafc;">اسم العملة</th>
-                <th style="padding: 6px 12px; min-width: 170px; text-align: right; position: sticky; top: 0; background: #f8fafc;">اسم الحساب</th>
-                <th style="padding: 6px 8px; width: 80px; position: sticky; top: 0; background: #f8fafc;">المحلات</th>
-                <th style="padding: 6px 6px; width: 50px; position: sticky; top: 0; background: #f8fafc;">مغلق</th>
+                <th style="padding: 8px 6px; width: 70px; min-width: 70px; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">الرقم</th>
+                <th style="padding: 8px 6px; width: 115px; min-width: 115px; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">التاريخ</th>
+                <th style="padding: 8px 10px; width: 140px; min-width: 140px; text-align: right; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">المركز المالي</th>
+                <th style="padding: 8px 12px; min-width: 260px; text-align: right; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">البيان</th>
+                <th style="padding: 8px 6px; width: 55px; min-width: 55px; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">مرحل</th>
+                <th style="padding: 8px 10px; width: 135px; min-width: 135px; text-align: right; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">الاجمالي</th>
+                <th style="padding: 8px 6px; width: 60px; min-width: 60px; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">العملة</th>
+                <th style="padding: 8px 8px; width: 75px; min-width: 75px; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">النوع</th>
+                <th style="padding: 8px 6px; width: 115px; min-width: 115px; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">تاريخ المرجع</th>
+                <th style="padding: 8px 8px; width: 85px; min-width: 85px; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">رقم المرجع</th>
+                <th style="padding: 8px 8px; width: 80px; min-width: 80px; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">رقم ID</th>
+                <th style="padding: 8px 10px; width: 140px; min-width: 140px; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">نوع الحركة</th>
+                <th style="padding: 8px 10px; width: 125px; min-width: 125px; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">اسم العملة</th>
+                <th style="padding: 8px 12px; width: 180px; min-width: 180px; text-align: right; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">اسم الحساب</th>
+                <th style="padding: 8px 10px; width: 95px; min-width: 95px; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">المحلات</th>
+                <th style="padding: 8px 6px; width: 55px; min-width: 55px; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">مغلق</th>
               </tr>
             </thead>
             <tbody id="rentBillsTableBody-${tabId}">
@@ -30265,22 +30265,22 @@ window.renderRentBillsTable = function(tabId, list) {
     
     html += `
       <tr class="rent-bill-row" id="rentBillRow-${tabId}-${idx}" data-idx="${idx}" data-id="${item.fldID}" onclick="selectRentBillRow('${tabId}', ${item.fldID}, this)" ondblclick="openRentInvoiceTab(${item.fldID})" style="cursor: pointer; border-bottom: 1px solid #e2e8f0; transition: background 0.15s; background: ${idx % 2 === 0 ? '#ffffff' : '#f8fafc'};">
-        <td style="padding: 5px 8px; font-weight: bold; font-family: monospace; color: #1e3a8a;">${item.fldTransNo}</td>
-        <td style="padding: 5px 8px; font-family: monospace;">${formattedDate}</td>
-        <td style="padding: 5px 12px; font-weight: 600; color: #334155; white-space: nowrap;">${item.fldBranchName || 'الفرع الرئيسي'}</td>
-        <td style="padding: 5px 14px; text-align: right; font-weight: bold; color: #0f172a;">${item.fldDescription || ''}</td>
-        <td style="padding: 5px 6px; text-align: center;"><input type="checkbox" ${item.fldOK ? 'checked' : ''} disabled></td>
-        <td style="padding: 5px 10px; text-align: right; font-weight: 900; font-family: monospace; color: #059669; font-size: 0.92rem;">${formattedTotal}</td>
-        <td style="padding: 5px 6px; text-align: center; color: #64748b;">${item.fldsymbol || 'YR'}</td>
-        <td style="padding: 5px 8px; text-align: center;"><span class="badge" style="background: #e0f2fe; color: #0369a1; padding: 2px 6px; border-radius: 4px; font-weight: bold;">${item.fldTypeName || 'اجل'}</span></td>
-        <td style="padding: 5px 8px; font-family: monospace; color: #64748b;">${formattedRefDate}</td>
-        <td style="padding: 5px 8px; font-family: monospace;">${item.fldRefNo || '0'}</td>
-        <td style="padding: 5px 8px; font-family: monospace; font-weight: bold; color: #475569;">${item.fldID}</td>
-        <td style="padding: 5px 12px; text-align: center; color: #334155; font-weight: 600;">فاتورة ايجار شهري</td>
-        <td style="padding: 5px 8px; color: #475569;">${item.fldMoneyName || 'ريال يمني1'}</td>
-        <td style="padding: 5px 12px; text-align: right; color: #334155; white-space: nowrap;">${item.fldAccBoxName || 'ايراد خدمة الايجار'}</td>
-        <td style="padding: 5px 8px; font-family: monospace; color: #0284c7; font-weight: bold;">${item.fldLinesCount || 0} محل</td>
-        <td style="padding: 5px 6px; text-align: center;"><input type="checkbox" ${item.fldClosed ? 'checked' : ''} disabled></td>
+        <td style="padding: 6px 6px; width: 70px; min-width: 70px; font-weight: bold; font-family: monospace; color: #1e3a8a; white-space: nowrap;">${item.fldTransNo}</td>
+        <td style="padding: 6px 6px; width: 115px; min-width: 115px; font-family: monospace; font-size: 0.82rem; white-space: nowrap; text-align: center;">${formattedDate}</td>
+        <td style="padding: 6px 10px; width: 140px; min-width: 140px; font-weight: 600; color: #334155; white-space: nowrap; text-align: right;">${item.fldBranchName || 'الفرع الرئيسي'}</td>
+        <td style="padding: 6px 12px; min-width: 260px; text-align: right; font-weight: bold; color: #0f172a; white-space: nowrap;">${item.fldDescription || ''}</td>
+        <td style="padding: 6px 6px; width: 55px; min-width: 55px; text-align: center; white-space: nowrap;"><input type="checkbox" ${item.fldOK ? 'checked' : ''} disabled></td>
+        <td style="padding: 6px 10px; width: 135px; min-width: 135px; text-align: right; font-weight: 900; font-family: monospace; color: #059669; font-size: 0.92rem; white-space: nowrap;">${formattedTotal}</td>
+        <td style="padding: 6px 6px; width: 60px; min-width: 60px; text-align: center; color: #64748b; white-space: nowrap;">${item.fldsymbol || 'YR'}</td>
+        <td style="padding: 6px 8px; width: 75px; min-width: 75px; text-align: center; white-space: nowrap;"><span class="badge" style="background: #e0f2fe; color: #0369a1; padding: 2px 6px; border-radius: 4px; font-weight: bold;">${item.fldTypeName || 'اجل'}</span></td>
+        <td style="padding: 6px 6px; width: 115px; min-width: 115px; font-family: monospace; font-size: 0.82rem; color: #64748b; white-space: nowrap; text-align: center;">${formattedRefDate}</td>
+        <td style="padding: 6px 8px; width: 85px; min-width: 85px; font-family: monospace; white-space: nowrap; text-align: center;">${item.fldRefNo || '0'}</td>
+        <td style="padding: 6px 8px; width: 80px; min-width: 80px; font-family: monospace; font-weight: bold; color: #475569; white-space: nowrap; text-align: center;">${item.fldID}</td>
+        <td style="padding: 6px 10px; width: 140px; min-width: 140px; text-align: center; color: #334155; font-weight: 600; white-space: nowrap;">فاتورة ايجار شهري</td>
+        <td style="padding: 6px 10px; width: 125px; min-width: 125px; color: #475569; white-space: nowrap; text-align: center;">${item.fldMoneyName || 'ريال يمني1'}</td>
+        <td style="padding: 6px 12px; width: 180px; min-width: 180px; text-align: right; color: #334155; white-space: nowrap;">${item.fldAccBoxName || 'ايراد خدمة الايجار'}</td>
+        <td style="padding: 6px 10px; width: 95px; min-width: 95px; font-family: monospace; color: #0284c7; font-weight: bold; white-space: nowrap; text-align: center;">${item.fldLinesCount || 0} محل</td>
+        <td style="padding: 6px 6px; width: 55px; min-width: 55px; text-align: center; white-space: nowrap;"><input type="checkbox" ${item.fldClosed ? 'checked' : ''} disabled></td>
       </tr>
     `;
   });

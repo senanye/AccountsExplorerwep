@@ -18181,6 +18181,465 @@ app.delete('/api/electricity-bills/:id', async (req, res) => {
   }
 });
 
+// =============================================================================
+// =============================================================================
+// 43. SERVICE REPORTS & WHATSAPP PDF ENGINE (تقارير الخدمات)
+// Matching media_1787856273843.png
+// =============================================================================
+
+// 1. GET /api/service-reports/shops-list
+app.get('/api/service-reports/shops-list', async (req, res) => {
+  const isConnected = globalPool !== null && globalPool.connected;
+  if (!isConnected) return res.json({ success: true, source: "mock", data: [] });
+
+  const { branchId, search } = req.query;
+  try {
+    const request = globalPool.request();
+    let whereClauses = ["1=1"];
+
+    if (branchId && parseInt(branchId) > 0) {
+      request.input('branchId', sql.Int, parseInt(branchId));
+      whereClauses.push("s.fldBranchNo = @branchId");
+    }
+    if (search && search.trim()) {
+      request.input('search', sql.NVarChar, '%' + search.trim() + '%');
+      whereClauses.push("(s.fldShopName LIKE @search OR s.fldCustomerName LIKE @search OR CAST(s.fldShopNumber AS VARCHAR) LIKE @search OR CAST(s.fldAccID AS VARCHAR) LIKE @search)");
+    }
+
+    const query = `
+      SELECT 
+        s.fldID,
+        s.fldShopNumber,
+        ISNULL(s.fldShopName, '') AS fldShopName,
+        ISNULL(s.fldCustomerName, '') AS fldCustomerName,
+        ISNULL(s.fldRent, 0) AS fldRent,
+        ISNULL(s.fldtheCounter, '') AS fldtheCounter,
+        ISNULL(s.ServicesCostElectricity, 0) AS fldServicesCostElectricity,
+        ISNULL(s.CleaningFees, 0) AS fldCleaningFees,
+        ISNULL(s.LocalFees, 0) AS fldLocalFees,
+        ISNULL(s.Fuel, 0) AS fldFuel,
+        ISNULL(s.ServicesTax, 0) AS fldlTaxTota_D,
+        s.fldAccID,
+        ISNULL(a.fldNumber, s.fldAccID) AS fldAccNo,
+        ISNULL(a.fldName, s.fldShopName) AS fldAccountName,
+        ISNULL((SELECT SUM(mm.fldDebit - mm.fldCredit) FROM dbo.tblMoneyMove mm WHERE mm.fldAccID = s.fldAccID), 0) AS fldCurrentBalance,
+        ISNULL(s.fldBranchNo, 1) AS fldBranchID,
+        ISNULL(b.fldName, N'الفرع الرئيسي') AS fldBranchName,
+        ISNULL(s.fldIsActive, 1) AS fldState
+      FROM dbo.tblShopList s
+      LEFT JOIN dbo.tblAccount a ON s.fldAccID = a.fldID
+      LEFT JOIN dbo.tblBranchList b ON s.fldBranchNo = b.fldID
+      WHERE ` + whereClauses.join(' AND ') + `
+      ORDER BY s.fldfloor, s.fldShopNumber ASC, s.fldID ASC
+    `;
+
+    const result = await request.query(query);
+    res.json({ success: true, source: "database", data: result.recordset });
+  } catch (err) {
+    console.error("Error fetching service shops list report:", err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 2. GET /api/service-reports/monthly-electricity
+app.get('/api/service-reports/monthly-electricity', async (req, res) => {
+  const isConnected = globalPool !== null && globalPool.connected;
+  if (!isConnected) return res.json({ success: true, source: "mock", data: [] });
+
+  const { branchId, fromDate, toDate, shopId, search } = req.query;
+  try {
+    const request = globalPool.request();
+    let whereClauses = ["t.fldTransType = 41"];
+
+    if (branchId && parseInt(branchId) > 0) {
+      request.input('branchId', sql.Int, parseInt(branchId));
+      whereClauses.push("t.fldBranchNo = @branchId");
+    }
+    if (fromDate) {
+      request.input('fromDate', sql.NVarChar, fromDate);
+      whereClauses.push("CONVERT(VARCHAR(10), t.fldDate, 120) >= @fromDate");
+    }
+    if (toDate) {
+      request.input('toDate', sql.NVarChar, toDate);
+      whereClauses.push("CONVERT(VARCHAR(10), t.fldDate, 120) <= @toDate");
+    }
+    if (shopId && parseInt(shopId) > 0) {
+      request.input('shopId', sql.Int, parseInt(shopId));
+      whereClauses.push("e.fldShopID = @shopId");
+    }
+    if (search && search.trim()) {
+      request.input('search', sql.NVarChar, '%' + search.trim() + '%');
+      whereClauses.push("(s.fldShopName LIKE @search OR s.fldCustomerName LIKE @search OR t.fldDescription LIKE @search)");
+    }
+
+    const query = `
+      SELECT 
+        e.fldID,
+        e.fldTransID,
+        t.fldTransNo,
+        CONVERT(VARCHAR(10), t.fldDate, 120) AS fldDate,
+        RTRIM(LTRIM(ISNULL(t.fldDescription, ''))) AS fldDescription,
+        e.fldShopID,
+        s.fldShopNumber,
+        ISNULL(s.fldShopName, '') AS fldShopName,
+        ISNULL(s.fldCustomerName, '') AS fldCustomerName,
+        ISNULL(e.fldtheCounter, s.fldtheCounter) AS fldtheCounter,
+        ISNULL(e.fldPreviousReading, 0) AS fldPreviousReading,
+        ISNULL(e.fldCurrentreading, 0) AS fldCurrentreading,
+        ISNULL(e.fldUnits, 0) AS fldUnits,
+        ISNULL(e.fldUnitCost, 600) AS fldUnitCost,
+        ISNULL(e.fldTotalPrice, 0) AS fldTotalPrice,
+        ISNULL(e.fldServicesCostElectricity, 0) AS fldServicesCostElectricity,
+        ISNULL(e.fldCleaningFees, 0) AS fldCleaningFees,
+        ISNULL(e.fldLocalFees, 0) AS fldLocalFees,
+        ISNULL(e.fldFuel, 0) AS fldFuel,
+        ISNULL(e.fldlTaxTota_D, 0) AS fldlTaxTota_D,
+        (ISNULL(e.fldTotalPrice, 0) + ISNULL(e.fldServicesCostElectricity, 0) + ISNULL(e.fldCleaningFees, 0) + ISNULL(e.fldLocalFees, 0) + ISNULL(e.fldFuel, 0) + ISNULL(e.fldlTaxTota_D, 0)) AS fldNetTotal,
+        ISNULL(b.fldName, N'الفرع الرئيسي') AS fldBranchName
+      FROM dbo.tblElectricitybill e
+      INNER JOIN dbo.tblTransAction t ON e.fldTransID = t.fldID
+      LEFT JOIN dbo.tblShopList s ON e.fldShopID = s.fldID
+      LEFT JOIN dbo.tblBranchList b ON t.fldBranchNo = b.fldID
+      WHERE ` + whereClauses.join(' AND ') + `
+      ORDER BY t.fldDate DESC, s.fldShopNumber ASC
+    `;
+
+    const result = await request.query(query);
+    res.json({ success: true, source: "database", data: result.recordset });
+  } catch (err) {
+    console.error("Error fetching monthly electricity report:", err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 3. GET /api/service-reports/cost-center-revenue
+app.get('/api/service-reports/cost-center-revenue', async (req, res) => {
+  const isConnected = globalPool !== null && globalPool.connected;
+  if (!isConnected) return res.json({ success: true, source: "mock", data: [] });
+
+  const { branchId, fromDate, toDate, costCenterId } = req.query;
+  try {
+    const request = globalPool.request();
+    let whereClauses = ["t.fldTransType IN (40, 41)"];
+
+    if (branchId && parseInt(branchId) > 0) {
+      request.input('branchId', sql.Int, parseInt(branchId));
+      whereClauses.push("t.fldBranchNo = @branchId");
+    }
+    if (fromDate) {
+      request.input('fromDate', sql.NVarChar, fromDate);
+      whereClauses.push("CONVERT(VARCHAR(10), t.fldDate, 120) >= @fromDate");
+    }
+    if (toDate) {
+      request.input('toDate', sql.NVarChar, toDate);
+      whereClauses.push("CONVERT(VARCHAR(10), t.fldDate, 120) <= @toDate");
+    }
+    if (costCenterId && parseInt(costCenterId) > 0) {
+      request.input('costCenterId', sql.Int, parseInt(costCenterId));
+      whereClauses.push("t.fldCenterCostID = @costCenterId");
+    }
+
+    const query = `
+      SELECT 
+        ISNULL(cc.fldID, t.fldCenterCostID) AS fldCostCenterID,
+        ISNULL(cc.fldName, CASE t.fldTransType WHEN 40 THEN N'الايجارات' WHEN 41 THEN N'ايراد خدمة الكهرباء' ELSE N'عام' END) AS fldCostCenterName,
+        COUNT(DISTINCT t.fldID) AS fldInvoicesCount,
+        SUM(ISNULL(t.fldVoisherTotal, 0)) AS fldTotalAmount,
+        RTRIM(LTRIM(ISNULL(m.fldsymbol, 'USD'))) AS fldCurrency,
+        ISNULL(b.fldName, N'الفرع الرئيسي') AS fldBranchName
+      FROM dbo.tblTransAction t
+      LEFT JOIN dbo.tblCostCenter cc ON t.fldCenterCostID = cc.fldID
+      LEFT JOIN dbo.tblMoney m ON t.fldVoisherMoneyID = m.fldID
+      LEFT JOIN dbo.tblBranchList b ON t.fldBranchNo = b.fldID
+      WHERE ` + whereClauses.join(' AND ') + `
+      GROUP BY cc.fldID, cc.fldName, t.fldCenterCostID, t.fldTransType, m.fldsymbol, b.fldName
+      ORDER BY fldTotalAmount DESC
+    `;
+
+    const result = await request.query(query);
+    res.json({ success: true, source: "database", data: result.recordset });
+  } catch (err) {
+    console.error("Error fetching cost center revenue report:", err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 4. GET /api/service-reports/payment-tracking
+app.get('/api/service-reports/payment-tracking', async (req, res) => {
+  const isConnected = globalPool !== null && globalPool.connected;
+  if (!isConnected) return res.json({ success: true, source: "mock", data: [] });
+
+  const { branchId, search } = req.query;
+  try {
+    const request = globalPool.request();
+    let whereClauses = ["1=1"];
+
+    if (branchId && parseInt(branchId) > 0) {
+      request.input('branchId', sql.Int, parseInt(branchId));
+      whereClauses.push("s.fldBranchNo = @branchId");
+    }
+    if (search && search.trim()) {
+      request.input('search', sql.NVarChar, '%' + search.trim() + '%');
+      whereClauses.push("(s.fldShopName LIKE @search OR s.fldCustomerName LIKE @search)");
+    }
+
+    const query = `
+      SELECT 
+        s.fldID AS fldShopID,
+        s.fldShopNumber,
+        ISNULL(s.fldShopName, '') AS fldShopName,
+        ISNULL(s.fldCustomerName, '') AS fldCustomerName,
+        ISNULL(a.fldNumber, s.fldAccID) AS fldAccNo,
+        ISNULL(a.fldName, s.fldShopName) AS fldAccountName,
+        ISNULL((SELECT SUM(mm.fldDebit) FROM dbo.tblMoneyMove mm WHERE mm.fldAccID = s.fldAccID), 0) AS fldTotalBilled,
+        ISNULL((SELECT SUM(mm.fldCredit) FROM dbo.tblMoneyMove mm WHERE mm.fldAccID = s.fldAccID), 0) AS fldTotalPaid,
+        ISNULL((SELECT SUM(mm.fldDebit - mm.fldCredit) FROM dbo.tblMoneyMove mm WHERE mm.fldAccID = s.fldAccID), 0) AS fldRemainingDue,
+        CASE 
+          WHEN ISNULL((SELECT SUM(mm.fldDebit) FROM dbo.tblMoneyMove mm WHERE mm.fldAccID = s.fldAccID), 0) > 0 THEN 
+            ROUND((ISNULL((SELECT SUM(mm.fldCredit) FROM dbo.tblMoneyMove mm WHERE mm.fldAccID = s.fldAccID), 0) * 100.0 / (SELECT SUM(mm.fldDebit) FROM dbo.tblMoneyMove mm WHERE mm.fldAccID = s.fldAccID)), 1)
+          ELSE 100.0 
+        END AS fldCollectionRate,
+        ISNULL(b.fldName, N'الفرع الرئيسي') AS fldBranchName
+      FROM dbo.tblShopList s
+      LEFT JOIN dbo.tblAccount a ON s.fldAccID = a.fldID
+      LEFT JOIN dbo.tblBranchList b ON s.fldBranchNo = b.fldID
+      WHERE ` + whereClauses.join(' AND ') + `
+      ORDER BY fldRemainingDue DESC, s.fldShopNumber ASC
+    `;
+
+    const result = await request.query(query);
+    res.json({ success: true, source: "database", data: result.recordset });
+  } catch (err) {
+    console.error("Error fetching payment tracking report:", err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 5. GET /api/service-reports/overdue-debtors
+app.get('/api/service-reports/overdue-debtors', async (req, res) => {
+  const isConnected = globalPool !== null && globalPool.connected;
+  if (!isConnected) return res.json({ success: true, source: "mock", data: [] });
+
+  const { branchId, search } = req.query;
+  try {
+    const request = globalPool.request();
+    let whereClauses = ["ISNULL((SELECT SUM(mm.fldDebit - mm.fldCredit) FROM dbo.tblMoneyMove mm WHERE mm.fldAccID = s.fldAccID), 0) > 0"];
+
+    if (branchId && parseInt(branchId) > 0) {
+      request.input('branchId', sql.Int, parseInt(branchId));
+      whereClauses.push("s.fldBranchNo = @branchId");
+    }
+    if (search && search.trim()) {
+      request.input('search', sql.NVarChar, '%' + search.trim() + '%');
+      whereClauses.push("(s.fldShopName LIKE @search OR s.fldCustomerName LIKE @search)");
+    }
+
+    const query = `
+      SELECT 
+        s.fldID AS fldShopID,
+        s.fldShopNumber,
+        ISNULL(s.fldShopName, '') AS fldShopName,
+        ISNULL(s.fldCustomerName, '') AS fldCustomerName,
+        ISNULL(s.fldRent, 0) AS fldRent,
+        ISNULL(a.fldNumber, s.fldAccID) AS fldAccNo,
+        ISNULL(a.fldName, s.fldShopName) AS fldAccountName,
+        ISNULL((SELECT SUM(mm.fldDebit - mm.fldCredit) FROM dbo.tblMoneyMove mm WHERE mm.fldAccID = s.fldAccID), 0) AS fldOverdueAmount,
+        ISNULL(b.fldName, N'الفرع الرئيسي') AS fldBranchName
+      FROM dbo.tblShopList s
+      INNER JOIN dbo.tblAccount a ON s.fldAccID = a.fldID
+      LEFT JOIN dbo.tblBranchList b ON s.fldBranchNo = b.fldID
+      WHERE ` + whereClauses.join(' AND ') + `
+      ORDER BY fldOverdueAmount DESC, s.fldShopNumber ASC
+    `;
+
+    const result = await request.query(query);
+    res.json({ success: true, source: "database", data: result.recordset });
+  } catch (err) {
+    console.error("Error fetching overdue debtors report:", err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 6. GET /api/service-reports/detailed-consumption
+app.get('/api/service-reports/detailed-consumption', async (req, res) => {
+  const isConnected = globalPool !== null && globalPool.connected;
+  if (!isConnected) return res.json({ success: true, source: "mock", data: [] });
+
+  const { branchId, fromDate, toDate, shopId } = req.query;
+  try {
+    const request = globalPool.request();
+    let whereClauses = ["t.fldTransType = 41"];
+
+    if (branchId && parseInt(branchId) > 0) {
+      request.input('branchId', sql.Int, parseInt(branchId));
+      whereClauses.push("t.fldBranchNo = @branchId");
+    }
+    if (fromDate) {
+      request.input('fromDate', sql.NVarChar, fromDate);
+      whereClauses.push("CONVERT(VARCHAR(10), t.fldDate, 120) >= @fromDate");
+    }
+    if (toDate) {
+      request.input('toDate', sql.NVarChar, toDate);
+      whereClauses.push("CONVERT(VARCHAR(10), t.fldDate, 120) <= @toDate");
+    }
+    if (shopId && parseInt(shopId) > 0) {
+      request.input('shopId', sql.Int, parseInt(shopId));
+      whereClauses.push("e.fldShopID = @shopId");
+    }
+
+    const query = `
+      SELECT 
+        e.fldID,
+        CONVERT(VARCHAR(10), t.fldDate, 120) AS fldDate,
+        t.fldTransNo,
+        ISNULL(t.fldDescription, N'فاتورة استهلاك كهرباء') AS fldDescription,
+        s.fldShopNumber,
+        ISNULL(s.fldShopName, '') AS fldShopName,
+        ISNULL(s.fldCustomerName, '') AS fldCustomerName,
+        ISNULL(e.fldtheCounter, s.fldtheCounter) AS fldtheCounter,
+        ISNULL(e.fldPreviousReading, 0) AS fldPreviousReading,
+        ISNULL(e.fldCurrentreading, 0) AS fldCurrentreading,
+        ISNULL(e.fldUnits, 0) AS fldUnits,
+        ISNULL(e.fldUnitCost, 600) AS fldUnitCost,
+        ISNULL(e.fldTotalPrice, 0) AS fldTotalPrice,
+        (ISNULL(e.fldServicesCostElectricity, 0) + ISNULL(e.fldCleaningFees, 0) + ISNULL(e.fldLocalFees, 0) + ISNULL(e.fldFuel, 0) + ISNULL(e.fldlTaxTota_D, 0)) AS fldTotalFees,
+        (ISNULL(e.fldTotalPrice, 0) + ISNULL(e.fldServicesCostElectricity, 0) + ISNULL(e.fldCleaningFees, 0) + ISNULL(e.fldLocalFees, 0) + ISNULL(e.fldFuel, 0) + ISNULL(e.fldlTaxTota_D, 0)) AS fldNetTotal
+      FROM dbo.tblElectricitybill e
+      INNER JOIN dbo.tblTransAction t ON e.fldTransID = t.fldID
+      LEFT JOIN dbo.tblShopList s ON e.fldShopID = s.fldID
+      WHERE ` + whereClauses.join(' AND ') + `
+      ORDER BY t.fldDate DESC, s.fldShopNumber ASC
+    `;
+
+    const result = await request.query(query);
+    res.json({ success: true, source: "database", data: result.recordset });
+  } catch (err) {
+    console.error("Error fetching detailed consumption report:", err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 7. GET /api/service-reports/rent-statement
+app.get('/api/service-reports/rent-statement', async (req, res) => {
+  const isConnected = globalPool !== null && globalPool.connected;
+  if (!isConnected) return res.json({ success: true, source: "mock", data: [] });
+
+  const { branchId, fromDate, toDate, shopId } = req.query;
+  try {
+    const request = globalPool.request();
+    let whereClauses = ["t.fldTransType = 40"];
+
+    if (branchId && parseInt(branchId) > 0) {
+      request.input('branchId', sql.Int, parseInt(branchId));
+      whereClauses.push("t.fldBranchNo = @branchId");
+    }
+    if (fromDate) {
+      request.input('fromDate', sql.NVarChar, fromDate);
+      whereClauses.push("CONVERT(VARCHAR(10), t.fldDate, 120) >= @fromDate");
+    }
+    if (toDate) {
+      request.input('toDate', sql.NVarChar, toDate);
+      whereClauses.push("CONVERT(VARCHAR(10), t.fldDate, 120) <= @toDate");
+    }
+    if (shopId && parseInt(shopId) > 0) {
+      request.input('shopId', sql.Int, parseInt(shopId));
+      whereClauses.push("r.fldShopID = @shopId");
+    }
+
+    const query = `
+      SELECT 
+        r.fldID,
+        CONVERT(VARCHAR(10), t.fldDate, 120) AS fldDate,
+        t.fldTransNo,
+        ISNULL(t.fldDescription, N'فاتورة ايجار شهري') AS fldDescription,
+        s.fldShopNumber,
+        ISNULL(s.fldShopName, '') AS fldShopName,
+        ISNULL(s.fldCustomerName, '') AS fldCustomerName,
+        ISNULL(r.fldQTY, 1) AS fldQTY,
+        ISNULL(r.fldRent, 0) AS fldRent,
+        ISNULL(r.fldDebit, 0) AS fldDebit,
+        ISNULL(r.fldlTaxTota_D, 0) AS fldTax,
+        (ISNULL(r.fldRent, 0) * ISNULL(r.fldQTY, 1) + ISNULL(r.fldlTaxTota_D, 0)) AS fldTotalPrice,
+        (ISNULL(r.fldRent, 0) * ISNULL(r.fldQTY, 1) + ISNULL(r.fldDebit, 0) + ISNULL(r.fldlTaxTota_D, 0)) AS fldNetTotal,
+        ISNULL((SELECT SUM(mm.fldDebit - mm.fldCredit) FROM dbo.tblMoneyMove mm WHERE mm.fldAccID = s.fldAccID), 0) AS fldAccountBalance
+      FROM dbo.tblRentbill r
+      INNER JOIN dbo.tblTransAction t ON r.fldTransID = t.fldID
+      LEFT JOIN dbo.tblShopList s ON r.fldShopID = s.fldID
+      LEFT JOIN dbo.tblAccount a ON s.fldAccID = a.fldID
+      WHERE ` + whereClauses.join(' AND ') + `
+      ORDER BY t.fldDate DESC, s.fldShopNumber ASC
+    `;
+
+    const result = await request.query(query);
+    res.json({ success: true, source: "database", data: result.recordset });
+  } catch (err) {
+    console.error("Error fetching rent statement report:", err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 8. POST /api/service-reports/send-whatsapp-pdf
+app.post('/api/service-reports/send-whatsapp-pdf', async (req, res) => {
+  const { html, phone, title, caption, landscape } = req.body;
+  if (!html || !phone) {
+    return res.status(400).json({ success: false, error: "HTML content and phone number are required" });
+  }
+
+  let cleanPhone = String(phone).replace(/[^0-9]/g, '');
+  if (!cleanPhone.includes('@c.us')) {
+    if (!cleanPhone.startsWith('967') && cleanPhone.length === 9) cleanPhone = '967' + cleanPhone;
+    cleanPhone = cleanPhone + '@c.us';
+  }
+
+  if (clientStatus !== "ready" || !whatsappClient) {
+    return res.status(503).json({ success: false, error: "خادم الواتساب غير متصل حالياً. يرجى مسح رمز QR أو الاتصال أولاً." });
+  }
+
+  try {
+    const pdfBuffer = await renderPosPdfBuffer(html, landscape !== false);
+    const fileName = `Report_${Date.now()}.pdf`;
+    const tempFilePath = path.join(scratchDir, fileName);
+    fs.writeFileSync(tempFilePath, pdfBuffer);
+
+    const media = MessageMedia.fromFilePath(tempFilePath);
+    let chatId = cleanPhone;
+    if (whatsappClient && typeof whatsappClient.getNumberId === 'function') {
+      try {
+        const numId = await whatsappClient.getNumberId(cleanPhone.replace('@c.us', ''));
+        if (numId && numId._serialized) chatId = numId._serialized;
+      } catch (e) {}
+    }
+
+    await whatsappClient.sendMessage(chatId, media, {
+      caption: caption || `تقرير: ${title || 'تقرير الخدمات'} من نظام مستكشف الحسابات`
+    });
+
+    try { fs.unlinkSync(tempFilePath); } catch (e) {}
+    res.json({ success: true, message: `تم إرسال ملف PDF بنجاح إلى الرقم (${phone})` });
+  } catch (err) {
+    console.error("Error sending service report WhatsApp PDF:", err);
+    res.status(500).json({ success: false, error: "فشل إرسال ملف PDF: " + err.message });
+  }
+});
+
+// 9. POST /api/service-reports/download-pdf
+app.post('/api/service-reports/download-pdf', async (req, res) => {
+  const { html, title, landscape } = req.body;
+  if (!html) {
+    return res.status(400).json({ success: false, error: "HTML content is required" });
+  }
+
+  try {
+    const pdfBuffer = await renderPosPdfBuffer(html, landscape !== false);
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(title || 'Service_Report')}_${Date.now()}.pdf"`);
+    res.end(Buffer.from(pdfBuffer));
+  } catch (err) {
+    console.error("Error downloading service report PDF:", err);
+    res.status(500).json({ success: false, error: "فشل توليد ملف PDF: " + err.message });
+  }
+});
+
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
@@ -18203,3 +18662,5 @@ function startHttpServer(portToTry) {
 }
 
 startHttpServer(PORT);
+
+// =============================================================================

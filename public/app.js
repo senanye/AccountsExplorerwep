@@ -898,6 +898,8 @@ async function openTab(tabId, tabTitle, iconClass, colorClass, bypassPermission 
     initStoreTransferTab(tabId);
   } else if (tabTitle === "استعلام التحويلات" || tabTitle === "استعلام التحويلات المخزنية" || tabId.includes("transfer-explorer")) {
     initTransferExplorerTab(tabId);
+  } else if (tabTitle === "تقارير الخدمات" || tabId === "menu-43" || tabId === "service-reports-tab" || tabTitle.includes("تقارير الخدمات")) {
+    initServiceReportsTab(tabId);
   } else if (tabTitle === "قائمة المحلات" || tabId === "menu-42" || tabTitle.includes("المحلات") || tabTitle.includes("قائمة المحلات")) {
     initShopsListTab(tabId);
   } else if (tabTitle === "فاتورة ايجار شهري" || tabTitle === "استعلام فواتير الايجار" || tabId === "menu-40" || tabId === "rent-bills-explorer" || tabId === "menu-40-explorer" || (tabTitle.includes("ايجار") && !tabId.includes("rent-inv"))) {
@@ -1002,7 +1004,8 @@ function getScreenContent(tabId, tabTitle, iconClass, colorClass) {
   const isItemsExplorer = tabTitle === "الاصناف" || tabTitle === "الأصناف" || tabId === "menu-1076" || tabTitle === "مستكشف الاصناف" || tabTitle === "مستكشف الأصناف" || tabId === "menu-202" || tabId === "menu-501" || tabTitle.includes("السلع والمنتجات") || tabTitle.includes("اصناف") || tabTitle.includes("أصناف");
   const isPurchasesExplorer = tabTitle === "عرض مشتريات" || tabTitle === "المشتريات" || tabId === "menu-20";
   const isPurchasesInvoice = tabTitle === "مشتريات" || tabTitle === "فاتورة المشتريات" || tabId.includes("menu-20-invoice") || tabId.includes("purchase-inv") || (tabTitle.includes("مشتريات") && !tabTitle.includes("عرض") && !tabTitle.includes("تقارير"));
-  const isShopsList = tabTitle === "قائمة المحلات" || tabId === "menu-42" || tabTitle.includes("المحلات") || tabTitle.includes("قائمة المحلات");
+  const isServiceReports = tabTitle === "تقارير الخدمات" || tabId === "menu-43" || tabId === "service-reports-tab" || tabTitle.includes("تقارير الخدمات");
+  const isShopsList = (tabTitle === "قائمة المحلات" || tabId === "menu-42" || tabTitle.includes("المحلات") || tabTitle.includes("قائمة المحلات")) && !isServiceReports;
   const isSalesReturnExplorer = tabTitle === "مردود المبيعات" || tabTitle === "مردود مبيعات" || tabTitle === "استعلام مردود المبيعات" || tabId === "menu-31" || tabId === "sales-return-explorer" || tabId === "menu-31-explorer";
   const isSalesReturnInvoice = tabTitle === "فاتورة مردود مبيعات" || tabId.includes("menu-31-invoice") || tabId.includes("sales-return-inv");
   const isSalesExplorer = (tabTitle === "عرض مبيعات" || tabTitle === "المبيعات" || tabTitle === "استعلام المبيعات" || tabId === "menu-30" || tabId === "sales-explorer" || tabId === "menu-30-explorer") && !isSalesReturnExplorer;
@@ -1014,7 +1017,152 @@ function getScreenContent(tabId, tabTitle, iconClass, colorClass) {
 
   let bodyHtml = '';
 
-  if (isLogoSettings) {
+  if (isServiceReports) {
+    bodyHtml = `
+      <div class="service-reports-screen" style="direction: rtl; text-align: right; font-family: var(--font-arabic); display: flex; flex-direction: column; gap: 4px; height: 100%; padding: 4px 6px;">
+        
+        <!-- Top Reports Switcher Ribbon (Matching media_1787856273843.png) -->
+        <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 4px 8px; display: flex; justify-content: space-between; align-items: center; gap: 6px; flex-wrap: wrap; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+          
+          <!-- Report Selector Buttons -->
+          <div style="display: flex; align-items: center; gap: 4px; flex-wrap: wrap;">
+            <button type="button" id="btnSrvRep-shops-${tabId}" class="srv-rep-btn active" onclick="switchServiceReport('${tabId}', 'shops')" style="height: 38px; padding: 0 12px; background: #e0f2fe; border: 1.5px solid #0284c7; border-radius: 6px; font-weight: 800; font-size: 0.82rem; color: #0369a1; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;">
+              <i class="fa-solid fa-store" style="font-size: 0.95rem;"></i>
+              <span>قائمة المحلات</span>
+            </button>
+            <button type="button" id="btnSrvRep-elec-${tabId}" class="srv-rep-btn" onclick="switchServiceReport('${tabId}', 'elec')" style="height: 38px; padding: 0 12px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; font-weight: 700; font-size: 0.82rem; color: #475569; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;">
+              <i class="fa-solid fa-chart-column" style="color: #f59e0b; font-size: 0.95rem;"></i>
+              <span>الاستهلاك الشهري</span>
+            </button>
+            <button type="button" id="btnSrvRep-cc-${tabId}" class="srv-rep-btn" onclick="switchServiceReport('${tabId}', 'cc')" style="height: 38px; padding: 0 12px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; font-weight: 700; font-size: 0.82rem; color: #475569; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;">
+              <i class="fa-solid fa-table-cells-large" style="color: #8b5cf6; font-size: 0.95rem;"></i>
+              <span>ايرادات مركز كلفة</span>
+            </button>
+            <button type="button" id="btnSrvRep-tracking-${tabId}" class="srv-rep-btn" onclick="switchServiceReport('${tabId}', 'tracking')" style="height: 38px; padding: 0 12px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; font-weight: 700; font-size: 0.82rem; color: #475569; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;">
+              <i class="fa-solid fa-chart-line" style="color: #10b981; font-size: 0.95rem;"></i>
+              <span>متابعة السداد</span>
+            </button>
+            <button type="button" id="btnSrvRep-overdue-${tabId}" class="srv-rep-btn" onclick="switchServiceReport('${tabId}', 'overdue')" style="height: 38px; padding: 0 12px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; font-weight: 700; font-size: 0.82rem; color: #475569; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;">
+              <i class="fa-solid fa-hand" style="color: #ef4444; font-size: 0.95rem;"></i>
+              <span>متأخرين عن السداد</span>
+            </button>
+            <button type="button" id="btnSrvRep-elecdetail-${tabId}" class="srv-rep-btn" onclick="switchServiceReport('${tabId}', 'elecdetail')" style="height: 38px; padding: 0 12px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; font-weight: 700; font-size: 0.82rem; color: #475569; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;">
+              <i class="fa-solid fa-list-check" style="color: #0284c7; font-size: 0.95rem;"></i>
+              <span>كشف استهلاك تفصيلي</span>
+            </button>
+            <button type="button" id="btnSrvRep-rentstmt-${tabId}" class="srv-rep-btn" onclick="switchServiceReport('${tabId}', 'rentstmt')" style="height: 38px; padding: 0 12px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; font-weight: 700; font-size: 0.82rem; color: #475569; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;">
+              <i class="fa-solid fa-receipt" style="color: #6366f1; font-size: 0.95rem;"></i>
+              <span>كشف الإيجارات و رصيد الحساب</span>
+            </button>
+          </div>
+
+          <!-- Actions: Print, XLS, WhatsApp -->
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <button type="button" onclick="printCurrentServiceReport('${tabId}')" class="btn btn-secondary btn-sm" style="height: 32px; padding: 0 10px; font-weight: 800; font-size: 0.8rem; display: flex; align-items: center; gap: 5px;" title="طباعة التقرير">
+              <i class="fa-solid fa-print" style="color: #475569;"></i> طباعة
+            </button>
+            <button type="button" onclick="exportServiceReportExcel('${tabId}')" class="btn btn-secondary btn-sm" style="height: 32px; padding: 0 10px; font-weight: 800; font-size: 0.8rem; display: flex; align-items: center; gap: 5px;" title="تصدير إكسل">
+              <i class="fa-solid fa-file-excel" style="color: #10b981;"></i> تصدير XLS
+            </button>
+            <button type="button" onclick="openServiceReportWhatsAppModal('${tabId}')" class="btn btn-success btn-sm" style="height: 32px; padding: 0 12px; font-weight: 800; font-size: 0.8rem; background: #25d366; border-color: #22c55e; color: #ffffff; display: flex; align-items: center; gap: 6px; box-shadow: 0 1px 3px rgba(37,211,102,0.3);" title="إرسال PDF عبر الواتساب">
+              <i class="fa-brands fa-whatsapp" style="font-size: 1rem;"></i> إرسال PDF واتساب
+            </button>
+          </div>
+
+        </div>
+
+        <!-- Decorative Title Banner (Matching Screenshot) -->
+        <div style="position: relative; text-align: center; margin: 4px 0;">
+          <div style="position: absolute; top: 50%; left: 0; right: 0; height: 1px; background: #cbd5e1; z-index: 1;"></div>
+          <span id="srvRepTitleText-${tabId}" style="position: relative; z-index: 2; background: #f8fafc; padding: 0 20px; font-size: 1.15rem; font-weight: 900; color: #1e3a8a; border-radius: 4px; box-shadow: 0 0 10px #f8fafc;">قائمة المحلات</span>
+        </div>
+
+        <!-- Filter & Search Controls (Matching media_1787856273843.png) -->
+        <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 6px 10px; display: flex; flex-direction: column; gap: 4px;">
+          
+          <!-- Row 1: Branch, From Date, To Date, Currency, Report Type -->
+          <div style="display: grid; grid-template-columns: 1.2fr 1fr 1fr 1fr 1fr; gap: 8px; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <label style="font-size: 0.76rem; font-weight: bold; color: #334155; white-space: nowrap;">الفرع:</label>
+              <select id="srvRepBranch-${tabId}" onchange="loadActiveServiceReport('${tabId}')" style="width: 100%; height: 26px; border: 1px solid #94a3b8; border-radius: 4px; font-weight: bold; font-family: var(--font-arabic); font-size: 0.8rem;">
+              </select>
+            </div>
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <label style="font-size: 0.76rem; font-weight: bold; color: #334155; white-space: nowrap;">من تاريخ:</label>
+              <input type="date" id="srvRepFromDate-${tabId}" style="width: 100%; height: 26px; border: 1px solid #94a3b8; border-radius: 4px; font-family: monospace; font-size: 0.8rem;">
+            </div>
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <label style="font-size: 0.76rem; font-weight: bold; color: #334155; white-space: nowrap;">الى تاريخ:</label>
+              <input type="date" id="srvRepToDate-${tabId}" style="width: 100%; height: 26px; border: 1px solid #94a3b8; border-radius: 4px; font-family: monospace; font-size: 0.8rem;">
+            </div>
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <label style="font-size: 0.76rem; font-weight: bold; color: #334155; white-space: nowrap;">العملة:</label>
+              <select id="srvRepCurrency-${tabId}" style="width: 100%; height: 26px; border: 1px solid #94a3b8; border-radius: 4px; font-weight: bold; font-family: var(--font-arabic); font-size: 0.8rem;">
+                <option value="1">دولار امريكي</option>
+                <option value="3">ريال يمني1</option>
+                <option value="2">ريال سعودي</option>
+              </select>
+            </div>
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <label style="font-size: 0.76rem; font-weight: bold; color: #334155; white-space: nowrap;">نوع التقرير:</label>
+              <select id="srvRepType-${tabId}" style="width: 100%; height: 26px; border: 1px solid #94a3b8; border-radius: 4px; font-weight: bold; font-family: var(--font-arabic); font-size: 0.8rem;">
+                <option value="detailed">تفصيلي</option>
+                <option value="summary">إجمالي</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Row 2: Shop Select, Cost Center, Search Box, Apply Button -->
+          <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+            <div style="display: flex; align-items: center; gap: 4px; flex: 1.2; min-width: 220px;">
+              <label style="font-size: 0.76rem; font-weight: bold; color: #334155; white-space: nowrap;">المحل:</label>
+              <select id="srvRepShopSelect-${tabId}" onchange="loadActiveServiceReport('${tabId}')" style="width: 100%; height: 26px; border: 1px solid #94a3b8; border-radius: 4px; font-weight: bold; font-family: var(--font-arabic); font-size: 0.8rem;">
+                <option value="0">كافة المحلات والمشتركين</option>
+              </select>
+            </div>
+            <div style="display: flex; align-items: center; gap: 4px; flex: 1.2; min-width: 200px;">
+              <label style="font-size: 0.76rem; font-weight: bold; color: #334155; white-space: nowrap;">مركز الكلفة:</label>
+              <select id="srvRepCostCenterSelect-${tabId}" onchange="loadActiveServiceReport('${tabId}')" style="width: 100%; height: 26px; border: 1px solid #94a3b8; border-radius: 4px; font-weight: bold; font-family: var(--font-arabic); font-size: 0.8rem;">
+                <option value="0">كافة مراكز التكلفة</option>
+              </select>
+            </div>
+            <div style="position: relative; flex: 1.5; min-width: 200px;">
+              <input type="text" id="srvRepSearchInput-${tabId}" oninput="handleServiceReportSearch('${tabId}')" placeholder="🔍 بحث سريع في بيانات التقرير..." style="width: 100%; height: 26px; padding: 0 8px; border: 1px solid #94a3b8; border-radius: 4px; font-family: var(--font-arabic); font-size: 0.8rem;">
+            </div>
+            <button type="button" onclick="loadActiveServiceReport('${tabId}')" class="btn btn-primary btn-sm" style="height: 26px; padding: 0 14px; font-weight: 800; font-size: 0.8rem; display: flex; align-items: center; gap: 4px;">
+              <i class="fa-solid fa-filter"></i> تطبيق
+            </button>
+          </div>
+
+        </div>
+
+        <!-- Data Grid Container with Header Grouping Bar (Matching media_1787856273843.png) -->
+        <div class="accounts-table-container" style="flex: 1; min-height: 320px; max-height: calc(100vh - 235px); background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; overflow-x: auto; overflow-y: auto; position: relative;">
+          
+          <!-- Drag & Group header indicator -->
+          <div style="background: #f1f5f9; padding: 3px 12px; font-size: 0.74rem; color: #94a3b8; border-bottom: 1px solid #cbd5e1; font-style: italic;">
+            Drag a column header here to group by that column
+          </div>
+
+          <table id="serviceReportTable-${tabId}" class="accounts-table" style="width: 100%; min-width: 1300px; border-collapse: separate; border-spacing: 0; font-size: 0.82rem; text-align: center;">
+            <thead id="serviceReportThead-${tabId}">
+              <!-- Dynamic Report Headers -->
+            </thead>
+            <tbody id="serviceReportTbody-${tabId}">
+              <!-- Dynamic Report Rows -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Summary & Stats Footer -->
+        <div id="serviceReportFooter-${tabId}" style="background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 4px; padding: 4px 12px; display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; font-weight: bold; color: #334155;">
+          <span id="srvRepSummaryCount-${tabId}">عدد السجلات: 0</span>
+          <span id="srvRepSummaryTotals-${tabId}"></span>
+        </div>
+
+      </div>
+    `;
+  } else if (isLogoSettings) {
     bodyHtml = `
       <div class="screen-container">
         <div class="screen-header">
@@ -32908,4 +33056,815 @@ window.executeElectricityInvoicePrint = function() {
     </html>
   `);
   printWindow.document.close();
+};
+
+// =============================================================================
+// 43. SERVICE REPORTS JAVASCRIPT CONTROLLERS (تقارير الخدمات)
+// Matching media_1787856273843.png
+// =============================================================================
+
+state.serviceReports = state.serviceReports || {};
+
+const SERVICE_REPORT_META = {
+  shops: { title: "قائمة المحلات", endpoint: "/api/service-reports/shops-list", icon: "fa-store" },
+  elec: { title: "الاستهلاك الشهري", endpoint: "/api/service-reports/monthly-electricity", icon: "fa-chart-column" },
+  cc: { title: "ايرادات مركز كلفة", endpoint: "/api/service-reports/cost-center-revenue", icon: "fa-table-cells-large" },
+  tracking: { title: "متابعة السداد", endpoint: "/api/service-reports/payment-tracking", icon: "fa-chart-line" },
+  overdue: { title: "متأخرين عن السداد", endpoint: "/api/service-reports/overdue-debtors", icon: "fa-hand" },
+  elecdetail: { title: "كشف استهلاك تفصيلي", endpoint: "/api/service-reports/detailed-consumption", icon: "fa-list-check" },
+  rentstmt: { title: "كشف الإيجارات و رصيد الحساب", endpoint: "/api/service-reports/rent-statement", icon: "fa-receipt" }
+};
+
+window.openServiceReportsTab = function() {
+  openTab('service-reports-tab', 'تقارير الخدمات', 'fa-solid fa-file-waveform', 'text-primary', true);
+};
+
+window.initServiceReportsTab = async function(tabId) {
+  state.serviceReports[tabId] = state.serviceReports[tabId] || {
+    activeReport: 'shops',
+    data: []
+  };
+
+  // 1. Populate Branches
+  if (!state.branches || state.branches.length === 0) {
+    try {
+      const res = await fetch('/api/branches');
+      const branchData = await res.json();
+      state.branches = branchData.data || [];
+    } catch (e) {
+      console.warn("Could not fetch branches:", e);
+    }
+  }
+  const branchList = (state.userBranches && state.userBranches.length > 0) ? state.userBranches : (state.branches || []);
+  const branchSelect = document.getElementById(`srvRepBranch-${tabId}`);
+  if (branchSelect) {
+    branchSelect.innerHTML = '<option value="0">كافة الفروع</option>';
+    branchList.forEach(b => {
+      const opt = document.createElement('option');
+      opt.value = b.fldID;
+      opt.textContent = b.fldName;
+      if (state.currentBranch && String(b.fldID) === String(state.currentBranch.id)) {
+        opt.selected = true;
+      }
+      branchSelect.appendChild(opt);
+    });
+  }
+
+  // 2. Populate Shops Select
+  try {
+    const sRes = await fetch('/api/shops');
+    const sData = await sRes.json();
+    state.allShopsList = sData.data || [];
+    const shopSelect = document.getElementById(`srvRepShopSelect-${tabId}`);
+    if (shopSelect && state.allShopsList.length > 0) {
+      shopSelect.innerHTML = '<option value="0">كافة المحلات والمشتركين</option>';
+      state.allShopsList.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s.fldID;
+        opt.textContent = `#${s.fldShopNumber} - ${s.fldShopName || ''} (${s.fldCustomerName || ''})`;
+        shopSelect.appendChild(opt);
+      });
+    }
+  } catch (e) {
+    console.warn("Could not fetch shops:", e);
+  }
+
+  // 3. Populate Cost Centers
+  try {
+    const ccRes = await fetch('/api/rent-bills/cost-centers');
+    const ccData = await ccRes.json();
+    const ccSelect = document.getElementById(`srvRepCostCenterSelect-${tabId}`);
+    if (ccSelect && ccData.data) {
+      ccSelect.innerHTML = '<option value="0">كافة مراكز التكلفة</option>';
+      ccData.data.forEach(cc => {
+        const opt = document.createElement('option');
+        opt.value = cc.fldID;
+        opt.textContent = `${cc.fldID} - ${cc.fldName}`;
+        ccSelect.appendChild(opt);
+      });
+    }
+  } catch (e) {
+    console.warn("Could not fetch cost centers:", e);
+  }
+
+  // 4. Default Date Range (1 year ago to today)
+  const fromEl = document.getElementById(`srvRepFromDate-${tabId}`);
+  const toEl = document.getElementById(`srvRepToDate-${tabId}`);
+  const today = new Date();
+  const oneYearAgo = new Date();
+  oneYearAgo.setFullYear(today.getFullYear() - 1);
+  if (fromEl && !fromEl.value) fromEl.value = oneYearAgo.toISOString().split('T')[0];
+  if (toEl && !toEl.value) toEl.value = today.toISOString().split('T')[0];
+
+  // 5. Load Initial Report
+  loadActiveServiceReport(tabId);
+};
+
+window.switchServiceReport = function(tabId, reportKey) {
+  if (!SERVICE_REPORT_META[reportKey]) return;
+  state.serviceReports[tabId] = state.serviceReports[tabId] || {};
+  state.serviceReports[tabId].activeReport = reportKey;
+
+  // Update button active states
+  const btns = ['shops', 'elec', 'cc', 'tracking', 'overdue', 'elecdetail', 'rentstmt'];
+  btns.forEach(k => {
+    const btn = document.getElementById(`btnSrvRep-${k}-${tabId}`);
+    if (!btn) return;
+    if (k === reportKey) {
+      btn.style.background = '#e0f2fe';
+      btn.style.borderColor = '#0284c7';
+      btn.style.color = '#0369a1';
+      btn.style.fontWeight = '800';
+    } else {
+      btn.style.background = '#f8fafc';
+      btn.style.borderColor = '#cbd5e1';
+      btn.style.color = '#475569';
+      btn.style.fontWeight = '700';
+    }
+  });
+
+  // Update Title Banner
+  const titleEl = document.getElementById(`srvRepTitleText-${tabId}`);
+  if (titleEl) {
+    titleEl.textContent = SERVICE_REPORT_META[reportKey].title;
+  }
+
+  loadActiveServiceReport(tabId);
+};
+
+window.loadActiveServiceReport = async function(tabId) {
+  const repState = state.serviceReports[tabId] || { activeReport: 'shops' };
+  const reportKey = repState.activeReport || 'shops';
+  const meta = SERVICE_REPORT_META[reportKey] || SERVICE_REPORT_META.shops;
+
+  const thead = document.getElementById(`serviceReportThead-${tabId}`);
+  const tbody = document.getElementById(`serviceReportTbody-${tabId}`);
+  if (!tbody) return;
+
+  tbody.innerHTML = `<tr><td colspan="15" style="text-align: center; padding: 30px; color: #64748b;"><i class="fa-solid fa-spinner fa-spin"></i> جاري استعلام وتحميل بيانات ${meta.title}...</td></tr>`;
+
+  const branchId = document.getElementById(`srvRepBranch-${tabId}`)?.value || 0;
+  const fromDate = document.getElementById(`srvRepFromDate-${tabId}`)?.value || '';
+  const toDate = document.getElementById(`srvRepToDate-${tabId}`)?.value || '';
+  const shopId = document.getElementById(`srvRepShopSelect-${tabId}`)?.value || 0;
+  const costCenterId = document.getElementById(`srvRepCostCenterSelect-${tabId}`)?.value || 0;
+  const search = document.getElementById(`srvRepSearchInput-${tabId}`)?.value || '';
+
+  try {
+    let url = `${meta.endpoint}?branchId=${branchId}&fromDate=${fromDate}&toDate=${toDate}&shopId=${shopId}&costCenterId=${costCenterId}&search=${encodeURIComponent(search)}`;
+    const res = await fetch(url);
+    const result = await res.json();
+
+    if (!result.success || !result.data || result.data.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="15" style="text-align: center; padding: 30px; color: #94a3b8;"><i class="fa-solid fa-folder-open"></i> لا توجد بيانات مسجلة في ${meta.title} تطابق معايير الفلترة.</td></tr>`;
+      updateServiceReportSummary(tabId, 0, '');
+      return;
+    }
+
+    repState.data = result.data;
+
+    // Render report by key
+    if (reportKey === 'shops') renderServiceShopsReport(tabId, result.data);
+    else if (reportKey === 'elec') renderServiceMonthlyElecReport(tabId, result.data);
+    else if (reportKey === 'cc') renderServiceCostCenterReport(tabId, result.data);
+    else if (reportKey === 'tracking') renderServicePaymentTrackingReport(tabId, result.data);
+    else if (reportKey === 'overdue') renderServiceOverdueReport(tabId, result.data);
+    else if (reportKey === 'elecdetail') renderServiceDetailedConsumptionReport(tabId, result.data);
+    else if (reportKey === 'rentstmt') renderServiceRentStatementReport(tabId, result.data);
+
+  } catch (err) {
+    console.error("Error loading service report:", err);
+    tbody.innerHTML = `<tr><td colspan="15" style="text-align: center; padding: 25px; color: #ef4444;">حدث خطأ أثناء تحميل التقرير: ${err.message}</td></tr>`;
+  }
+};
+
+window.handleServiceReportSearch = function(tabId) {
+  clearTimeout(window._srvRepSearchTimeout);
+  window._srvRepSearchTimeout = setTimeout(() => {
+    loadActiveServiceReport(tabId);
+  }, 300);
+};
+
+// 1. RENDER SHOPS LIST REPORT (Matching Screenshot media_1787856273843.png)
+function renderServiceShopsReport(tabId, list) {
+  const thead = document.getElementById(`serviceReportThead-${tabId}`);
+  const tbody = document.getElementById(`serviceReportTbody-${tabId}`);
+  if (!thead || !tbody) return;
+
+  thead.innerHTML = `
+    <tr style="position: sticky; top: 0; z-index: 10; background: #f8fafc; border-bottom: 2px solid #cbd5e1; color: #334155; font-weight: 800;">
+      <th style="padding: 8px 6px; width: 70px; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">رقم الفرع</th>
+      <th style="padding: 8px 12px; min-width: 220px; text-align: right; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">اسم الحساب</th>
+      <th style="padding: 8px 8px; width: 100px; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">رقم الحساب</th>
+      <th style="padding: 8px 12px; min-width: 240px; text-align: right; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">اسم المستاجر</th>
+      <th style="padding: 8px 12px; min-width: 180px; text-align: right; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">اسم المحل</th>
+      <th style="padding: 8px 6px; width: 75px; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">رقم المحل</th>
+      <th style="padding: 8px 8px; width: 95px; text-align: right; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">الايجار الشهري</th>
+      <th style="padding: 8px 8px; width: 95px; text-align: right; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">الرصيد الحالي</th>
+      <th style="padding: 8px 8px; width: 110px; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">رقم التلفون</th>
+      <th style="padding: 8px 6px; width: 60px; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">العداد</th>
+    </tr>
+  `;
+
+  let totalRent = 0;
+  let totalBal = 0;
+  let html = '';
+
+  list.forEach((s, idx) => {
+    const rent = parseFloat(s.fldRent || 0);
+    const bal = parseFloat(s.fldCurrentBalance || 0);
+    totalRent += rent;
+    totalBal += bal;
+
+    html += `
+      <tr style="border-bottom: 1px solid #e2e8f0; background: ${idx % 2 === 0 ? '#ffffff' : '#f8fafc'}; transition: background 0.15s;">
+        <td style="padding: 6px 6px; font-family: monospace; color: #64748b; white-space: nowrap;">${s.fldBranchID || 1}</td>
+        <td style="padding: 6px 12px; text-align: right; color: #334155; font-size: 0.82rem; white-space: nowrap;">${s.fldAccountName || ''}</td>
+        <td style="padding: 6px 8px; font-family: monospace; font-weight: bold; color: #1e3a8a; white-space: nowrap;">${s.fldAccNo || s.fldAccID || ''}</td>
+        <td style="padding: 6px 12px; text-align: right; font-weight: 600; color: #0f172a; white-space: nowrap;">${s.fldCustomerName || ''}</td>
+        <td style="padding: 6px 12px; text-align: right; font-weight: bold; color: #1e293b; white-space: nowrap;">${s.fldShopName || ''}</td>
+        <td style="padding: 6px 6px; font-weight: 800; font-family: monospace; color: #0284c7; white-space: nowrap;">#${s.fldShopNumber || ''}</td>
+        <td style="padding: 6px 8px; text-align: right; font-weight: bold; font-family: monospace; color: #059669; white-space: nowrap;">${rent.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+        <td style="padding: 6px 8px; text-align: right; font-weight: bold; font-family: monospace; color: ${bal > 0 ? '#dc2626' : '#059669'}; white-space: nowrap;">${bal.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+        <td style="padding: 6px 8px; font-family: monospace; color: #475569; white-space: nowrap;">${s.fldTelephone || '-'}</td>
+        <td style="padding: 6px 6px; font-family: monospace; color: #64748b; white-space: nowrap;">${s.fldtheCounter || '-'}</td>
+      </tr>
+    `;
+  });
+
+  tbody.innerHTML = html;
+  updateServiceReportSummary(tabId, list.length, `إجمالي الإيجارات: <span style="color: #059669; margin: 0 4px;">$${totalRent.toLocaleString('en-US', {minimumFractionDigits:2})}</span> | إجمالي الأرصدة: <span style="color: ${totalBal > 0 ? '#dc2626' : '#059669'}; margin: 0 4px;">$${totalBal.toLocaleString('en-US', {minimumFractionDigits:2})}</span>`);
+}
+
+// 2. RENDER MONTHLY ELECTRICITY REPORT
+function renderServiceMonthlyElecReport(tabId, list) {
+  const thead = document.getElementById(`serviceReportThead-${tabId}`);
+  const tbody = document.getElementById(`serviceReportTbody-${tabId}`);
+  if (!thead || !tbody) return;
+
+  thead.innerHTML = `
+    <tr style="position: sticky; top: 0; z-index: 10; background: #f8fafc; border-bottom: 2px solid #cbd5e1; color: #334155; font-weight: 800;">
+      <th style="padding: 8px 6px; width: 65px; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">رقم الفاتورة</th>
+      <th style="padding: 8px 8px; width: 100px; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">التاريخ</th>
+      <th style="padding: 8px 6px; width: 70px; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">رقم المحل</th>
+      <th style="padding: 8px 12px; min-width: 160px; text-align: right; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">اسم المحل</th>
+      <th style="padding: 8px 12px; min-width: 200px; text-align: right; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">اسم المستأجر</th>
+      <th style="padding: 8px 6px; width: 80px; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">العداد</th>
+      <th style="padding: 8px 6px; width: 75px; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">السابقة</th>
+      <th style="padding: 8px 6px; width: 75px; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">الحالية</th>
+      <th style="padding: 8px 6px; width: 80px; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">الاستهلاك (ك.و)</th>
+      <th style="padding: 8px 6px; width: 75px; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">سعر الوحدة</th>
+      <th style="padding: 8px 8px; width: 100px; text-align: right; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">قيمة الاستهلاك</th>
+      <th style="padding: 8px 8px; width: 90px; text-align: right; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">إجمالي الرسوم</th>
+      <th style="padding: 8px 10px; width: 115px; text-align: right; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">صافي الفاتورة</th>
+    </tr>
+  `;
+
+  let totalUnits = 0;
+  let totalUsage = 0;
+  let totalFees = 0;
+  let totalNet = 0;
+  let html = '';
+
+  list.forEach((e, idx) => {
+    const units = parseFloat(e.fldUnits || 0);
+    const usage = parseFloat(e.fldTotalPrice || 0);
+    const fees = parseFloat(e.fldServicesCostElectricity || 0) + parseFloat(e.fldCleaningFees || 0) + parseFloat(e.fldLocalFees || 0) + parseFloat(e.fldFuel || 0) + parseFloat(e.fldlTaxTota_D || 0);
+    const net = parseFloat(e.fldNetTotal || 0);
+
+    totalUnits += units;
+    totalUsage += usage;
+    totalFees += fees;
+    totalNet += net;
+
+    html += `
+      <tr style="border-bottom: 1px solid #e2e8f0; background: ${idx % 2 === 0 ? '#ffffff' : '#f8fafc'}; transition: background 0.15s;">
+        <td style="padding: 6px 6px; font-weight: bold; font-family: monospace; color: #1e3a8a; white-space: nowrap;">${e.fldTransNo || e.fldTransID}</td>
+        <td style="padding: 6px 8px; font-family: monospace; white-space: nowrap;">${e.fldDate || ''}</td>
+        <td style="padding: 6px 6px; font-weight: 800; font-family: monospace; color: #0284c7; white-space: nowrap;">#${e.fldShopNumber || ''}</td>
+        <td style="padding: 6px 12px; text-align: right; font-weight: bold; color: #1e293b; white-space: nowrap;">${e.fldShopName || ''}</td>
+        <td style="padding: 6px 12px; text-align: right; color: #334155; white-space: nowrap;">${e.fldCustomerName || ''}</td>
+        <td style="padding: 6px 6px; font-family: monospace; white-space: nowrap;">${e.fldtheCounter || '-'}</td>
+        <td style="padding: 6px 6px; font-family: monospace; white-space: nowrap;">${parseFloat(e.fldPreviousReading||0).toFixed(0)}</td>
+        <td style="padding: 6px 6px; font-family: monospace; white-space: nowrap;">${parseFloat(e.fldCurrentreading||0).toFixed(0)}</td>
+        <td style="padding: 6px 6px; font-family: monospace; font-weight: bold; color: #d97706; white-space: nowrap;">${units.toLocaleString()}</td>
+        <td style="padding: 6px 6px; font-family: monospace; white-space: nowrap;">${parseFloat(e.fldUnitCost||600).toFixed(0)}</td>
+        <td style="padding: 6px 8px; text-align: right; font-family: monospace; font-weight: bold; color: #059669; white-space: nowrap;">${usage.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+        <td style="padding: 6px 8px; text-align: right; font-family: monospace; color: #64748b; white-space: nowrap;">${fees.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+        <td style="padding: 6px 10px; text-align: right; font-weight: 900; font-family: monospace; color: #0f766e; font-size: 0.9rem; white-space: nowrap;">${net.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+      </tr>
+    `;
+  });
+
+  tbody.innerHTML = html;
+  updateServiceReportSummary(tabId, list.length, `إجمالي الكيلوواط: <span style="color: #d97706; margin: 0 4px;">${totalUnits.toLocaleString()} ك.و</span> | إجمالي الاستهلاك: <span style="color: #059669; margin: 0 4px;">${totalUsage.toLocaleString('en-US', {minimumFractionDigits:2})}</span> | صافي الفواتير: <span style="color: #0f766e; margin: 0 4px;">${totalNet.toLocaleString('en-US', {minimumFractionDigits:2})}</span>`);
+}
+
+// 3. RENDER COST CENTER REVENUE REPORT
+function renderServiceCostCenterReport(tabId, list) {
+  const thead = document.getElementById(`serviceReportThead-${tabId}`);
+  const tbody = document.getElementById(`serviceReportTbody-${tabId}`);
+  if (!thead || !tbody) return;
+
+  thead.innerHTML = `
+    <tr style="position: sticky; top: 0; z-index: 10; background: #f8fafc; border-bottom: 2px solid #cbd5e1; color: #334155; font-weight: 800;">
+      <th style="padding: 8px 8px; width: 100px; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">رقم المركز</th>
+      <th style="padding: 8px 14px; min-width: 250px; text-align: right; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">اسم مركز التكلفة</th>
+      <th style="padding: 8px 10px; width: 120px; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">عدد الفواتير</th>
+      <th style="padding: 8px 14px; width: 180px; text-align: right; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">إجمالي الإيرادات</th>
+      <th style="padding: 8px 8px; width: 80px; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">العملة</th>
+      <th style="padding: 8px 12px; width: 160px; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">الفرع</th>
+    </tr>
+  `;
+
+  let totalRev = 0;
+  let totalInv = 0;
+  let html = '';
+
+  list.forEach((cc, idx) => {
+    const amt = parseFloat(cc.fldTotalAmount || 0);
+    const cnt = parseInt(cc.fldInvoicesCount || 0);
+    totalRev += amt;
+    totalInv += cnt;
+
+    html += `
+      <tr style="border-bottom: 1px solid #e2e8f0; background: ${idx % 2 === 0 ? '#ffffff' : '#f8fafc'}; transition: background 0.15s;">
+        <td style="padding: 8px 8px; font-weight: bold; font-family: monospace; color: #1e3a8a; white-space: nowrap;">${cc.fldCostCenterID}</td>
+        <td style="padding: 8px 14px; text-align: right; font-weight: bold; color: #0f172a; white-space: nowrap;">${cc.fldCostCenterName}</td>
+        <td style="padding: 8px 10px; font-family: monospace; font-weight: bold; color: #0284c7; white-space: nowrap;">${cnt} فاتورة</td>
+        <td style="padding: 8px 14px; text-align: right; font-weight: 900; font-family: monospace; color: #059669; font-size: 0.95rem; white-space: nowrap;">${amt.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+        <td style="padding: 8px 8px; font-family: monospace; color: #64748b; white-space: nowrap;">${cc.fldCurrency || 'USD'}</td>
+        <td style="padding: 8px 12px; color: #334155; white-space: nowrap;">${cc.fldBranchName || 'الفرع الرئيسي'}</td>
+      </tr>
+    `;
+  });
+
+  tbody.innerHTML = html;
+  updateServiceReportSummary(tabId, list.length, `إجمالي الفواتير: <span style="color: #0284c7; margin: 0 4px;">${totalInv}</span> | إجمالي الإيراد العام: <span style="color: #059669; font-size: 1rem; margin: 0 4px;">${totalRev.toLocaleString('en-US', {minimumFractionDigits:2})}</span>`);
+}
+
+// 4. RENDER PAYMENT TRACKING REPORT
+function renderServicePaymentTrackingReport(tabId, list) {
+  const thead = document.getElementById(`serviceReportThead-${tabId}`);
+  const tbody = document.getElementById(`serviceReportTbody-${tabId}`);
+  if (!thead || !tbody) return;
+
+  thead.innerHTML = `
+    <tr style="position: sticky; top: 0; z-index: 10; background: #f8fafc; border-bottom: 2px solid #cbd5e1; color: #334155; font-weight: 800;">
+      <th style="padding: 8px 6px; width: 75px; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">رقم المحل</th>
+      <th style="padding: 8px 12px; min-width: 180px; text-align: right; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">اسم المحل</th>
+      <th style="padding: 8px 12px; min-width: 220px; text-align: right; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">اسم المستأجر</th>
+      <th style="padding: 8px 8px; width: 110px; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">رقم التلفون</th>
+      <th style="padding: 8px 10px; width: 130px; text-align: right; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">إجمالي المستحق</th>
+      <th style="padding: 8px 10px; width: 130px; text-align: right; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">إجمالي المسدد</th>
+      <th style="padding: 8px 10px; width: 130px; text-align: right; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">المتبقي</th>
+      <th style="padding: 8px 10px; width: 110px; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">نسبة التحصيل</th>
+    </tr>
+  `;
+
+  let totalBilled = 0;
+  let totalPaid = 0;
+  let totalRem = 0;
+  let html = '';
+
+  list.forEach((p, idx) => {
+    const billed = parseFloat(p.fldTotalBilled || 0);
+    const paid = parseFloat(p.fldTotalPaid || 0);
+    const rem = parseFloat(p.fldRemainingDue || 0);
+    const rate = parseFloat(p.fldCollectionRate || 0);
+
+    totalBilled += billed;
+    totalPaid += paid;
+    totalRem += rem;
+
+    html += `
+      <tr style="border-bottom: 1px solid #e2e8f0; background: ${idx % 2 === 0 ? '#ffffff' : '#f8fafc'}; transition: background 0.15s;">
+        <td style="padding: 6px 6px; font-weight: 800; font-family: monospace; color: #0284c7; white-space: nowrap;">#${p.fldShopNumber || ''}</td>
+        <td style="padding: 6px 12px; text-align: right; font-weight: bold; color: #1e293b; white-space: nowrap;">${p.fldShopName || ''}</td>
+        <td style="padding: 6px 12px; text-align: right; color: #334155; white-space: nowrap;">${p.fldCustomerName || ''}</td>
+        <td style="padding: 6px 8px; font-family: monospace; color: #64748b; white-space: nowrap;">${p.fldTelephone || '-'}</td>
+        <td style="padding: 6px 10px; text-align: right; font-weight: bold; font-family: monospace; color: #1e3a8a; white-space: nowrap;">${billed.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+        <td style="padding: 6px 10px; text-align: right; font-weight: bold; font-family: monospace; color: #059669; white-space: nowrap;">${paid.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+        <td style="padding: 6px 10px; text-align: right; font-weight: 900; font-family: monospace; color: ${rem > 0 ? '#dc2626' : '#059669'}; white-space: nowrap;">${rem.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+        <td style="padding: 6px 10px; text-align: center; white-space: nowrap;">
+          <span class="badge" style="background: ${rate >= 90 ? '#dcfce7' : rate >= 50 ? '#fef3c7' : '#fee2e2'}; color: ${rate >= 90 ? '#15803d' : rate >= 50 ? '#b45309' : '#b91c1c'}; font-weight: 800; padding: 3px 8px; border-radius: 4px;">
+            ${rate.toFixed(1)}%
+          </span>
+        </td>
+      </tr>
+    `;
+  });
+
+  tbody.innerHTML = html;
+  const overallRate = totalBilled > 0 ? ((totalPaid * 100.0) / totalBilled).toFixed(1) : '100.0';
+  updateServiceReportSummary(tabId, list.length, `إجمالي المستحق: <span style="color: #1e3a8a; margin: 0 4px;">$${totalBilled.toLocaleString('en-US', {minimumFractionDigits:2})}</span> | إجمالي المحصل: <span style="color: #059669; margin: 0 4px;">$${totalPaid.toLocaleString('en-US', {minimumFractionDigits:2})}</span> | إجمالي المتبقي: <span style="color: #dc2626; margin: 0 4px;">$${totalRem.toLocaleString('en-US', {minimumFractionDigits:2})}</span> (نسبة التحصيل: <b>${overallRate}%</b>)`);
+}
+
+// 5. RENDER OVERDUE DEBTORS REPORT
+function renderServiceOverdueReport(tabId, list) {
+  const thead = document.getElementById(`serviceReportThead-${tabId}`);
+  const tbody = document.getElementById(`serviceReportTbody-${tabId}`);
+  if (!thead || !tbody) return;
+
+  thead.innerHTML = `
+    <tr style="position: sticky; top: 0; z-index: 10; background: #fff1f2; border-bottom: 2px solid #fecdd3; color: #9f1239; font-weight: 800;">
+      <th style="padding: 8px 6px; width: 75px; position: sticky; top: 0; background: #fff1f2; white-space: nowrap;">رقم المحل</th>
+      <th style="padding: 8px 12px; min-width: 180px; text-align: right; position: sticky; top: 0; background: #fff1f2; white-space: nowrap;">اسم المحل</th>
+      <th style="padding: 8px 12px; min-width: 220px; text-align: right; position: sticky; top: 0; background: #fff1f2; white-space: nowrap;">اسم المستأجر</th>
+      <th style="padding: 8px 8px; width: 120px; position: sticky; top: 0; background: #fff1f2; white-space: nowrap;">رقم التلفون</th>
+      <th style="padding: 8px 10px; width: 120px; text-align: right; position: sticky; top: 0; background: #fff1f2; white-space: nowrap;">قيمة الإيجار الشهري</th>
+      <th style="padding: 8px 14px; width: 160px; text-align: right; position: sticky; top: 0; background: #fff1f2; white-space: nowrap;">المبلغ المتأخر (المديونية)</th>
+      <th style="padding: 8px 10px; width: 130px; text-align: center; position: sticky; top: 0; background: #fff1f2; white-space: nowrap;">إجراء واتساب</th>
+    </tr>
+  `;
+
+  let totalOverdue = 0;
+  let html = '';
+
+  list.forEach((o, idx) => {
+    const overdue = parseFloat(o.fldOverdueAmount || 0);
+    const rent = parseFloat(o.fldRent || 0);
+    totalOverdue += overdue;
+
+    html += `
+      <tr style="border-bottom: 1px solid #fee2e2; background: ${idx % 2 === 0 ? '#ffffff' : '#fff5f5'}; transition: background 0.15s;">
+        <td style="padding: 6px 6px; font-weight: 800; font-family: monospace; color: #b91c1c; white-space: nowrap;">#${o.fldShopNumber || ''}</td>
+        <td style="padding: 6px 12px; text-align: right; font-weight: bold; color: #1e293b; white-space: nowrap;">${o.fldShopName || ''}</td>
+        <td style="padding: 6px 12px; text-align: right; color: #334155; white-space: nowrap;">${o.fldCustomerName || ''}</td>
+        <td style="padding: 6px 8px; font-family: monospace; font-weight: bold; color: #0284c7; white-space: nowrap;">${o.fldTelephone || '-'}</td>
+        <td style="padding: 6px 10px; text-align: right; font-family: monospace; color: #475569; white-space: nowrap;">${rent.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+        <td style="padding: 6px 14px; text-align: right; font-weight: 900; font-family: monospace; color: #dc2626; font-size: 0.95rem; white-space: nowrap;">${overdue.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+        <td style="padding: 6px 10px; text-align: center; white-space: nowrap;">
+          <button type="button" onclick="sendOverdueNoticeWhatsApp('${tabId}', '${o.fldTelephone || ''}', '${o.fldCustomerName || o.fldShopName}', ${overdue})" class="btn btn-xs btn-success" style="padding: 3px 8px; font-size: 0.75rem; background: #22c55e; color: #fff; border-radius: 4px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
+            <i class="fa-brands fa-whatsapp"></i> إشعار سداد
+          </button>
+        </td>
+      </tr>
+    `;
+  });
+
+  tbody.innerHTML = html;
+  updateServiceReportSummary(tabId, list.length, `عدد المتأخرين: <span style="color: #dc2626; margin: 0 4px;">${list.length} مشترك</span> | إجمالي مبالغ المتأخرات: <span style="color: #dc2626; font-size: 1rem; margin: 0 4px;">$${totalOverdue.toLocaleString('en-US', {minimumFractionDigits:2})}</span>`);
+}
+
+// 6. RENDER DETAILED CONSUMPTION REPORT
+function renderServiceDetailedConsumptionReport(tabId, list) {
+  const thead = document.getElementById(`serviceReportThead-${tabId}`);
+  const tbody = document.getElementById(`serviceReportTbody-${tabId}`);
+  if (!thead || !tbody) return;
+
+  thead.innerHTML = `
+    <tr style="position: sticky; top: 0; z-index: 10; background: #f8fafc; border-bottom: 2px solid #cbd5e1; color: #334155; font-weight: 800;">
+      <th style="padding: 8px 8px; width: 100px; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">التاريخ</th>
+      <th style="padding: 8px 6px; width: 70px; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">رقم المحل</th>
+      <th style="padding: 8px 12px; min-width: 160px; text-align: right; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">اسم المحل</th>
+      <th style="padding: 8px 12px; min-width: 200px; text-align: right; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">اسم المستأجر</th>
+      <th style="padding: 8px 6px; width: 80px; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">العداد</th>
+      <th style="padding: 8px 6px; width: 75px; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">السابقة</th>
+      <th style="padding: 8px 6px; width: 75px; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">الحالية</th>
+      <th style="padding: 8px 6px; width: 80px; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">الاستهلاك</th>
+      <th style="padding: 8px 8px; width: 100px; text-align: right; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">قيمة الاستهلاك</th>
+      <th style="padding: 8px 8px; width: 90px; text-align: right; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">الرسوم والضرائب</th>
+      <th style="padding: 8px 10px; width: 120px; text-align: right; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">الإجمالي الصافي</th>
+    </tr>
+  `;
+
+  let totalUnits = 0;
+  let totalNet = 0;
+  let html = '';
+
+  list.forEach((d, idx) => {
+    const units = parseFloat(d.fldUnits || 0);
+    const usage = parseFloat(d.fldTotalPrice || 0);
+    const fees = parseFloat(d.fldTotalFees || 0);
+    const net = parseFloat(d.fldNetTotal || 0);
+
+    totalUnits += units;
+    totalNet += net;
+
+    html += `
+      <tr style="border-bottom: 1px solid #e2e8f0; background: ${idx % 2 === 0 ? '#ffffff' : '#f8fafc'}; transition: background 0.15s;">
+        <td style="padding: 6px 8px; font-family: monospace; white-space: nowrap;">${d.fldDate || ''}</td>
+        <td style="padding: 6px 6px; font-weight: 800; font-family: monospace; color: #0284c7; white-space: nowrap;">#${d.fldShopNumber || ''}</td>
+        <td style="padding: 6px 12px; text-align: right; font-weight: bold; color: #1e293b; white-space: nowrap;">${d.fldShopName || ''}</td>
+        <td style="padding: 6px 12px; text-align: right; color: #334155; white-space: nowrap;">${d.fldCustomerName || ''}</td>
+        <td style="padding: 6px 6px; font-family: monospace; white-space: nowrap;">${d.fldtheCounter || '-'}</td>
+        <td style="padding: 6px 6px; font-family: monospace; white-space: nowrap;">${parseFloat(d.fldPreviousReading||0).toFixed(0)}</td>
+        <td style="padding: 6px 6px; font-family: monospace; white-space: nowrap;">${parseFloat(d.fldCurrentreading||0).toFixed(0)}</td>
+        <td style="padding: 6px 6px; font-family: monospace; font-weight: bold; color: #d97706; white-space: nowrap;">${units.toLocaleString()}</td>
+        <td style="padding: 6px 8px; text-align: right; font-family: monospace; color: #059669; white-space: nowrap;">${usage.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+        <td style="padding: 6px 8px; text-align: right; font-family: monospace; color: #64748b; white-space: nowrap;">${fees.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+        <td style="padding: 6px 10px; text-align: right; font-weight: 900; font-family: monospace; color: #0f766e; font-size: 0.9rem; white-space: nowrap;">${net.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+      </tr>
+    `;
+  });
+
+  tbody.innerHTML = html;
+  updateServiceReportSummary(tabId, list.length, `إجمالي الكيلوواط: <span style="color: #d97706; margin: 0 4px;">${totalUnits.toLocaleString()} ك.و</span> | إجمالي الصافي: <span style="color: #0f766e; margin: 0 4px;">${totalNet.toLocaleString('en-US', {minimumFractionDigits:2})}</span>`);
+}
+
+// 7. RENDER RENT STATEMENT REPORT
+function renderServiceRentStatementReport(tabId, list) {
+  const thead = document.getElementById(`serviceReportThead-${tabId}`);
+  const tbody = document.getElementById(`serviceReportTbody-${tabId}`);
+  if (!thead || !tbody) return;
+
+  thead.innerHTML = `
+    <tr style="position: sticky; top: 0; z-index: 10; background: #f8fafc; border-bottom: 2px solid #cbd5e1; color: #334155; font-weight: 800;">
+      <th style="padding: 8px 8px; width: 100px; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">التاريخ</th>
+      <th style="padding: 8px 6px; width: 70px; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">رقم المحل</th>
+      <th style="padding: 8px 12px; min-width: 160px; text-align: right; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">اسم المحل</th>
+      <th style="padding: 8px 12px; min-width: 200px; text-align: right; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">اسم المستأجر</th>
+      <th style="padding: 8px 14px; min-width: 220px; text-align: right; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">البيان</th>
+      <th style="padding: 8px 8px; width: 100px; text-align: right; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">قيمة الإيجار</th>
+      <th style="padding: 8px 8px; width: 90px; text-align: right; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">مدين سابق</th>
+      <th style="padding: 8px 8px; width: 80px; text-align: right; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">الضريبة</th>
+      <th style="padding: 8px 10px; width: 120px; text-align: right; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">الإجمالي</th>
+      <th style="padding: 8px 10px; width: 120px; text-align: right; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">رصيد الحساب</th>
+    </tr>
+  `;
+
+  let totalRent = 0;
+  let totalDebit = 0;
+  let totalNet = 0;
+  let html = '';
+
+  list.forEach((r, idx) => {
+    const rent = parseFloat(r.fldRent || 0);
+    const debit = parseFloat(r.fldDebit || 0);
+    const tax = parseFloat(r.fldTax || 0);
+    const net = parseFloat(r.fldNetTotal || (rent + debit + tax));
+    const bal = parseFloat(r.fldAccountBalance || 0);
+
+    totalRent += rent;
+    totalDebit += debit;
+    totalNet += net;
+
+    html += `
+      <tr style="border-bottom: 1px solid #e2e8f0; background: ${idx % 2 === 0 ? '#ffffff' : '#f8fafc'}; transition: background 0.15s;">
+        <td style="padding: 6px 8px; font-family: monospace; white-space: nowrap;">${r.fldDate || ''}</td>
+        <td style="padding: 6px 6px; font-weight: 800; font-family: monospace; color: #0284c7; white-space: nowrap;">#${r.fldShopNumber || ''}</td>
+        <td style="padding: 6px 12px; text-align: right; font-weight: bold; color: #1e293b; white-space: nowrap;">${r.fldShopName || ''}</td>
+        <td style="padding: 6px 12px; text-align: right; color: #334155; white-space: nowrap;">${r.fldCustomerName || ''}</td>
+        <td style="padding: 6px 14px; text-align: right; font-size: 0.8rem; color: #475569; white-space: nowrap;">${r.fldDescription || ''}</td>
+        <td style="padding: 6px 8px; text-align: right; font-family: monospace; font-weight: bold; color: #059669; white-space: nowrap;">${rent.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+        <td style="padding: 6px 8px; text-align: right; font-family: monospace; color: #b91c1c; white-space: nowrap;">${debit.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+        <td style="padding: 6px 8px; text-align: right; font-family: monospace; color: #64748b; white-space: nowrap;">${tax.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+        <td style="padding: 6px 10px; text-align: right; font-weight: 900; font-family: monospace; color: #0f766e; font-size: 0.9rem; white-space: nowrap;">${net.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+        <td style="padding: 6px 10px; text-align: right; font-weight: bold; font-family: monospace; color: ${bal > 0 ? '#dc2626' : '#059669'}; white-space: nowrap;">${bal.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+      </tr>
+    `;
+  });
+
+  tbody.innerHTML = html;
+  updateServiceReportSummary(tabId, list.length, `إجمالي الإيجارات: <span style="color: #059669; margin: 0 4px;">$${totalRent.toLocaleString('en-US', {minimumFractionDigits:2})}</span> | إجمالي المدين: <span style="color: #b91c1c; margin: 0 4px;">$${totalDebit.toLocaleString('en-US', {minimumFractionDigits:2})}</span> | إجمالي الفواتير: <span style="color: #0f766e; margin: 0 4px;">$${totalNet.toLocaleString('en-US', {minimumFractionDigits:2})}</span>`);
+}
+
+function updateServiceReportSummary(tabId, count, totalsHtml) {
+  const countEl = document.getElementById(`srvRepSummaryCount-${tabId}`);
+  const totalsEl = document.getElementById(`srvRepSummaryTotals-${tabId}`);
+  if (countEl) countEl.innerHTML = `عدد السجلات: <span style="color: #0284c7; font-size: 0.9rem;">${count}</span>`;
+  if (totalsEl) totalsEl.innerHTML = totalsHtml || '';
+}
+
+// 8. PRINT & EXCEL EXPORT
+window.generateServiceReportPrintHtml = function(tabId) {
+  const repState = state.serviceReports[tabId] || { activeReport: 'shops' };
+  const reportKey = repState.activeReport || 'shops';
+  const meta = SERVICE_REPORT_META[reportKey] || SERVICE_REPORT_META.shops;
+
+  const branchEl = document.getElementById(`srvRepBranch-${tabId}`);
+  const branchName = branchEl ? branchEl.options[branchEl.selectedIndex]?.text : 'الفرع الرئيسي';
+  const fromDate = document.getElementById(`srvRepFromDate-${tabId}`)?.value || '';
+  const toDate = document.getElementById(`srvRepToDate-${tabId}`)?.value || '';
+
+  const theadHtml = document.getElementById(`serviceReportThead-${tabId}`)?.innerHTML || '';
+  const tbodyHtml = document.getElementById(`serviceReportTbody-${tabId}`)?.innerHTML || '';
+  const summaryHtml = document.getElementById(`serviceReportFooter-${tabId}`)?.innerHTML || '';
+
+  const savedHeaderImage = localStorage.getItem('reportHeaderImage') || '/api/settings/logo';
+
+  return `
+    <!DOCTYPE html>
+    <html dir="rtl" lang="ar">
+    <head>
+      <meta charset="UTF-8">
+      <title>${meta.title} - ${branchName}</title>
+      <style>
+        @page { size: A4 landscape; margin: 8mm; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 11px; margin: 0; padding: 0; color: #1e293b; direction: rtl; }
+        .print-header-img { width: 100%; max-height: 90px; object-fit: contain; margin-bottom: 6px; display: block; }
+        .report-header-box { border-bottom: 2px solid #0284c7; padding-bottom: 6px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+        .report-title { font-size: 18px; font-weight: 900; color: #1e3a8a; }
+        .report-meta { font-size: 11px; color: #475569; }
+        table { width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 10.5px; }
+        th { background: #f1f5f9; color: #1e293b; border: 1px solid #94a3b8; padding: 5px 4px; text-align: center; font-weight: bold; }
+        td { border: 1px solid #cbd5e1; padding: 4px 6px; text-align: center; }
+        tr:nth-child(even) { background-color: #f8fafc; }
+        .summary-box { margin-top: 8px; padding: 6px 10px; background: #f8fafc; border: 1px solid #cbd5e1; font-weight: bold; font-size: 11.5px; display: flex; justify-content: space-between; }
+        .footer-signatures { margin-top: 18px; display: flex; justify-content: space-between; font-weight: bold; font-size: 11px; }
+      </style>
+    </head>
+    <body>
+      <img src="${savedHeaderImage}" class="print-header-img" onerror="this.style.display='none'">
+      <div class="report-header-box">
+        <div>
+          <span class="report-title">${meta.title}</span>
+          <span style="margin-right: 12px; font-size: 12px; color: #0284c7; font-weight: bold;">[ ${branchName} ]</span>
+        </div>
+        <div class="report-meta">
+          <span>الفترة: من ${fromDate || 'البداية'} إلى ${toDate || 'اليوم'}</span> |
+          <span>تاريخ الطباعة: ${new Date().toLocaleDateString('ar-EG')}</span>
+        </div>
+      </div>
+
+      <table>
+        <thead>${theadHtml}</thead>
+        <tbody>${tbodyHtml}</tbody>
+      </table>
+
+      <div class="summary-box">${summaryHtml}</div>
+
+      <div class="footer-signatures">
+        <div>المسؤول: ....................</div>
+        <div>المحاسب: ....................</div>
+        <div>المدير العام: ....................</div>
+      </div>
+    </body>
+    </html>
+  `;
+};
+
+window.printCurrentServiceReport = function(tabId) {
+  const html = generateServiceReportPrintHtml(tabId);
+  const printWin = window.open('', '_blank');
+  if (!printWin) {
+    showToast("يرجى السماح بالنوافذ المنبثقة للطباعة", "warning");
+    return;
+  }
+  printWin.document.write(html);
+  printWin.document.close();
+  setTimeout(() => {
+    printWin.focus();
+    printWin.print();
+  }, 400);
+};
+
+window.exportServiceReportExcel = function(tabId) {
+  const repState = state.serviceReports[tabId] || { activeReport: 'shops' };
+  const reportKey = repState.activeReport || 'shops';
+  const meta = SERVICE_REPORT_META[reportKey] || SERVICE_REPORT_META.shops;
+  const table = document.getElementById(`serviceReportTable-${tabId}`);
+  if (!table) return;
+
+  let html = `
+    <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+    <head><meta charset="utf-8"/></head>
+    <body dir="rtl">
+      <h2>${meta.title}</h2>
+      ${table.outerHTML}
+    </body>
+    </html>
+  `;
+  const blob = new Blob([html], { type: 'application/vnd.ms-excel;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${meta.title}_${Date.now()}.xls`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  showToast("تم تصدير ملف الإكسل بنجاح", "success");
+};
+
+// 9. WHATSAPP MODAL & PDF SENDER
+window.openServiceReportWhatsAppModal = function(tabId) {
+  const repState = state.serviceReports[tabId] || { activeReport: 'shops' };
+  const reportKey = repState.activeReport || 'shops';
+  const meta = SERVICE_REPORT_META[reportKey] || SERVICE_REPORT_META.shops;
+
+  // Auto detect selected shop phone if single shop selected
+  let defaultPhone = '';
+  const shopId = document.getElementById(`srvRepShopSelect-${tabId}`)?.value || 0;
+  if (shopId && parseInt(shopId) > 0 && state.allShopsList) {
+    const s = state.allShopsList.find(x => String(x.fldID) === String(shopId));
+    if (s && s.fldTelephone) defaultPhone = s.fldTelephone;
+  }
+
+  let modal = document.getElementById('serviceReportWhatsAppModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'serviceReportWhatsAppModal';
+    modal.className = 'modal-backdrop';
+    modal.style.display = 'none';
+    modal.style.position = 'fixed';
+    modal.style.top = '0';
+    modal.style.left = '0';
+    modal.style.width = '100%';
+    modal.style.height = '100%';
+    modal.style.background = 'rgba(0,0,0,0.5)';
+    modal.style.zIndex = '9999';
+    modal.style.justifyContent = 'center';
+    modal.style.alignItems = 'center';
+    modal.style.direction = 'rtl';
+    modal.style.fontFamily = 'var(--font-arabic)';
+    document.body.appendChild(modal);
+  }
+
+  modal.innerHTML = `
+    <div style="background: #ffffff; width: 440px; max-width: 95%; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); overflow: hidden;">
+      <div style="background: #25d366; color: #ffffff; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;">
+        <div style="font-weight: 800; font-size: 1rem; display: flex; align-items: center; gap: 8px;">
+          <i class="fa-brands fa-whatsapp" style="font-size: 1.2rem;"></i> إرسال ${meta.title} عبر الواتساب
+        </div>
+        <button type="button" onclick="document.getElementById('serviceReportWhatsAppModal').style.display='none'" style="background: transparent; border: none; color: #fff; font-size: 1.2rem; cursor: pointer;">&times;</button>
+      </div>
+
+      <div style="padding: 16px; display: flex; flex-direction: column; gap: 12px;">
+        <div>
+          <label style="font-size: 0.82rem; font-weight: bold; color: #334155; display: block; margin-bottom: 4px;">رقم هاتف الواتساب المستلم:</label>
+          <input type="text" id="srvRepWhatsAppPhoneInput" value="${defaultPhone}" placeholder="مثال: 777123456 أو 967777123456" style="width: 100%; height: 34px; padding: 0 10px; border: 1.5px solid #25d366; border-radius: 6px; font-family: monospace; font-size: 0.95rem; font-weight: bold;">
+          <span style="font-size: 0.72rem; color: #64748b; margin-top: 2px; display: block;">سيتم توليد التقرير كملف PDF عالي الدقة وإرساله فوراً عبر خادم الواتساب المدمج.</span>
+        </div>
+
+        <div>
+          <label style="font-size: 0.82rem; font-weight: bold; color: #334155; display: block; margin-bottom: 4px;">نص الرسالة التوضيحية (Caption):</label>
+          <textarea id="srvRepWhatsAppCaptionInput" rows="2" style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-family: var(--font-arabic); font-size: 0.82rem;">مرفق لكم ملف ${meta.title} من نظام إدارة الخدمات.</textarea>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 6px;">
+          <button type="button" onclick="document.getElementById('serviceReportWhatsAppModal').style.display='none'" class="btn btn-secondary btn-sm" style="padding: 6px 14px;">إلغاء</button>
+          <button type="button" id="btnSendSrvRepWhatsApp" onclick="executeSendServiceReportWhatsApp('${tabId}')" class="btn btn-success btn-sm" style="background: #25d366; border-color: #22c55e; color: #fff; font-weight: 800; padding: 6px 16px; display: flex; align-items: center; gap: 6px;">
+            <i class="fa-solid fa-paper-plane"></i> إرسال الآن
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  modal.style.display = 'flex';
+};
+
+window.executeSendServiceReportWhatsApp = async function(tabId) {
+  const phone = document.getElementById('srvRepWhatsAppPhoneInput')?.value?.trim();
+  const caption = document.getElementById('srvRepWhatsAppCaptionInput')?.value?.trim();
+  const btn = document.getElementById('btnSendSrvRepWhatsApp');
+
+  if (!phone) {
+    showToast("يرجى إدخال رقم هاتف الواتساب للمستلم.", "warning");
+    return;
+  }
+
+  const repState = state.serviceReports[tabId] || { activeReport: 'shops' };
+  const reportKey = repState.activeReport || 'shops';
+  const meta = SERVICE_REPORT_META[reportKey] || SERVICE_REPORT_META.shops;
+
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري التوليد والإرسال...';
+  }
+
+  const html = generateServiceReportPrintHtml(tabId);
+
+  try {
+    const res = await fetch('/api/service-reports/send-whatsapp-pdf', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        html: html,
+        phone: phone,
+        title: meta.title,
+        caption: caption,
+        landscape: true
+      })
+    });
+
+    const result = await res.json();
+    if (result.success) {
+      showToast(result.message || "تم إرسال ملف PDF بنجاح عبر الواتساب!", "success");
+      const modal = document.getElementById('serviceReportWhatsAppModal');
+      if (modal) modal.style.display = 'none';
+    } else {
+      showToast(result.error || "فشل إرسال ملف PDF", "error");
+    }
+  } catch (err) {
+    console.error("Error sending WhatsApp PDF:", err);
+    showToast("حدث خطأ أثناء الإرسال: " + err.message, "error");
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> إرسال الآن';
+    }
+  }
+};
+
+window.sendOverdueNoticeWhatsApp = function(tabId, phone, name, amount) {
+  const modal = document.getElementById('serviceReportWhatsAppModal') || openServiceReportWhatsAppModal(tabId);
+  setTimeout(() => {
+    openServiceReportWhatsAppModal(tabId);
+    const phoneInput = document.getElementById('srvRepWhatsAppPhoneInput');
+    const captionInput = document.getElementById('srvRepWhatsAppCaptionInput');
+    if (phoneInput && phone) phoneInput.value = phone;
+    if (captionInput) captionInput.value = `الأخ / ${name} المحترم، يرجى التكرم بسداد المتأخرات المستحقة بمبلغ ($${amount.toLocaleString('en-US', {minimumFractionDigits:2})}). شاكرين تعاونكم.`;
+  }, 50);
 };

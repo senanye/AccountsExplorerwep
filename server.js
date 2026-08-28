@@ -18278,12 +18278,14 @@ app.get('/api/service-reports/monthly-electricity', async (req, res) => {
         e.fldTransID,
         t.fldTransNo,
         CONVERT(VARCHAR(10), t.fldDate, 120) AS fldDate,
+        YEAR(t.fldDate) AS fldYear,
+        MONTH(t.fldDate) AS fldMonth,
         RTRIM(LTRIM(ISNULL(t.fldDescription, ''))) AS fldDescription,
         e.fldShopID,
         s.fldShopNumber,
         ISNULL(s.fldShopName, '') AS fldShopName,
         ISNULL(s.fldCustomerName, '') AS fldCustomerName,
-        ISNULL(e.fldtheCounter, s.fldtheCounter) AS fldtheCounter,
+        ISNULL(s.fldtheCounter, '') AS fldtheCounter,
         ISNULL(e.fldPreviousReading, 0) AS fldPreviousReading,
         ISNULL(e.fldCurrentreading, 0) AS fldCurrentreading,
         ISNULL(e.fldUnits, 0) AS fldUnits,
@@ -18305,7 +18307,42 @@ app.get('/api/service-reports/monthly-electricity', async (req, res) => {
     `;
 
     const result = await request.query(query);
-    res.json({ success: true, source: "database", data: result.recordset });
+
+    // Also compute monthly aggregated chart series
+    const chartReq = globalPool.request();
+    let chartWhere = ["t.fldTransType = 41"];
+    if (branchId && parseInt(branchId) > 0) {
+      chartReq.input('branchId', sql.Int, parseInt(branchId));
+      chartWhere.push("t.fldBranchNo = @branchId");
+    }
+    if (shopId && parseInt(shopId) > 0) {
+      chartReq.input('shopId', sql.Int, parseInt(shopId));
+      chartWhere.push("e.fldShopID = @shopId");
+    }
+
+    const chartQuery = `
+      SELECT 
+        YEAR(t.fldDate) AS fldYear,
+        MONTH(t.fldDate) AS fldMonth,
+        SUM(ISNULL(e.fldUnits, 0)) AS fldTotalUnits,
+        SUM(ISNULL(e.fldTotalPrice, 0)) AS fldTotalPrice,
+        SUM(ISNULL(e.fldTotalPrice, 0) + ISNULL(e.fldServicesCostElectricity, 0) + ISNULL(e.fldCleaningFees, 0) + ISNULL(e.fldLocalFees, 0) + ISNULL(e.fldFuel, 0) + ISNULL(e.fldlTaxTota_D, 0)) AS fldNetTotal,
+        COUNT(DISTINCT e.fldShopID) AS fldShopsCount
+      FROM dbo.tblElectricitybill e
+      INNER JOIN dbo.tblTransAction t ON e.fldTransID = t.fldID
+      WHERE ` + chartWhere.join(' AND ') + `
+      GROUP BY YEAR(t.fldDate), MONTH(t.fldDate)
+      ORDER BY YEAR(t.fldDate) ASC, MONTH(t.fldDate) ASC
+    `;
+
+    const chartRes = await chartReq.query(chartQuery);
+
+    res.json({ 
+      success: true, 
+      source: "database", 
+      data: result.recordset,
+      chartData: chartRes.recordset 
+    });
   } catch (err) {
     console.error("Error fetching monthly electricity report:", err.message);
     res.status(500).json({ success: false, error: err.message });
@@ -18496,7 +18533,7 @@ app.get('/api/service-reports/detailed-consumption', async (req, res) => {
         s.fldShopNumber,
         ISNULL(s.fldShopName, '') AS fldShopName,
         ISNULL(s.fldCustomerName, '') AS fldCustomerName,
-        ISNULL(e.fldtheCounter, s.fldtheCounter) AS fldtheCounter,
+        ISNULL(s.fldtheCounter, '') AS fldtheCounter,
         ISNULL(e.fldPreviousReading, 0) AS fldPreviousReading,
         ISNULL(e.fldCurrentreading, 0) AS fldCurrentreading,
         ISNULL(e.fldUnits, 0) AS fldUnits,

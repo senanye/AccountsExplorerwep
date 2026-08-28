@@ -17903,19 +17903,20 @@ window.initAccountReportsTab = async function(tabId) {
     filtered: []
   };
 
-  // Populate branches
+  // 1. Populate Branches (dbo.tblBranchList)
   const branchSelect = document.getElementById(`arBranch-${tabId}`);
   if (branchSelect) {
     try {
       const bRes = await fetch('/api/branches');
       const bData = await bRes.json();
-      if (bData.success && Array.isArray(bData.data)) {
-        branchSelect.innerHTML = `<option value="0">الفرع الرئيسي</option>` + bData.data.map(b => `<option value="${b.fldID}">${b.fldName}</option>`).join('');
+      const bList = bData.data || (Array.isArray(bData) ? bData : []);
+      if (Array.isArray(bList) && bList.length > 0) {
+        branchSelect.innerHTML = `<option value="0">الفرع الرئيسي</option>` + bList.map(b => `<option value="${b.fldID}">${b.fldName}</option>`).join('');
       }
     } catch(e) {}
   }
 
-  // Populate currencies
+  // 2. Populate Currencies (dbo.tblMoney)
   const cur1 = document.getElementById(`arCurrency-${tabId}`);
   const cur2 = document.getElementById(`arCurrency2-${tabId}`);
   try {
@@ -17930,31 +17931,33 @@ window.initAccountReportsTab = async function(tabId) {
     }
   } catch(e) {}
 
-  // Populate cost centers
+  // 3. Populate Cost Centers (SELECT [fldID], [fldName], [fldCenterCostMainID] FROM [dbo].[tblCostCenter])
   const ccSelect = document.getElementById(`arCostCenter-${tabId}`);
   if (ccSelect) {
     try {
       const ccRes = await fetch('/api/cost-centers');
       const ccData = await ccRes.json();
-      if (ccData.success && Array.isArray(ccData.data)) {
-        ccSelect.innerHTML = `<option value="">كافة المراكز</option>` + ccData.data.map(c => `<option value="${c.fldID}">${c.fldName}</option>`).join('');
+      const ccList = ccData.data || (Array.isArray(ccData) ? ccData : []);
+      if (Array.isArray(ccList) && ccList.length > 0) {
+        ccSelect.innerHTML = `<option value="">كافة المراكز</option>` + ccList.map(c => `<option value="${c.fldID}">${c.fldName}</option>`).join('');
       }
     } catch(e) {}
   }
 
-  // Populate account groups
+  // 4. Populate Account Groups (SELECT [fldID], [fldName] FROM [dbo].[tblAccountGroup])
   const gSelect = document.getElementById(`arGroup-${tabId}`);
   if (gSelect) {
     try {
       const gRes = await fetch('/api/account-groups');
       const gData = await gRes.json();
-      if (gData.success && Array.isArray(gData.data)) {
-        gSelect.innerHTML = `<option value="">كافة المجموعات</option>` + gData.data.map(g => `<option value="${g.fldID}">${g.fldName}</option>`).join('');
+      const gList = gData.data || (Array.isArray(gData) ? gData : []);
+      if (Array.isArray(gList) && gList.length > 0) {
+        gSelect.innerHTML = `<option value="">كافة المجموعات</option>` + gList.map(g => `<option value="${g.fldID}">${g.fldName}</option>`).join('');
       }
     } catch(e) {}
   }
 
-  // Set default dates
+  // 5. Set default dates
   const startEl = document.getElementById(`arStartDate-${tabId}`);
   const endEl = document.getElementById(`arEndDate-${tabId}`);
   if (startEl) startEl.value = '2024-08-28';

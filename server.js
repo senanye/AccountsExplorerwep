@@ -4257,20 +4257,22 @@ app.get('/api/accounts-reports', async (req, res) => {
           a.fldID,
           a.fldNumber,
           a.fldName,
-          m.fldBranchNo,
+          ISNULL(m.fldBranchNo, 1) AS fldBranchNo,
           ISNULL(b.fldName, N'الفرع الرئيسي') AS BranchName,
           a.fldAccType,
-          cur.fldName AS CurrencyName,
-          cur.fldsymbol AS CurrencySymbol,
+          ISNULL(cur.fldName, N'ريال سعودي') AS CurrencyName,
+          ISNULL(cur.fldsymbol, N'ر.س') AS CurrencySymbol,
           ISNULL(SUM(CASE WHEN t.fldDate < @startDate THEN m.fldDebit - m.fldCredit ELSE 0 END), 0) AS PreviousBalance,
           ISNULL(SUM(CASE WHEN t.fldDate < @startDate THEN m.Debit - m.Credit ELSE 0 END), 0) AS PreviousBalanceLocal,
           ISNULL(SUM(CASE WHEN t.fldDate >= @startDate AND t.fldDate <= @endDate THEN m.fldDebit ELSE 0 END), 0) AS PeriodDebit,
           ISNULL(SUM(CASE WHEN t.fldDate >= @startDate AND t.fldDate <= @endDate THEN m.fldCredit ELSE 0 END), 0) AS PeriodCredit,
           ISNULL(SUM(CASE WHEN t.fldDate >= @startDate AND t.fldDate <= @endDate THEN m.Debit ELSE 0 END), 0) AS PeriodDebitLocal,
-          ISNULL(SUM(CASE WHEN t.fldDate >= @startDate AND t.fldDate <= @endDate THEN m.Credit ELSE 0 END), 0) AS PeriodCreditLocal
-        FROM dbo.tblMoneyMove m
+          ISNULL(SUM(CASE WHEN t.fldDate >= @startDate AND t.fldDate <= @endDate THEN m.Credit ELSE 0 END), 0) AS PeriodCreditLocal,
+          (ISNULL(SUM(CASE WHEN t.fldDate >= @startDate AND t.fldDate <= @endDate THEN m.fldDebit ELSE 0 END), 0) - ISNULL(SUM(CASE WHEN t.fldDate >= @startDate AND t.fldDate <= @endDate THEN m.fldCredit ELSE 0 END), 0)) AS Balance,
+          (ISNULL(SUM(CASE WHEN t.fldDate < @startDate THEN m.fldDebit - m.fldCredit ELSE 0 END), 0) + ISNULL(SUM(CASE WHEN t.fldDate >= @startDate AND t.fldDate <= @endDate THEN m.fldDebit ELSE 0 END), 0) - ISNULL(SUM(CASE WHEN t.fldDate >= @startDate AND t.fldDate <= @endDate THEN m.fldCredit ELSE 0 END), 0)) AS CumulativeBalance
+        FROM dbo.tblAccount a
+        INNER JOIN dbo.tblMoneyMove m ON a.fldID = m.fldAccID
         INNER JOIN dbo.tblTransAction t ON m.fldTransID = t.fldID
-        INNER JOIN dbo.tblAccount a ON m.fldAccID = a.fldID
         LEFT JOIN dbo.tblBranchList b ON m.fldBranchNo = b.fldID
         LEFT JOIN dbo.tblMoney cur ON m.fldMoneyID = cur.fldID
         WHERE t.fldDate <= @endDate
@@ -4278,27 +4280,27 @@ app.get('/api/accounts-reports', async (req, res) => {
 
       if (detailType === 'totals') {
         query += ` AND a.fldIs_Primary = 1`;
-      } else {
+      } else if (detailType === 'detailed') {
         query += ` AND (a.fldIs_Primary = 0 OR a.fldIs_Primary IS NULL)`;
       }
 
-      if (branchNo) {
+      if (branchNo && parseInt(branchNo) > 0) {
         request.input('branchNo', sql.Int, parseInt(branchNo));
         query += ` AND m.fldBranchNo = @branchNo`;
       }
-      if (currencyId) {
+      if (currencyId && parseInt(currencyId) > 0) {
         request.input('currencyId', sql.Int, parseInt(currencyId));
         query += ` AND m.fldMoneyID = @currencyId`;
       }
-      if (costCenterId) {
+      if (costCenterId && parseInt(costCenterId) > 0) {
         request.input('costCenterId', sql.Int, parseInt(costCenterId));
         query += ` AND m.fldCenterCostID = @costCenterId`;
       }
-      if (groupId) {
+      if (groupId && parseInt(groupId) >= 0 && groupId !== '') {
         request.input('groupId', sql.Int, parseInt(groupId));
         query += ` AND a.fldGroupID = @groupId`;
       }
-      if (accType) {
+      if (accType && parseInt(accType) > 0) {
         request.input('accType', sql.Int, parseInt(accType));
         query += ` AND a.fldAccType = @accType`;
       }
@@ -11330,22 +11332,21 @@ app.get('/api/account-groups', async (req, res) => {
   const isConnected = globalPool !== null && globalPool.connected;
 
   if (!isConnected) {
-    return res.json({ source: "mock", data: mockAccountGroups });
+    return res.json({ success: true, source: "mock", data: mockAccountGroups });
   }
 
   try {
-    const query = 'SELECT fldID, fldName FROM dbo.tblAccountGroup';
-    console.log(`Executing Account Groups Query: ${query}`);
+    const query = 'SELECT fldID, fldName FROM dbo.tblAccountGroup ORDER BY fldID';
     const result = await globalPool.request().query(query);
     
     if (result.recordset.length === 0) {
-      return res.json({ source: "database-empty", data: mockAccountGroups });
+      return res.json({ success: true, source: "database-empty", data: mockAccountGroups });
     }
     
-    res.json({ source: "database", data: result.recordset });
+    res.json({ success: true, source: "database", data: result.recordset });
   } catch (err) {
     console.error("Error executing account groups query:", err.message);
-    res.json({ source: "mock-fallback", error: err.message, data: mockAccountGroups });
+    res.json({ success: true, source: "mock-fallback", error: err.message, data: mockAccountGroups });
   }
 });
 
@@ -11378,22 +11379,21 @@ app.get('/api/cost-centers', async (req, res) => {
   const isConnected = globalPool !== null && globalPool.connected;
 
   if (!isConnected) {
-    return res.json({ source: "mock", data: mockCostCenters });
+    return res.json({ success: true, source: "mock", data: mockCostCenters });
   }
 
   try {
-    const query = 'SELECT fldID, fldName FROM dbo.tblCostCenter';
-    console.log(`Executing Cost Centers Query: ${query}`);
+    const query = 'SELECT fldID, fldName, fldCenterCostMainID FROM dbo.tblCostCenter ORDER BY fldID';
     const result = await globalPool.request().query(query);
     
     if (result.recordset.length === 0) {
-      return res.json({ source: "database-empty", data: mockCostCenters });
+      return res.json({ success: true, source: "database-empty", data: mockCostCenters });
     }
     
-    res.json({ source: "database", data: result.recordset });
+    res.json({ success: true, source: "database", data: result.recordset });
   } catch (err) {
     console.error("Error executing cost centers query:", err.message);
-    res.json({ source: "mock-fallback", error: err.message, data: mockCostCenters });
+    res.json({ success: true, source: "mock-fallback", error: err.message, data: mockCostCenters });
   }
 });
 

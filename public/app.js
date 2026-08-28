@@ -898,6 +898,8 @@ async function openTab(tabId, tabTitle, iconClass, colorClass, bypassPermission 
     initStoreTransferTab(tabId);
   } else if (tabTitle === "استعلام التحويلات" || tabTitle === "استعلام التحويلات المخزنية" || tabId.includes("transfer-explorer")) {
     initTransferExplorerTab(tabId);
+  } else if (tabTitle === "تقارير_المخزون" || tabTitle === "تقارير المخزون" || tabId === "menu-203" || tabId === "inventory-reports-tab" || tabTitle.includes("تقارير المخزون") || tabTitle.includes("تقارير_المخزون")) {
+    initInventoryReportsTab(tabId);
   } else if (tabTitle === "تقارير المبيعات" || tabId === "menu-39" || tabId === "sales-reports-tab" || tabTitle.includes("تقارير المبيعات")) {
     initSalesReportsTab(tabId);
   } else if (tabTitle === "تقارير الخدمات" || tabId === "menu-43" || tabId === "service-reports-tab" || tabTitle.includes("تقارير الخدمات")) {
@@ -1006,6 +1008,7 @@ function getScreenContent(tabId, tabTitle, iconClass, colorClass) {
   const isItemsExplorer = tabTitle === "الاصناف" || tabTitle === "الأصناف" || tabId === "menu-1076" || tabTitle === "مستكشف الاصناف" || tabTitle === "مستكشف الأصناف" || tabId === "menu-202" || tabId === "menu-501" || tabTitle.includes("السلع والمنتجات") || tabTitle.includes("اصناف") || tabTitle.includes("أصناف");
   const isPurchasesExplorer = tabTitle === "عرض مشتريات" || tabTitle === "المشتريات" || tabId === "menu-20";
   const isPurchasesInvoice = tabTitle === "مشتريات" || tabTitle === "فاتورة المشتريات" || tabId.includes("menu-20-invoice") || tabId.includes("purchase-inv") || (tabTitle.includes("مشتريات") && !tabTitle.includes("عرض") && !tabTitle.includes("تقارير"));
+  const isInventoryReports = tabTitle === "تقارير_المخزون" || tabTitle === "تقارير المخزون" || tabId === "menu-203" || tabId === "inventory-reports-tab" || tabTitle.includes("تقارير المخزون") || tabTitle.includes("تقارير_المخزون");
   const isSalesReports = tabTitle === "تقارير المبيعات" || tabId === "menu-39" || tabId === "sales-reports-tab" || tabTitle.includes("تقارير المبيعات");
   const isServiceReports = tabTitle === "تقارير الخدمات" || tabId === "menu-43" || tabId === "service-reports-tab" || tabTitle.includes("تقارير الخدمات");
   const isShopsList = (tabTitle === "قائمة المحلات" || tabId === "menu-42" || tabTitle.includes("المحلات") || tabTitle.includes("قائمة المحلات")) && !isServiceReports;
@@ -1020,7 +1023,259 @@ function getScreenContent(tabId, tabTitle, iconClass, colorClass) {
 
   let bodyHtml = '';
 
-  if (isSalesReports) {
+  if (isInventoryReports) {
+    bodyHtml = `
+      <div class="inventory-reports-screen" style="direction: rtl; text-align: right; font-family: var(--font-arabic); display: flex; flex-direction: column; gap: 4px; height: 100%; padding: 4px 6px;">
+        
+        <!-- Top Reports Switcher Ribbon (Matching media_1787900897850.png) -->
+        <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 4px 8px; display: flex; justify-content: space-between; align-items: center; gap: 6px; flex-wrap: wrap; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+          
+          <!-- 7 Report Selector Buttons (Right to Left matching screenshot) -->
+          <div style="display: flex; align-items: center; gap: 4px; flex-wrap: wrap;">
+            
+            <button type="button" id="btnInvRep-opening_stock-${tabId}" class="inv-rep-btn active" onclick="switchInventoryReport('${tabId}', 'opening_stock')" style="height: 38px; padding: 0 10px; background: #e0f2fe; border: 1.5px solid #0284c7; border-radius: 5px; font-weight: 800; font-size: 0.78rem; color: #0369a1; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; white-space: nowrap;">
+              <i class="fa-solid fa-cart-shopping" style="font-size: 0.9rem;"></i>
+              <span>تقرير رصيد اول المده</span>
+            </button>
+
+            <button type="button" id="btnInvRep-warehouse_quantities-${tabId}" class="inv-rep-btn" onclick="switchInventoryReport('${tabId}', 'warehouse_quantities')" style="height: 38px; padding: 0 10px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 5px; font-weight: 700; font-size: 0.78rem; color: #475569; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; white-space: nowrap;">
+              <i class="fa-solid fa-database" style="color: #f59e0b; font-size: 0.9rem;"></i>
+              <span>تقرير الكميات في المستودع</span>
+            </button>
+
+            <button type="button" id="btnInvRep-item_movement-${tabId}" class="inv-rep-btn" onclick="switchInventoryReport('${tabId}', 'item_movement')" style="height: 38px; padding: 0 10px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 5px; font-weight: 700; font-size: 0.78rem; color: #475569; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; white-space: nowrap;">
+              <i class="fa-solid fa-cart-arrow-down" style="color: #10b981; font-size: 0.9rem;"></i>
+              <span>كشف حركة الاصناف</span>
+            </button>
+
+            <button type="button" id="btnInvRep-trans_movement-${tabId}" class="inv-rep-btn" onclick="switchInventoryReport('${tabId}', 'trans_movement')" style="height: 38px; padding: 0 10px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 5px; font-weight: 700; font-size: 0.78rem; color: #475569; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; white-space: nowrap;">
+              <i class="fa-solid fa-forward-step" style="color: #6366f1; font-size: 0.9rem;"></i>
+              <span>عرض حركة مخزنية</span>
+            </button>
+
+            <button type="button" id="btnInvRep-in_out_movement-${tabId}" class="inv-rep-btn" onclick="switchInventoryReport('${tabId}', 'in_out_movement')" style="height: 38px; padding: 0 10px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 5px; font-weight: 700; font-size: 0.78rem; color: #475569; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; white-space: nowrap;">
+              <i class="fa-solid fa-arrows-up-down" style="color: #ec4899; font-size: 0.9rem;"></i>
+              <span>حركة المخزون وارد منصرف</span>
+            </button>
+
+            <button type="button" id="btnInvRep-in_out_summary-${tabId}" class="inv-rep-btn" onclick="switchInventoryReport('${tabId}', 'in_out_summary')" style="height: 38px; padding: 0 10px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 5px; font-weight: 700; font-size: 0.78rem; color: #475569; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; white-space: nowrap;">
+              <i class="fa-solid fa-boxes-packing" style="color: #b45309; font-size: 0.9rem;"></i>
+              <span>حركة المخزون وارد منصرف اجمالي</span>
+            </button>
+
+            <button type="button" id="btnInvRep-expired_zero_stock-${tabId}" class="inv-rep-btn" onclick="switchInventoryReport('${tabId}', 'expired_zero_stock')" style="height: 38px; padding: 0 10px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 5px; font-weight: 700; font-size: 0.78rem; color: #475569; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; white-space: nowrap;">
+              <i class="fa-solid fa-eye" style="color: #0284c7; font-size: 0.9rem;"></i>
+              <span>كشف بقائمة الاصناف المنتهيه</span>
+            </button>
+
+          </div>
+
+          <!-- Actions: Print, XLS, WhatsApp -->
+          <div style="display: flex; align-items: center; gap: 5px;">
+            <button type="button" onclick="printCurrentInventoryReport('${tabId}')" class="btn btn-secondary btn-sm" style="height: 32px; padding: 0 10px; font-weight: 800; font-size: 0.8rem; display: flex; align-items: center; gap: 5px;" title="طباعة التقرير">
+              <i class="fa-solid fa-print"></i>
+              <span>طباعه</span>
+            </button>
+
+            <button type="button" onclick="exportInventoryReportExcel('${tabId}')" class="btn btn-secondary btn-sm" style="height: 32px; padding: 0 10px; font-weight: 800; font-size: 0.8rem; display: flex; align-items: center; gap: 5px; color: #047857;" title="تصدير إلى إكسل">
+              <i class="fa-solid fa-file-excel"></i>
+              <span>تصدير XLS</span>
+            </button>
+
+            <button type="button" onclick="openInventoryReportWhatsAppModal('${tabId}')" class="btn btn-sm" style="height: 32px; padding: 0 10px; font-weight: 800; font-size: 0.8rem; background: #25D366; color: #ffffff; border: 1px solid #16a34a; border-radius: 4px; display: flex; align-items: center; gap: 5px;" title="إرسال التقرير عبر الواتساب">
+              <i class="fa-brands fa-whatsapp" style="font-size: 0.95rem;"></i>
+              <span>إرسال PDF</span>
+            </button>
+          </div>
+
+        </div>
+
+        <!-- Centered Dynamic Title Header matching media_1787900897850.png -->
+        <div style="text-align: center; margin: 2px 0;">
+          <h3 id="invReportTitle-${tabId}" style="margin: 0; font-size: 1.15rem; font-weight: 900; color: #0f172a; letter-spacing: -0.2px;">تقرير رصيد اول المده</h3>
+        </div>
+
+        <!-- 3-Row Filter Bar (Matching media_1787900897850.png) -->
+        <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 4px 8px; display: flex; flex-direction: column; gap: 4px; font-size: 0.82rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+          
+          <!-- Row 1: الفرع | المجموعة | من تاريخ | العمله | طريقة الدفع -->
+          <div style="display: grid; grid-template-columns: 1.2fr 1.1fr 1.1fr 1.1fr 1.1fr; gap: 6px; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <label style="min-width: 45px; font-weight: 800; color: #334155;">الفرع:</label>
+              <select id="invRepBranch-${tabId}" class="form-select form-select-sm" style="font-size: 0.8rem; font-weight: 700;">
+                <option value="0">الفرع الرئيسي</option>
+              </select>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <label style="min-width: 55px; font-weight: 800; color: #334155;">المجموعة:</label>
+              <select id="invRepCatg-${tabId}" class="form-select form-select-sm" style="font-size: 0.8rem;">
+                <option value="0">كافة المجموعات</option>
+              </select>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <label style="min-width: 55px; font-weight: 800; color: #334155;">من تاريخ:</label>
+              <input type="date" id="invRepFromDate-${tabId}" class="form-control form-control-sm" style="font-size: 0.8rem; font-family: monospace;">
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <label style="min-width: 45px; font-weight: 800; color: #334155;">العملة:</label>
+              <select id="invRepCurrency-${tabId}" class="form-select form-select-sm" style="font-size: 0.8rem;">
+                <option value="0">ريال سعودي</option>
+              </select>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <label style="min-width: 65px; font-weight: 800; color: #334155;">طريقة الدفع:</label>
+              <select id="invRepPaymentType-${tabId}" class="form-select form-select-sm" style="font-size: 0.8rem;">
+                <option value="0">الكل</option>
+                <option value="1">نقد</option>
+                <option value="2">آجل</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Row 2: المستودع | نوع الحركه | الى تاريخ | العمله | الحساب -->
+          <div style="display: grid; grid-template-columns: 1.2fr 1.1fr 1.1fr 1.1fr 1.1fr; gap: 6px; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <label style="min-width: 55px; font-weight: 800; color: #334155;">المستودع:</label>
+              <select id="invRepStore-${tabId}" class="form-select form-select-sm" style="font-size: 0.8rem;">
+                <option value="0">كافة المستودعات</option>
+              </select>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <label style="min-width: 65px; font-weight: 800; color: #334155;">نوع الحركة:</label>
+              <select id="invRepTransType-${tabId}" class="form-select form-select-sm" style="font-size: 0.8rem;">
+                <option value="0">كافة الحركات</option>
+                <option value="242">رصيد أول المدة</option>
+                <option value="22">أمر توريد مخزني</option>
+                <option value="23">أمر صرف مخزني</option>
+                <option value="28">تحويل مخزني</option>
+                <option value="20">مشتريات</option>
+                <option value="30">مبيعات</option>
+              </select>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <label style="min-width: 55px; font-weight: 800; color: #334155;">إلى تاريخ:</label>
+              <input type="date" id="invRepToDate-${tabId}" class="form-control form-control-sm" style="font-size: 0.8rem; font-family: monospace;">
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <label style="min-width: 45px; font-weight: 800; color: #334155;">العملة:</label>
+              <select id="invRepCurrency2-${tabId}" class="form-select form-select-sm" style="font-size: 0.8rem;">
+                <option value="0">ريال سعودي</option>
+              </select>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <label style="min-width: 55px; font-weight: 800; color: #334155;">الحساب:</label>
+              <select id="invRepAccount-${tabId}" class="form-select form-select-sm" style="font-size: 0.8rem;">
+                <option value="0">[ الكل ]</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Row 3: نوع التقرير | بحث سريع | زر التحديث -->
+          <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+            <div style="display: flex; align-items: center; gap: 6px; max-width: 220px;">
+              <label style="min-width: 65px; font-weight: 800; color: #334155;">نوع التقرير:</label>
+              <select id="invRepReportType-${tabId}" class="form-select form-select-sm" style="font-size: 0.8rem; font-weight: 700;">
+                <option value="detailed">تفصيلي</option>
+                <option value="summary">إجمالي</option>
+              </select>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 6px; flex: 1;">
+              <div class="input-group input-group-sm" style="direction: ltr;">
+                <input type="text" id="invRepSearch-${tabId}" class="form-control form-control-sm" placeholder="بحث سريع في التقرير (اسم الصنف، الكود، المستودع)..." style="direction: rtl; font-size: 0.8rem;">
+                <button class="btn btn-outline-secondary" type="button" onclick="document.getElementById('invRepSearch-${tabId}').value=''; applyInventoryReportQuickSearch('${tabId}');" title="مسح البحث">
+                  <i class="fa-solid fa-xmark"></i>
+                </button>
+              </div>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <button type="button" onclick="loadActiveInventoryReport('${tabId}')" class="btn btn-primary btn-sm" style="height: 30px; padding: 0 14px; font-weight: 800; font-size: 0.8rem; display: flex; align-items: center; gap: 5px;">
+                <i class="fa-solid fa-arrows-rotate"></i>
+                <span>تحديث التقرير</span>
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Table Grid Container with Grouping Banner matching media_1787900897850.png -->
+        <div style="flex: 1; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+          
+          <!-- Grouping Bar Header -->
+          <div style="background: #f1f5f9; padding: 3px 8px; border-bottom: 1px solid #cbd5e1; font-size: 0.72rem; color: #64748b; font-style: italic; display: flex; align-items: center; gap: 6px;">
+            <i class="fa-solid fa-table-columns" style="color: #94a3b8;"></i>
+            <span>Drag a column header here to group by that column</span>
+          </div>
+
+          <!-- Table with horizontal/vertical scrolling -->
+          <div style="flex: 1; overflow: auto; max-height: calc(100vh - 275px);">
+            <table id="invReportTable-${tabId}" class="table table-hover table-bordered" style="width: 100%; min-width: 1200px; margin-bottom: 0; font-size: 0.8rem; border-collapse: collapse; text-align: center;">
+              <thead id="invReportThead-${tabId}" style="position: sticky; top: 0; z-index: 5; background: #f8fafc; border-bottom: 2px solid #cbd5e1;"></thead>
+              <tbody id="invReportTbody-${tabId}"></tbody>
+            </table>
+          </div>
+
+          <!-- Footer Summary Bar -->
+          <div id="invReportFooter-${tabId}" style="background: #f8fafc; border-top: 1.5px solid #cbd5e1; padding: 4px 10px; display: flex; justify-content: space-between; align-items: center; font-weight: 800; font-size: 0.8rem; color: #1e293b;">
+            <div id="invReportCount-${tabId}">عدد السجلات: 0</div>
+            <div id="invReportTotals-${tabId}"></div>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Inventory Report WhatsApp Modal -->
+      <div class="modal fade" id="invReportWhatsAppModal-${tabId}" tabindex="-1" aria-hidden="true" style="direction: rtl;">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content" style="border-radius: 8px; border: 1.5px solid #25D366;">
+            <div class="modal-header" style="background: #25D366; color: #ffffff; padding: 8px 14px;">
+              <h5 class="modal-title" style="font-weight: 900; font-size: 1rem; display: flex; align-items: center; gap: 8px;">
+                <i class="fa-brands fa-whatsapp" style="font-size: 1.3rem;"></i>
+                <span>إرسال تقرير المخزون (ملف PDF) عبر الواتساب</span>
+              </h5>
+              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" style="padding: 14px;">
+              <div style="margin-bottom: 12px;">
+                <label style="font-weight: 800; color: #1e293b; margin-bottom: 4px; display: block;">رقم هاتف المستلم (مع مفتاح الدولة أو بدونه):</label>
+                <div class="input-group">
+                  <span class="input-group-text" style="background: #f1f5f9;"><i class="fa-solid fa-phone"></i></span>
+                  <input type="text" id="invRepWaPhone-${tabId}" class="form-control" placeholder="مثال: 777123456 أو 967777123456" style="font-family: monospace; font-weight: bold; font-size: 0.95rem;">
+                </div>
+              </div>
+
+              <div style="margin-bottom: 12px;">
+                <label style="font-weight: 800; color: #1e293b; margin-bottom: 4px; display: block;">نص الرسالة المرفقة مع الملف:</label>
+                <textarea id="invRepWaCaption-${tabId}" class="form-control" rows="2" style="font-size: 0.85rem;" placeholder="مرفق لكم تقرير المخزون المعتمد بصيغة PDF..."></textarea>
+              </div>
+
+              <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; padding: 8px 10px; font-size: 0.8rem; color: #166534;">
+                <i class="fa-solid fa-circle-info" style="margin-left: 4px;"></i>
+                سيتم تحويل تقرير المخزون بالكامل مع الترويسة المعتمدة إلى ملف PDF بحجم A4 وإرساله مباشرة عبر خادم الواتساب المدمج في النظام.
+              </div>
+            </div>
+            <div class="modal-footer" style="padding: 6px 12px; background: #f8fafc;">
+              <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">إلغاء</button>
+              <button type="button" onclick="executeSendInventoryReportWhatsApp('${tabId}')" class="btn btn-sm" style="background: #25D366; color: #ffffff; font-weight: 800; display: flex; align-items: center; gap: 6px;">
+                <i class="fa-solid fa-paper-plane"></i>
+                <span>إرسال PDF الآن</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  } else if (isSalesReports) {
     bodyHtml = `
       <div class="sales-reports-screen" style="direction: rtl; text-align: right; font-family: var(--font-arabic); display: flex; flex-direction: column; gap: 4px; height: 100%; padding: 4px 6px;">
         
@@ -35375,6 +35630,825 @@ window.executeSendSalesReportWhatsApp = async function(tabId) {
     }
   } catch (err) {
     console.error("Error sending sales report WhatsApp:", err);
+    showNotification("فشل إرسال ملف PDF: " + err.message, "error");
+  }
+};
+
+
+// =============================================================================
+// 45. INVENTORY REPORTS CONTROLLERS & RENDERERS (تقارير المخزون)
+// Matching media_1787900897850.png
+// =============================================================================
+
+const INVENTORY_REPORT_META = {
+  opening_stock: { title: 'تقرير رصيد اول المده', icon: 'fa-cart-shopping', endpoint: '/api/inventory-reports/opening-stock' },
+  warehouse_quantities: { title: 'تقرير الكميات في المستودع', icon: 'fa-database', endpoint: '/api/inventory-reports/warehouse-quantities' },
+  item_movement: { title: 'كشف حركة الاصناف', icon: 'fa-cart-arrow-down', endpoint: '/api/inventory-reports/item-movement' },
+  trans_movement: { title: 'عرض حركة مخزنية', icon: 'fa-forward-step', endpoint: '/api/inventory-reports/trans-movement' },
+  in_out_movement: { title: 'حركة المخزون وارد منصرف', icon: 'fa-arrows-up-down', endpoint: '/api/inventory-reports/in-out-movement' },
+  in_out_summary: { title: 'حركة المخزون وارد منصرف اجمالي', icon: 'fa-boxes-packing', endpoint: '/api/inventory-reports/in-out-summary' },
+  expired_zero_stock: { title: 'كشف بقائمة الاصناف المنتهيه', icon: 'fa-eye', endpoint: '/api/inventory-reports/expired-zero-stock' }
+};
+
+window.initInventoryReportsTab = function(tabId) {
+  state.inventoryReports = state.inventoryReports || {};
+  state.inventoryReports[tabId] = {
+    activeReport: 'opening_stock',
+    data: [],
+    filtered: []
+  };
+
+  populateInvBranches(tabId);
+  populateInvStores(tabId);
+  populateInvCurrencies(tabId);
+  populateInvCategories(tabId);
+  populateInvAccounts(tabId);
+
+  const fromEl = document.getElementById(`invRepFromDate-${tabId}`);
+  const toEl = document.getElementById(`invRepToDate-${tabId}`);
+  if (fromEl) fromEl.value = '2024-08-28';
+  if (toEl) toEl.value = new Date().toISOString().split('T')[0];
+
+  const searchInput = document.getElementById(`invRepSearch-${tabId}`);
+  if (searchInput) {
+    searchInput.addEventListener('input', () => applyInventoryReportQuickSearch(tabId));
+  }
+
+  loadActiveInventoryReport(tabId);
+};
+
+async function populateInvBranches(tabId) {
+  const select = document.getElementById(`invRepBranch-${tabId}`);
+  if (!select) return;
+  try {
+    const res = await fetch('/api/branches');
+    const json = await res.json();
+    if (json.success && Array.isArray(json.data)) {
+      select.innerHTML = `<option value="0">الفرع الرئيسي</option>` + json.data.map(b => `<option value="${b.fldID}">${b.fldName}</option>`).join('');
+    }
+  } catch (e) {}
+}
+
+async function populateInvStores(tabId) {
+  const select = document.getElementById(`invRepStore-${tabId}`);
+  if (!select) return;
+  try {
+    const res = await fetch('/api/stores');
+    const json = await res.json();
+    if (json.success && Array.isArray(json.data)) {
+      select.innerHTML = `<option value="0">كافة المستودعات</option>` + json.data.map(s => `<option value="${s.fldID}">${s.fldName}</option>`).join('');
+    }
+  } catch (e) {}
+}
+
+async function populateInvCurrencies(tabId) {
+  const sel1 = document.getElementById(`invRepCurrency-${tabId}`);
+  const sel2 = document.getElementById(`invRepCurrency2-${tabId}`);
+  
+  if (state.currencies && Array.isArray(state.currencies) && state.currencies.length > 0) {
+    const opts = `<option value="0">الكل</option>` + state.currencies.map(c => `<option value="${c.fldID}">${c.fldName} (${c.fldsymbol || ''})</option>`).join('');
+    if (sel1) sel1.innerHTML = opts;
+    if (sel2) sel2.innerHTML = opts;
+    return;
+  }
+
+  try {
+    let res = await fetch('/api/currencies-list');
+    if (!res.ok) res = await fetch('/api/currencies');
+    const json = await res.json();
+    const list = json.data || (Array.isArray(json) ? json : []);
+    if (Array.isArray(list) && list.length > 0) {
+      state.currencies = list;
+      const opts = `<option value="0">الكل</option>` + list.map(c => `<option value="${c.fldID}">${c.fldName} (${c.fldsymbol || ''})</option>`).join('');
+      if (sel1) sel1.innerHTML = opts;
+      if (sel2) sel2.innerHTML = opts;
+    }
+  } catch (e) {}
+}
+
+async function populateInvCategories(tabId) {
+  const select = document.getElementById(`invRepCatg-${tabId}`);
+  if (!select) return;
+  try {
+    const res = await fetch('/api/categories');
+    const json = await res.json();
+    if (json.success && Array.isArray(json.data)) {
+      select.innerHTML = `<option value="0">كافة المجموعات</option>` + json.data.map(c => `<option value="${c.fldID}">${c.fldName}</option>`).join('');
+    }
+  } catch (e) {}
+}
+
+async function populateInvAccounts(tabId) {
+  const select = document.getElementById(`invRepAccount-${tabId}`);
+  if (!select) return;
+  try {
+    const res = await fetch('/api/accounts');
+    const json = await res.json();
+    if (json.success && Array.isArray(json.data)) {
+      select.innerHTML = `<option value="0">[ كافة الحسابات ]</option>` + json.data.map(a => `<option value="${a.fldID}">${a.fldNumber} - ${a.fldName}</option>`).join('');
+    }
+  } catch (e) {}
+}
+
+window.switchInventoryReport = function(tabId, reportKey) {
+  state.inventoryReports = state.inventoryReports || {};
+  state.inventoryReports[tabId] = state.inventoryReports[tabId] || {};
+  state.inventoryReports[tabId].activeReport = reportKey;
+
+  document.querySelectorAll(`.inv-rep-btn`).forEach(btn => {
+    btn.classList.remove('active');
+    btn.style.background = '#f8fafc';
+    btn.style.borderColor = '#cbd5e1';
+    btn.style.color = '#475569';
+  });
+
+  const activeBtn = document.getElementById(`btnInvRep-${reportKey}-${tabId}`);
+  if (activeBtn) {
+    activeBtn.classList.add('active');
+    activeBtn.style.background = '#e0f2fe';
+    activeBtn.style.borderColor = '#0284c7';
+    activeBtn.style.color = '#0369a1';
+  }
+
+  const titleEl = document.getElementById(`invReportTitle-${tabId}`);
+  if (titleEl && INVENTORY_REPORT_META[reportKey]) {
+    titleEl.innerText = INVENTORY_REPORT_META[reportKey].title;
+  }
+
+  loadActiveInventoryReport(tabId);
+};
+
+window.loadActiveInventoryReport = async function(tabId) {
+  const repState = state.inventoryReports[tabId] || { activeReport: 'opening_stock' };
+  const reportKey = repState.activeReport || 'opening_stock';
+  const meta = INVENTORY_REPORT_META[reportKey] || INVENTORY_REPORT_META.opening_stock;
+
+  const branchId = document.getElementById(`invRepBranch-${tabId}`)?.value || '0';
+  const catgId = document.getElementById(`invRepCatg-${tabId}`)?.value || '0';
+  const fromDate = document.getElementById(`invRepFromDate-${tabId}`)?.value || '';
+  const toDate = document.getElementById(`invRepToDate-${tabId}`)?.value || '';
+  const currencyId = document.getElementById(`invRepCurrency-${tabId}`)?.value || '0';
+  const storeId = document.getElementById(`invRepStore-${tabId}`)?.value || '0';
+  const transType = document.getElementById(`invRepTransType-${tabId}`)?.value || '0';
+  const accountId = document.getElementById(`invRepAccount-${tabId}`)?.value || '0';
+
+  const tbody = document.getElementById(`invReportTbody-${tabId}`);
+  if (tbody) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="12" style="padding: 30px; text-align: center; color: #64748b;">
+          <i class="fa-solid fa-spinner fa-spin" style="font-size: 1.5rem; color: #0284c7; margin-bottom: 8px;"></i>
+          <div style="font-weight: bold;">جاري تحميل ${meta.title}...</div>
+        </td>
+      </tr>
+    `;
+  }
+
+  try {
+    const params = new URLSearchParams({
+      branchId, catgId, fromDate, toDate, currencyId, storeId, transType, accountId
+    });
+
+    const res = await fetch(`${meta.endpoint}?${params.toString()}`);
+    const json = await res.json();
+
+    if (!json.success) {
+      if (tbody) {
+        tbody.innerHTML = `<tr><td colspan="12" style="padding: 20px; text-align: center; color: #ef4444; font-weight: bold;">خطأ: ${json.error || 'فشل تحميل البيانات'}</td></tr>`;
+      }
+      return;
+    }
+
+    repState.data = json.data || [];
+    repState.filtered = [...repState.data];
+
+    applyInventoryReportQuickSearch(tabId);
+  } catch (err) {
+    console.error("Error loading inventory report:", err);
+    if (tbody) {
+      tbody.innerHTML = `<tr><td colspan="12" style="padding: 20px; text-align: center; color: #ef4444; font-weight: bold;">فشل الاتصال بالخادم: ${err.message}</td></tr>`;
+    }
+  }
+};
+
+window.applyInventoryReportQuickSearch = function(tabId) {
+  const repState = state.inventoryReports[tabId];
+  if (!repState || !repState.data) return;
+
+  const search = (document.getElementById(`invRepSearch-${tabId}`)?.value || '').trim().toLowerCase();
+  if (!search) {
+    repState.filtered = [...repState.data];
+  } else {
+    repState.filtered = repState.data.filter(item => {
+      return Object.values(item).some(val => val && String(val).toLowerCase().includes(search));
+    });
+  }
+
+  renderCurrentInventoryReport(tabId);
+};
+
+function renderCurrentInventoryReport(tabId) {
+  const repState = state.inventoryReports[tabId];
+  if (!repState) return;
+
+  const reportKey = repState.activeReport || 'opening_stock';
+  const list = repState.filtered || [];
+
+  switch (reportKey) {
+    case 'opening_stock':
+      renderInventoryOpeningStockReport(tabId, list);
+      break;
+    case 'warehouse_quantities':
+      renderInventoryWarehouseQuantitiesReport(tabId, list);
+      break;
+    case 'item_movement':
+      renderInventoryItemMovementReport(tabId, list);
+      break;
+    case 'trans_movement':
+      renderInventoryTransMovementReport(tabId, list);
+      break;
+    case 'in_out_movement':
+      renderInventoryInOutMovementReport(tabId, list);
+      break;
+    case 'in_out_summary':
+      renderInventoryInOutSummaryReport(tabId, list);
+      break;
+    case 'expired_zero_stock':
+      renderInventoryExpiredZeroStockReport(tabId, list);
+      break;
+    default:
+      renderInventoryOpeningStockReport(tabId, list);
+  }
+}
+
+function updateInventoryReportSummary(tabId, count, totalsHtml) {
+  const countEl = document.getElementById(`invReportCount-${tabId}`);
+  const totalsEl = document.getElementById(`invReportTotals-${tabId}`);
+  if (countEl) countEl.innerHTML = `عدد السجلات: <span style="color: #0284c7; font-size: 0.9rem;">${count}</span>`;
+  if (totalsEl) totalsEl.innerHTML = totalsHtml || '';
+}
+
+// 1. RENDER OPENING STOCK (تقرير رصيد اول المده - Exact Match to media_1787900897850.png)
+function renderInventoryOpeningStockReport(tabId, list) {
+  const thead = document.getElementById(`invReportThead-${tabId}`);
+  const tbody = document.getElementById(`invReportTbody-${tabId}`);
+  if (!thead || !tbody) return;
+
+  thead.innerHTML = `
+    <tr style="position: sticky; top: 0; z-index: 10; background: #f8fafc; border-bottom: 2px solid #cbd5e1; color: #334155; font-weight: 800;">
+      <th style="padding: 7px 8px; width: 130px; white-space: nowrap;">الفرع</th>
+      <th style="padding: 7px 8px; width: 130px; white-space: nowrap;">المستودع</th>
+      <th style="padding: 7px 6px; width: 95px; white-space: nowrap;">الكود</th>
+      <th style="padding: 7px 14px; min-width: 220px; text-align: right; white-space: nowrap;">اسم الصنف</th>
+      <th style="padding: 7px 6px; width: 75px; white-space: nowrap;">العبوه</th>
+      <th style="padding: 7px 8px; width: 95px; text-align: center; white-space: nowrap;">الكميه</th>
+      <th style="padding: 7px 10px; width: 100px; text-align: right; white-space: nowrap;">الكلفه</th>
+      <th style="padding: 7px 12px; width: 130px; text-align: right; white-space: nowrap;">الإجمالي</th>
+      <th style="padding: 7px 8px; width: 85px; white-space: nowrap;">ر.العمله</th>
+    </tr>
+  `;
+
+  if (!list || list.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="9" style="padding: 25px; text-align: center; color: #94a3b8; font-weight: bold;">لا توجد أصناف في رصيد أول المدة</td></tr>`;
+    updateInventoryReportSummary(tabId, 0, '');
+    return;
+  }
+
+  let totalQty = 0;
+  let grandTotal = 0;
+  let html = '';
+
+  list.forEach((item, idx) => {
+    const qty = parseFloat(item.fldQty || 0);
+    const cost = parseFloat(item.fldCost || 0);
+    const total = parseFloat(item.fldTotalAmount || (qty * cost));
+
+    totalQty += qty;
+    grandTotal += total;
+
+    html += `
+      <tr style="border-bottom: 1px solid #e2e8f0; background: ${idx % 2 === 0 ? '#ffffff' : '#f8fafc'};">
+        <td style="padding: 5px 8px; font-weight: bold; color: #0284c7; white-space: nowrap;">${item.fldBranchName || 'الفرع الرئيسي'}</td>
+        <td style="padding: 5px 8px; color: #475569; white-space: nowrap;">${item.fldStoreName || 'المستودع الرئيسي'}</td>
+        <td style="padding: 5px 6px; font-family: monospace; font-weight: bold; color: #334155; white-space: nowrap;">${item.fldItemCode || '-'}</td>
+        <td style="padding: 5px 14px; text-align: right; font-weight: bold; color: #1e293b; white-space: nowrap;">${item.fldItemName}</td>
+        <td style="padding: 5px 6px; font-family: monospace; white-space: nowrap;">${item.fldUnitName || 'حبه'}</td>
+        <td style="padding: 5px 8px; font-family: monospace; font-weight: bold; color: #d97706; text-align: center; white-space: nowrap;">${qty.toFixed(2)}</td>
+        <td style="padding: 5px 10px; text-align: right; font-family: monospace; white-space: nowrap;">${cost.toFixed(2)}</td>
+        <td style="padding: 5px 12px; text-align: right; font-weight: 900; font-family: monospace; color: #0f766e; font-size: 0.9rem; white-space: nowrap;">${total.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+        <td style="padding: 5px 8px; font-family: monospace; color: #64748b; white-space: nowrap;">${item.fldCurrency || 'ر.س'}</td>
+      </tr>
+    `;
+  });
+
+  tbody.innerHTML = html;
+  updateInventoryReportSummary(tabId, list.length, `إجمالي الكميات: <span style="color: #d97706; margin: 0 4px;">${totalQty.toFixed(2)}</span> | إجمالي قيمة رصيد أول المدة: <span style="color: #0f766e; margin: 0 4px; font-size: 0.95rem;">${grandTotal.toLocaleString('en-US', {minimumFractionDigits:2})} ر.س</span>`);
+}
+
+// 2. RENDER WAREHOUSE QUANTITIES (تقرير الكميات في المستودع)
+function renderInventoryWarehouseQuantitiesReport(tabId, list) {
+  const thead = document.getElementById(`invReportThead-${tabId}`);
+  const tbody = document.getElementById(`invReportTbody-${tabId}`);
+  if (!thead || !tbody) return;
+
+  thead.innerHTML = `
+    <tr style="position: sticky; top: 0; z-index: 10; background: #f8fafc; border-bottom: 2px solid #cbd5e1; color: #334155; font-weight: 800;">
+      <th style="padding: 7px 8px; width: 120px; white-space: nowrap;">المستودع</th>
+      <th style="padding: 7px 6px; width: 95px; white-space: nowrap;">كود الصنف</th>
+      <th style="padding: 7px 14px; min-width: 220px; text-align: right; white-space: nowrap;">اسم الصنف</th>
+      <th style="padding: 7px 6px; width: 75px; white-space: nowrap;">العبوة</th>
+      <th style="padding: 7px 8px; width: 95px; text-align: center; white-space: nowrap;">الكمية المتوفرة</th>
+      <th style="padding: 7px 10px; width: 100px; text-align: right; white-space: nowrap;">سعر الكلفة</th>
+      <th style="padding: 7px 10px; width: 100px; text-align: right; white-space: nowrap;">سعر البيع</th>
+      <th style="padding: 7px 12px; width: 130px; text-align: right; white-space: nowrap;">القيمة بالكلفة</th>
+      <th style="padding: 7px 12px; width: 130px; text-align: right; white-space: nowrap;">القيمة بسعر البيع</th>
+    </tr>
+  `;
+
+  if (!list || list.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="9" style="padding: 25px; text-align: center; color: #94a3b8; font-weight: bold;">لا توجد أصناف في المستودع</td></tr>`;
+    updateInventoryReportSummary(tabId, 0, '');
+    return;
+  }
+
+  let totalQty = 0;
+  let totalCostVal = 0;
+  let totalSellVal = 0;
+  let html = '';
+
+  list.forEach((item, idx) => {
+    const qty = parseFloat(item.fldStockQty || 0);
+    const cost = parseFloat(item.fldCostPrice || 0);
+    const sell = parseFloat(item.fldSellingPrice || 0);
+    const costTotal = parseFloat(item.fldTotalCostValue || (qty * cost));
+    const sellTotal = parseFloat(item.fldTotalSellingValue || (qty * sell));
+
+    totalQty += qty;
+    totalCostVal += costTotal;
+    totalSellVal += sellTotal;
+
+    html += `
+      <tr style="border-bottom: 1px solid #e2e8f0; background: ${idx % 2 === 0 ? '#ffffff' : '#f8fafc'};">
+        <td style="padding: 5px 8px; color: #475569; white-space: nowrap;">${item.fldStoreName || 'المستودع الرئيسي'}</td>
+        <td style="padding: 5px 6px; font-family: monospace; font-weight: bold; color: #334155; white-space: nowrap;">${item.fldItemCode}</td>
+        <td style="padding: 5px 14px; text-align: right; font-weight: bold; color: #1e293b; white-space: nowrap;">${item.fldItemName}</td>
+        <td style="padding: 5px 6px; font-family: monospace; white-space: nowrap;">${item.fldUnitName || 'حبه'}</td>
+        <td style="padding: 5px 8px; font-family: monospace; font-weight: bold; color: #0284c7; text-align: center; white-space: nowrap;">${qty.toFixed(2)}</td>
+        <td style="padding: 5px 10px; text-align: right; font-family: monospace; white-space: nowrap;">${cost.toFixed(2)}</td>
+        <td style="padding: 5px 10px; text-align: right; font-family: monospace; color: #059669; white-space: nowrap;">${sell.toFixed(2)}</td>
+        <td style="padding: 5px 12px; text-align: right; font-family: monospace; color: #64748b; white-space: nowrap;">${costTotal.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+        <td style="padding: 5px 12px; text-align: right; font-weight: 900; font-family: monospace; color: #0f766e; white-space: nowrap;">${sellTotal.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+      </tr>
+    `;
+  });
+
+  tbody.innerHTML = html;
+  updateInventoryReportSummary(tabId, list.length, `إجمالي الكميات: <span style="color: #0284c7; margin: 0 4px;">${totalQty.toFixed(2)}</span> | القيمة بسعر الكلفة: <span style="color: #64748b; margin: 0 4px;">${totalCostVal.toLocaleString('en-US', {minimumFractionDigits:2})}</span> | القيمة بسعر البيع: <span style="color: #0f766e; margin: 0 4px; font-size: 0.95rem;">${totalSellVal.toLocaleString('en-US', {minimumFractionDigits:2})}</span>`);
+}
+
+// 3. RENDER ITEM MOVEMENT (كشف حركة الاصناف)
+function renderInventoryItemMovementReport(tabId, list) {
+  const thead = document.getElementById(`invReportThead-${tabId}`);
+  const tbody = document.getElementById(`invReportTbody-${tabId}`);
+  if (!thead || !tbody) return;
+
+  thead.innerHTML = `
+    <tr style="position: sticky; top: 0; z-index: 10; background: #f8fafc; border-bottom: 2px solid #cbd5e1; color: #334155; font-weight: 800;">
+      <th style="padding: 7px 6px; width: 70px; white-space: nowrap;">الرقم</th>
+      <th style="padding: 7px 6px; width: 95px; white-space: nowrap;">التاريخ</th>
+      <th style="padding: 7px 6px; width: 110px; white-space: nowrap;">نوع الحركة</th>
+      <th style="padding: 7px 6px; width: 85px; white-space: nowrap;">الكود</th>
+      <th style="padding: 7px 12px; min-width: 180px; text-align: right; white-space: nowrap;">اسم الصنف</th>
+      <th style="padding: 7px 6px; width: 65px; white-space: nowrap;">العبوة</th>
+      <th style="padding: 7px 8px; width: 85px; text-align: center; white-space: nowrap;">وارد (+)</th>
+      <th style="padding: 7px 8px; width: 85px; text-align: center; white-space: nowrap;">منصرف (-)</th>
+      <th style="padding: 7px 10px; width: 100px; text-align: right; white-space: nowrap;">السعر/الكلفة</th>
+      <th style="padding: 7px 12px; width: 120px; text-align: right; white-space: nowrap;">الإجمالي</th>
+      <th style="padding: 7px 12px; min-width: 150px; text-align: right; white-space: nowrap;">الجهة / العميل / المورد</th>
+    </tr>
+  `;
+
+  if (!list || list.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="11" style="padding: 25px; text-align: center; color: #94a3b8; font-weight: bold;">لا توجد حركة للأصناف</td></tr>`;
+    updateInventoryReportSummary(tabId, 0, '');
+    return;
+  }
+
+  let totalIn = 0;
+  let totalOut = 0;
+  let grandTotal = 0;
+  let html = '';
+
+  list.forEach((item, idx) => {
+    const inQty = parseFloat(item.fldInQty || 0);
+    const outQty = parseFloat(item.fldOutQty || 0);
+    const total = parseFloat(item.fldTotalAmount || 0);
+
+    totalIn += inQty;
+    totalOut += outQty;
+    grandTotal += total;
+
+    html += `
+      <tr style="border-bottom: 1px solid #e2e8f0; background: ${idx % 2 === 0 ? '#ffffff' : '#f8fafc'};">
+        <td style="padding: 5px 6px; font-weight: bold; font-family: monospace; color: #1e3a8a;">${item.fldTransNo || item.fldTransID}</td>
+        <td style="padding: 5px 6px; font-family: monospace;">${item.fldDate}</td>
+        <td style="padding: 5px 6px; font-weight: bold; color: ${inQty > 0 ? '#059669' : '#dc2626'};">${item.fldTransTypeName}</td>
+        <td style="padding: 5px 6px; font-family: monospace; font-weight: bold; color: #334155;">${item.fldItemCode}</td>
+        <td style="padding: 5px 12px; text-align: right; font-weight: bold; color: #1e293b;">${item.fldItemName}</td>
+        <td style="padding: 5px 6px; font-family: monospace;">${item.fldUnitName || 'حبه'}</td>
+        <td style="padding: 5px 8px; font-family: monospace; font-weight: bold; color: #059669; text-align: center;">${inQty > 0 ? inQty.toFixed(2) : '-'}</td>
+        <td style="padding: 5px 8px; font-family: monospace; font-weight: bold; color: #dc2626; text-align: center;">${outQty > 0 ? outQty.toFixed(2) : '-'}</td>
+        <td style="padding: 5px 10px; text-align: right; font-family: monospace;">${parseFloat(item.fldUnitPrice||0).toFixed(2)}</td>
+        <td style="padding: 5px 12px; text-align: right; font-weight: 900; font-family: monospace; color: #0f766e;">${total.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+        <td style="padding: 5px 12px; text-align: right; color: #334155;">${item.fldCustomerSupplierName || ''}</td>
+      </tr>
+    `;
+  });
+
+  tbody.innerHTML = html;
+  updateInventoryReportSummary(tabId, list.length, `إجمالي الوارد: <span style="color: #059669; margin: 0 4px;">${totalIn.toFixed(2)}</span> | إجمالي المنصرف: <span style="color: #dc2626; margin: 0 4px;">${totalOut.toFixed(2)}</span> | صافي الحركة: <span style="color: #0f766e; margin: 0 4px; font-size: 0.95rem;">${(totalIn - totalOut).toFixed(2)}</span>`);
+}
+
+// 4. RENDER TRANS MOVEMENT (عرض حركة مخزنية)
+function renderInventoryTransMovementReport(tabId, list) {
+  const thead = document.getElementById(`invReportThead-${tabId}`);
+  const tbody = document.getElementById(`invReportTbody-${tabId}`);
+  if (!thead || !tbody) return;
+
+  thead.innerHTML = `
+    <tr style="position: sticky; top: 0; z-index: 10; background: #f8fafc; border-bottom: 2px solid #cbd5e1; color: #334155; font-weight: 800;">
+      <th style="padding: 7px 6px; width: 75px; white-space: nowrap;">رقم المستند</th>
+      <th style="padding: 7px 6px; width: 95px; white-space: nowrap;">التاريخ</th>
+      <th style="padding: 7px 6px; width: 120px; white-space: nowrap;">نوع الحركة</th>
+      <th style="padding: 7px 14px; min-width: 220px; text-align: right; white-space: nowrap;">البيان / الوصف</th>
+      <th style="padding: 7px 8px; width: 110px; white-space: nowrap;">المستودع</th>
+      <th style="padding: 7px 8px; width: 85px; white-space: nowrap;">عدد الأصناف</th>
+      <th style="padding: 7px 8px; width: 95px; text-align: center; white-space: nowrap;">إجمالي الكميات</th>
+      <th style="padding: 7px 12px; width: 130px; text-align: right; white-space: nowrap;">القيمة الإجمالية</th>
+    </tr>
+  `;
+
+  if (!list || list.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="8" style="padding: 25px; text-align: center; color: #94a3b8; font-weight: bold;">لا توجد مستندات حركات مخزنية</td></tr>`;
+    updateInventoryReportSummary(tabId, 0, '');
+    return;
+  }
+
+  let totalQty = 0;
+  let grandTotal = 0;
+  let html = '';
+
+  list.forEach((item, idx) => {
+    const qty = parseFloat(item.fldTotalQty || 0);
+    const total = parseFloat(item.fldTotalAmount || 0);
+
+    totalQty += qty;
+    grandTotal += total;
+
+    html += `
+      <tr style="border-bottom: 1px solid #e2e8f0; background: ${idx % 2 === 0 ? '#ffffff' : '#f8fafc'};">
+        <td style="padding: 6px 6px; font-weight: bold; font-family: monospace; color: #1e3a8a;">${item.fldTransNo || item.fldTransID}</td>
+        <td style="padding: 6px 6px; font-family: monospace;">${item.fldDate}</td>
+        <td style="padding: 6px 6px; font-weight: bold; color: #0284c7;">${item.fldTransTypeName}</td>
+        <td style="padding: 6px 14px; text-align: right; color: #1e293b;">${item.fldDescription || '-'}</td>
+        <td style="padding: 6px 8px; color: #475569;">${item.fldStoreName || ''}</td>
+        <td style="padding: 6px 8px; font-family: monospace; font-weight: bold;">${item.fldItemsCount}</td>
+        <td style="padding: 6px 8px; font-family: monospace; font-weight: bold; color: #d97706; text-align: center;">${qty.toFixed(2)}</td>
+        <td style="padding: 6px 12px; text-align: right; font-weight: 900; font-family: monospace; color: #0f766e;">${total.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+      </tr>
+    `;
+  });
+
+  tbody.innerHTML = html;
+  updateInventoryReportSummary(tabId, list.length, `إجمالي الكميات: <span style="color: #d97706; margin: 0 4px;">${totalQty.toFixed(2)}</span> | القيمة الإجمالية للحركات: <span style="color: #0f766e; margin: 0 4px; font-size: 0.95rem;">${grandTotal.toLocaleString('en-US', {minimumFractionDigits:2})}</span>`);
+}
+
+// 5. RENDER IN OUT MOVEMENT (حركة المخزون وارد منصرف)
+function renderInventoryInOutMovementReport(tabId, list) {
+  const thead = document.getElementById(`invReportThead-${tabId}`);
+  const tbody = document.getElementById(`invReportTbody-${tabId}`);
+  if (!thead || !tbody) return;
+
+  thead.innerHTML = `
+    <tr style="position: sticky; top: 0; z-index: 10; background: #f8fafc; border-bottom: 2px solid #cbd5e1; color: #334155; font-weight: 800;">
+      <th style="padding: 7px 6px; width: 95px; white-space: nowrap;">كود الصنف</th>
+      <th style="padding: 7px 14px; min-width: 220px; text-align: right; white-space: nowrap;">اسم الصنف</th>
+      <th style="padding: 7px 6px; width: 75px; white-space: nowrap;">العبوة</th>
+      <th style="padding: 7px 8px; width: 95px; text-align: center; white-space: nowrap;">كمية الوارد</th>
+      <th style="padding: 7px 10px; width: 120px; text-align: right; white-space: nowrap;">قيمة الوارد</th>
+      <th style="padding: 7px 8px; width: 95px; text-align: center; white-space: nowrap;">كمية المنصرف</th>
+      <th style="padding: 7px 10px; width: 120px; text-align: right; white-space: nowrap;">قيمة المنصرف</th>
+      <th style="padding: 7px 10px; width: 100px; text-align: center; white-space: nowrap;">رصيد الكمية</th>
+    </tr>
+  `;
+
+  if (!list || list.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="8" style="padding: 25px; text-align: center; color: #94a3b8; font-weight: bold;">لا توجد حركة وارد ومنصرف</td></tr>`;
+    updateInventoryReportSummary(tabId, 0, '');
+    return;
+  }
+
+  let totalIn = 0;
+  let totalOut = 0;
+  let totalInVal = 0;
+  let totalOutVal = 0;
+  let html = '';
+
+  list.forEach((item, idx) => {
+    const inQty = parseFloat(item.fldTotalInQty || 0);
+    const outQty = parseFloat(item.fldTotalOutQty || 0);
+    const inVal = parseFloat(item.fldTotalInValue || 0);
+    const outVal = parseFloat(item.fldTotalOutValue || 0);
+    const balQty = parseFloat(item.fldBalanceQty || (inQty - outQty));
+
+    totalIn += inQty;
+    totalOut += outQty;
+    totalInVal += inVal;
+    totalOutVal += outVal;
+
+    html += `
+      <tr style="border-bottom: 1px solid #e2e8f0; background: ${idx % 2 === 0 ? '#ffffff' : '#f8fafc'};">
+        <td style="padding: 6px 6px; font-family: monospace; font-weight: bold; color: #334155;">${item.fldItemCode}</td>
+        <td style="padding: 6px 14px; text-align: right; font-weight: bold; color: #1e293b;">${item.fldItemName}</td>
+        <td style="padding: 6px 6px; font-family: monospace;">${item.fldUnitName || 'حبه'}</td>
+        <td style="padding: 6px 8px; font-family: monospace; font-weight: bold; color: #059669; text-align: center;">${inQty.toFixed(2)}</td>
+        <td style="padding: 6px 10px; text-align: right; font-family: monospace; color: #059669;">${inVal.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+        <td style="padding: 6px 8px; font-family: monospace; font-weight: bold; color: #dc2626; text-align: center;">${outQty.toFixed(2)}</td>
+        <td style="padding: 6px 10px; text-align: right; font-family: monospace; color: #dc2626;">${outVal.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+        <td style="padding: 6px 10px; font-weight: 900; font-family: monospace; color: #0f766e; text-align: center;">${balQty.toFixed(2)}</td>
+      </tr>
+    `;
+  });
+
+  tbody.innerHTML = html;
+  updateInventoryReportSummary(tabId, list.length, `إجمالي الوارد: <span style="color: #059669; margin: 0 4px;">${totalIn.toFixed(2)} (${totalInVal.toLocaleString('en-US', {minimumFractionDigits:2})})</span> | إجمالي المنصرف: <span style="color: #dc2626; margin: 0 4px;">${totalOut.toFixed(2)} (${totalOutVal.toLocaleString('en-US', {minimumFractionDigits:2})})</span> | صافي الرصيد: <span style="color: #0f766e; margin: 0 4px; font-size: 0.95rem;">${(totalIn - totalOut).toFixed(2)}</span>`);
+}
+
+// 6. RENDER IN OUT SUMMARY (حركة المخزون وارد منصرف اجمالي)
+function renderInventoryInOutSummaryReport(tabId, list) {
+  const thead = document.getElementById(`invReportThead-${tabId}`);
+  const tbody = document.getElementById(`invReportTbody-${tabId}`);
+  if (!thead || !tbody) return;
+
+  thead.innerHTML = `
+    <tr style="position: sticky; top: 0; z-index: 10; background: #f8fafc; border-bottom: 2px solid #cbd5e1; color: #334155; font-weight: 800;">
+      <th style="padding: 7px 6px; width: 95px; white-space: nowrap;">كود الصنف</th>
+      <th style="padding: 7px 14px; min-width: 220px; text-align: right; white-space: nowrap;">اسم الصنف</th>
+      <th style="padding: 7px 6px; width: 75px; white-space: nowrap;">العبوة</th>
+      <th style="padding: 7px 8px; width: 95px; text-align: center; white-space: nowrap;">رصيد أول المدة</th>
+      <th style="padding: 7px 8px; width: 95px; text-align: center; white-space: nowrap;">وارد الفترة</th>
+      <th style="padding: 7px 8px; width: 95px; text-align: center; white-space: nowrap;">منصرف الفترة</th>
+      <th style="padding: 7px 10px; width: 100px; text-align: center; white-space: nowrap;">رصيد آخر المدة</th>
+      <th style="padding: 7px 10px; width: 95px; text-align: right; white-space: nowrap;">متوسط الكلفة</th>
+      <th style="padding: 7px 12px; width: 130px; text-align: right; white-space: nowrap;">قيمة آخر المدة</th>
+    </tr>
+  `;
+
+  if (!list || list.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="9" style="padding: 25px; text-align: center; color: #94a3b8; font-weight: bold;">لا توجد بيانات حركة إجمالية</td></tr>`;
+    updateInventoryReportSummary(tabId, 0, '');
+    return;
+  }
+
+  let totalEndingQty = 0;
+  let totalEndingVal = 0;
+  let html = '';
+
+  list.forEach((item, idx) => {
+    const openQty = parseFloat(item.fldOpeningQty || 0);
+    const inQty = parseFloat(item.fldPeriodInQty || 0);
+    const outQty = parseFloat(item.fldPeriodOutQty || 0);
+    const endQty = parseFloat(item.fldEndingStockQty || (openQty + inQty - outQty));
+    const cost = parseFloat(item.fldAvgCost || 0);
+    const endVal = parseFloat(item.fldEndingStockVal || (endQty * cost));
+
+    totalEndingQty += endQty;
+    totalEndingVal += endVal;
+
+    html += `
+      <tr style="border-bottom: 1px solid #e2e8f0; background: ${idx % 2 === 0 ? '#ffffff' : '#f8fafc'};">
+        <td style="padding: 6px 6px; font-family: monospace; font-weight: bold; color: #334155;">${item.fldItemCode}</td>
+        <td style="padding: 6px 14px; text-align: right; font-weight: bold; color: #1e293b;">${item.fldItemName}</td>
+        <td style="padding: 6px 6px; font-family: monospace;">${item.fldUnitName || 'حبه'}</td>
+        <td style="padding: 6px 8px; font-family: monospace; color: #475569; text-align: center;">${openQty.toFixed(2)}</td>
+        <td style="padding: 6px 8px; font-family: monospace; font-weight: bold; color: #059669; text-align: center;">${inQty.toFixed(2)}</td>
+        <td style="padding: 6px 8px; font-family: monospace; font-weight: bold; color: #dc2626; text-align: center;">${outQty.toFixed(2)}</td>
+        <td style="padding: 6px 10px; font-weight: 900; font-family: monospace; color: #0284c7; text-align: center;">${endQty.toFixed(2)}</td>
+        <td style="padding: 6px 10px; text-align: right; font-family: monospace;">${cost.toFixed(2)}</td>
+        <td style="padding: 6px 12px; text-align: right; font-weight: 900; font-family: monospace; color: #0f766e;">${endVal.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+      </tr>
+    `;
+  });
+
+  tbody.innerHTML = html;
+  updateInventoryReportSummary(tabId, list.length, `إجمالي كمية آخر المدة: <span style="color: #0284c7; margin: 0 4px;">${totalEndingQty.toFixed(2)}</span> | إجمالي قيمة بضاعة آخر المدة: <span style="color: #0f766e; margin: 0 4px; font-size: 0.95rem;">${totalEndingVal.toLocaleString('en-US', {minimumFractionDigits:2})}</span>`);
+}
+
+// 7. RENDER EXPIRED OR ZERO STOCK (كشف بقائمة الاصناف المنتهيه)
+function renderInventoryExpiredZeroStockReport(tabId, list) {
+  const thead = document.getElementById(`invReportThead-${tabId}`);
+  const tbody = document.getElementById(`invReportTbody-${tabId}`);
+  if (!thead || !tbody) return;
+
+  thead.innerHTML = `
+    <tr style="position: sticky; top: 0; z-index: 10; background: #f8fafc; border-bottom: 2px solid #cbd5e1; color: #334155; font-weight: 800;">
+      <th style="padding: 7px 6px; width: 95px; white-space: nowrap;">كود الصنف</th>
+      <th style="padding: 7px 14px; min-width: 220px; text-align: right; white-space: nowrap;">اسم الصنف</th>
+      <th style="padding: 7px 6px; width: 75px; white-space: nowrap;">العبوة</th>
+      <th style="padding: 7px 8px; width: 95px; text-align: center; white-space: nowrap;">الكمية الحالية</th>
+      <th style="padding: 7px 10px; width: 100px; text-align: right; white-space: nowrap;">سعر الكلفة</th>
+      <th style="padding: 7px 10px; width: 100px; text-align: right; white-space: nowrap;">سعر البيع</th>
+      <th style="padding: 7px 10px; width: 110px; text-align: center; white-space: nowrap;">تاريخ الصلاحية</th>
+      <th style="padding: 7px 12px; width: 130px; text-align: center; white-space: nowrap;">حالة التنبيه</th>
+    </tr>
+  `;
+
+  if (!list || list.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="8" style="padding: 25px; text-align: center; color: #059669; font-weight: bold;">ممتاز! لا توجد أي أصناف منتهية الصلاحية أو تالفة في المخزون</td></tr>`;
+    updateInventoryReportSummary(tabId, 0, '<span style="color: #059669;">المخزون بحالة ممتازة</span>');
+    return;
+  }
+
+  let html = '';
+  list.forEach((item, idx) => {
+    const qty = parseFloat(item.fldStockQty || 0);
+    html += `
+      <tr style="border-bottom: 1px solid #e2e8f0; background: ${idx % 2 === 0 ? '#fff1f2' : '#ffffff'}; color: #991b1b;">
+        <td style="padding: 6px 6px; font-family: monospace; font-weight: bold;">${item.fldItemCode}</td>
+        <td style="padding: 6px 14px; text-align: right; font-weight: bold;">${item.fldItemName}</td>
+        <td style="padding: 6px 6px; font-family: monospace;">${item.fldUnitName || 'حبه'}</td>
+        <td style="padding: 6px 8px; font-family: monospace; font-weight: bold; text-align: center;">${qty.toFixed(2)}</td>
+        <td style="padding: 6px 10px; text-align: right; font-family: monospace;">${parseFloat(item.fldCostPrice||0).toFixed(2)}</td>
+        <td style="padding: 6px 10px; text-align: right; font-family: monospace;">${parseFloat(item.fldSellingPrice||0).toFixed(2)}</td>
+        <td style="padding: 6px 10px; font-family: monospace; text-align: center;">${item.fldExpDate || '-'}</td>
+        <td style="padding: 6px 12px; font-weight: 900; color: #dc2626; text-align: center;">${item.fldStatusReason || 'تنبيه مخزني'}</td>
+      </tr>
+    `;
+  });
+
+  tbody.innerHTML = html;
+  updateInventoryReportSummary(tabId, list.length, `عدد أصناف التنبيهات: <span style="color: #dc2626; font-weight: 900; margin: 0 4px;">${list.length}</span>`);
+}
+
+// 8. PRINT & EXCEL EXPORT FOR INVENTORY REPORTS
+window.generateInventoryReportPrintHtml = function(tabId) {
+  const repState = state.inventoryReports[tabId] || { activeReport: 'opening_stock' };
+  const reportKey = repState.activeReport || 'opening_stock';
+  const meta = INVENTORY_REPORT_META[reportKey] || INVENTORY_REPORT_META.opening_stock;
+
+  const branchEl = document.getElementById(`invRepBranch-${tabId}`);
+  const branchName = branchEl ? branchEl.options[branchEl.selectedIndex]?.text : 'الفرع الرئيسي';
+  const fromDate = document.getElementById(`invRepFromDate-${tabId}`)?.value || '';
+  const toDate = document.getElementById(`invRepToDate-${tabId}`)?.value || '';
+
+  const theadHtml = document.getElementById(`invReportThead-${tabId}`)?.innerHTML || '';
+  const tbodyHtml = document.getElementById(`invReportTbody-${tabId}`)?.innerHTML || '';
+  const summaryHtml = document.getElementById(`invReportFooter-${tabId}`)?.innerHTML || '';
+
+  const savedHeaderImage = localStorage.getItem('reportHeaderImage') || '/api/settings/logo';
+
+  return `
+    <!DOCTYPE html>
+    <html dir="rtl" lang="ar">
+    <head>
+      <meta charset="UTF-8">
+      <title>${meta.title} - ${branchName}</title>
+      <style>
+        @page { size: A4 landscape; margin: 8mm; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 10px; margin: 0; padding: 0; color: #1e293b; direction: rtl; }
+        .print-header-img { width: 100%; max-height: 85px; object-fit: contain; margin-bottom: 6px; display: block; }
+        .report-header-box { border-bottom: 2px solid #0284c7; padding-bottom: 6px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+        .report-title { font-size: 17px; font-weight: 900; color: #1e3a8a; }
+        .report-meta { font-size: 10.5px; color: #475569; }
+        table { width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 9.5px; }
+        th { background: #f1f5f9; color: #1e293b; border: 1px solid #94a3b8; padding: 4px; text-align: center; font-weight: bold; }
+        td { border: 1px solid #cbd5e1; padding: 4px 6px; text-align: center; }
+        tr:nth-child(even) { background-color: #f8fafc; }
+        .summary-box { margin-top: 8px; padding: 6px 10px; background: #f8fafc; border: 1px solid #cbd5e1; font-weight: bold; font-size: 11px; display: flex; justify-content: space-between; }
+        .footer-signatures { margin-top: 18px; display: flex; justify-content: space-between; font-weight: bold; font-size: 10.5px; }
+      </style>
+    </head>
+    <body>
+      <img src="${savedHeaderImage}" class="print-header-img" onerror="this.style.display='none'">
+      <div class="report-header-box">
+        <div>
+          <span class="report-title">${meta.title}</span>
+          <span style="margin-right: 12px; font-size: 12px; color: #0284c7; font-weight: bold;">[ ${branchName} ]</span>
+        </div>
+        <div class="report-meta">
+          <span>الفترة: من ${fromDate || 'البداية'} إلى ${toDate || 'اليوم'}</span> |
+          <span>تاريخ الطباعة: ${new Date().toLocaleDateString('ar-EG')}</span>
+        </div>
+      </div>
+
+      <table>
+        <thead>${theadHtml}</thead>
+        <tbody>${tbodyHtml}</tbody>
+      </table>
+
+      <div class="summary-box">${summaryHtml}</div>
+
+      <div class="footer-signatures">
+        <div>أمين المستودع: ..........................</div>
+        <div>المحاسب المسؤول: ..........................</div>
+        <div>المراجعة والتدقيق: ..........................</div>
+        <div>اعتماد الإدارة: ..........................</div>
+      </div>
+    </body>
+    </html>
+  `;
+};
+
+window.printCurrentInventoryReport = function(tabId) {
+  const html = generateInventoryReportPrintHtml(tabId);
+  const printWindow = window.open('', '_blank');
+  if (!printWindow) {
+    alert("يرجى السماح بالنوافذ المنبثقة للطباعة");
+    return;
+  }
+  printWindow.document.open();
+  printWindow.document.write(html);
+  printWindow.document.close();
+  setTimeout(() => {
+    printWindow.focus();
+    printWindow.print();
+  }, 400);
+};
+
+window.exportInventoryReportExcel = function(tabId) {
+  const repState = state.inventoryReports[tabId] || { activeReport: 'opening_stock' };
+  const reportKey = repState.activeReport || 'opening_stock';
+  const meta = INVENTORY_REPORT_META[reportKey] || INVENTORY_REPORT_META.opening_stock;
+  const list = repState.filtered || [];
+
+  if (!list || list.length === 0) {
+    showNotification("لا توجد بيانات لتصديرها", "warning");
+    return;
+  }
+
+  let tableHtml = document.getElementById(`invReportTable-${tabId}`)?.outerHTML || '';
+  const uri = 'data:application/vnd.ms-excel;base64,';
+  const template = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="UTF-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>' + meta.title + '</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head><body dir="rtl">' + tableHtml + '</body></html>';
+  const base64 = function(s) { return window.btoa(unescape(encodeURIComponent(s))); };
+
+  const a = document.createElement('a');
+  a.href = uri + base64(template);
+  a.download = `${meta.title}_${new Date().toISOString().split('T')[0]}.xls`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  showNotification("تم تصدير ملف الإكسل بنجاح", "success");
+};
+
+// 9. WHATSAPP PDF FOR INVENTORY REPORTS
+window.openInventoryReportWhatsAppModal = function(tabId) {
+  const modalEl = document.getElementById(`invReportWhatsAppModal-${tabId}`);
+  if (!modalEl) return;
+  const modal = new bootstrap.Modal(modalEl);
+  modal.show();
+};
+
+window.executeSendInventoryReportWhatsApp = async function(tabId) {
+  const repState = state.inventoryReports[tabId] || { activeReport: 'opening_stock' };
+  const reportKey = repState.activeReport || 'opening_stock';
+  const meta = INVENTORY_REPORT_META[reportKey] || INVENTORY_REPORT_META.opening_stock;
+
+  const phone = document.getElementById(`invRepWaPhone-${tabId}`)?.value || '';
+  const caption = document.getElementById(`invRepWaCaption-${tabId}`)?.value || '';
+
+  if (!phone || !phone.trim()) {
+    showNotification("يرجى إدخال رقم هاتف المستلم", "error");
+    return;
+  }
+
+  const html = generateInventoryReportPrintHtml(tabId);
+  const modalEl = document.getElementById(`invReportWhatsAppModal-${tabId}`);
+  const bsModal = bootstrap.Modal.getInstance(modalEl);
+
+  showNotification("جاري توليد ملف PDF وإرساله عبر الواتساب...", "info");
+
+  try {
+    const res = await fetch('/api/inventory-reports/send-whatsapp-pdf', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        html,
+        phone: phone.trim(),
+        title: meta.title,
+        caption: caption || `مرفق لكم: ${meta.title} من نظام مستكشف الحسابات`,
+        landscape: true
+      })
+    });
+
+    const json = await res.json();
+    if (json.success) {
+      if (bsModal) bsModal.hide();
+      showNotification(json.message || "تم إرسال التقرير بنجاح عبر الواتساب", "success");
+    } else {
+      showNotification("فشل الإرسال: " + (json.error || 'خطأ غير معروف'), "error");
+    }
+  } catch (err) {
+    console.error("Error sending inventory report WhatsApp:", err);
     showNotification("فشل إرسال ملف PDF: " + err.message, "error");
   }
 };

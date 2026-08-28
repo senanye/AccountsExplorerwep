@@ -19391,6 +19391,480 @@ app.post('/api/sales-reports/download-pdf', async (req, res) => {
 
 
 
+// =============================================================================
+// 45. INVENTORY REPORTS & WHATSAPP PDF ENGINE (تقارير المخزون)
+// Matching media_1787900897850.png
+// =============================================================================
+
+// Helper for inventory reports filters
+function buildInventoryReportsWhere(req, request, prefix = 't') {
+  const { branchId, fromDate, toDate, currencyId, storeId, catgId, accountId, transType, search } = req.query;
+  let whereClauses = [];
+
+  if (branchId && parseInt(branchId) > 0) {
+    request.input('branchId', sql.Int, parseInt(branchId));
+    whereClauses.push(`${prefix}.fldBranchNo = @branchId`);
+  }
+  if (fromDate) {
+    request.input('fromDate', sql.NVarChar, fromDate);
+    whereClauses.push(`CONVERT(VARCHAR(10), ${prefix}.fldDate, 120) >= @fromDate`);
+  }
+  if (toDate) {
+    const toDateParam = (toDate.includes(' ') || toDate.includes('T')) ? toDate : `${toDate} 23:59:59`;
+    request.input('toDate', sql.NVarChar, toDateParam);
+    whereClauses.push(`CONVERT(VARCHAR(10), ${prefix}.fldDate, 120) <= @toDate`);
+  }
+  if (currencyId && parseInt(currencyId) > 0) {
+    request.input('currencyId', sql.Int, parseInt(currencyId));
+    whereClauses.push(`${prefix}.fldVoisherMoneyID = @currencyId`);
+  }
+  if (storeId && parseInt(storeId) > 0) {
+    request.input('storeId', sql.Int, parseInt(storeId));
+    whereClauses.push(`d.fldstoreID = @storeId`);
+  }
+  if (catgId && parseInt(catgId) > 0) {
+    request.input('catgId', sql.Int, parseInt(catgId));
+    whereClauses.push(`i.fldCatgID = @catgId`);
+  }
+  if (accountId && parseInt(accountId) > 0) {
+    request.input('accountId', sql.Int, parseInt(accountId));
+    whereClauses.push(`(${prefix}.fldAccNumberID = @accountId OR ${prefix}.fldVoisherAccID = @accountId)`);
+  }
+  if (transType && parseInt(transType) > 0) {
+    request.input('transType', sql.Int, parseInt(transType));
+    whereClauses.push(`${prefix}.fldTransType = @transType`);
+  }
+
+  return whereClauses;
+}
+
+// 1. GET /api/inventory-reports/opening-stock (تقرير رصيد اول المده - Main matching screenshot)
+app.get('/api/inventory-reports/opening-stock', async (req, res) => {
+  const isConnected = globalPool !== null && globalPool.connected;
+  if (!isConnected) return res.json({ success: true, source: "mock", data: [] });
+
+  try {
+    const request = globalPool.request();
+    let whereClauses = ["(t.fldTransType = 242 OR t.fldTransType = 1 OR t.fldDescription LIKE N'%اول المده%' OR t.fldDescription LIKE N'%أول المدة%' OR d.fldCaseQty = 0)"];
+    whereClauses.push(...buildInventoryReportsWhere(req, request, 't'));
+
+    const { search } = req.query;
+    if (search && search.trim()) {
+      request.input('search', sql.NVarChar, '%' + search.trim() + '%');
+      whereClauses.push("(i.fldName LIKE @search OR i.fldCode LIKE @search OR d.fldDescription LIKE @search)");
+    }
+
+    const query = `
+      SELECT 
+        d.fldID AS fldDetailID,
+        t.fldID AS fldTransID,
+        t.fldTransNo,
+        CONVERT(VARCHAR(10), t.fldDate, 120) AS fldDate,
+        ISNULL(b.fldName, N'الفرع الرئيسي') AS fldBranchName,
+        ISNULL(s.fldName, N'المستودع الرئيسي') AS fldStoreName,
+        COALESCE(i.fldCode, CAST(d.flditemID AS VARCHAR)) AS fldItemCode,
+        COALESCE(i.fldName, d.fldDescription, N'صنف') AS fldItemName,
+        ISNULL(u.fldUnitName, N'حبه') AS fldUnitName,
+        ISNULL(d.fldQTY, 0) AS fldQty,
+        ISNULL(d.fldCost, ISNULL(d.fldPrice, 0)) AS fldCost,
+        (ISNULL(d.fldQTY, 0) * ISNULL(d.fldCost, ISNULL(d.fldPrice, 0))) AS fldTotalAmount,
+        RTRIM(LTRIM(ISNULL(m.fldsymbol, N'ر.س'))) AS fldCurrency
+      FROM dbo.tblItemTransD d
+      INNER JOIN dbo.tblTransAction t ON d.fldTransID = t.fldID
+      LEFT JOIN dbo.tblItem i ON d.flditemID = i.fldID
+      LEFT JOIN dbo.tblItemsUnit u ON d.fldUnityID = u.fldID
+      LEFT JOIN dbo.tblBranchList b ON t.fldBranchNo = b.fldID
+      LEFT JOIN dbo.tblStore s ON ISNULL(d.fldstoreID, t.fldstoreID) = s.fldID
+      LEFT JOIN dbo.tblMoney m ON t.fldVoisherMoneyID = m.fldID
+      WHERE ` + whereClauses.join(' AND ') + `
+      ORDER BY i.fldCode ASC, d.fldID ASC
+    `;
+
+    let result = await request.query(query);
+    
+    // Fallback: If no dedicated 242 transactions found, select distinct items from tblItem/tblItemsUnit as starting baseline
+    if (!result.recordset || result.recordset.length === 0) {
+      const fallbackReq = globalPool.request();
+      const fbQuery = `
+        SELECT 
+          i.fldID AS fldDetailID,
+          0 AS fldTransID,
+          1 AS fldTransNo,
+          CONVERT(VARCHAR(10), GETDATE(), 120) AS fldDate,
+          N'الفرع الرئيسي' AS fldBranchName,
+          N'المستودع الرئيسي' AS fldStoreName,
+          i.fldCode AS fldItemCode,
+          i.fldName AS fldItemName,
+          ISNULL(u.fldUnitName, N'حبه') AS fldUnitName,
+          ISNULL((SELECT SUM(d.fldQTY) FROM dbo.tblItemTransD d WHERE d.flditemID = i.fldID), 0) AS fldQty,
+          ISNULL(u.fldCost, 0) AS fldCost,
+          (ISNULL((SELECT SUM(d.fldQTY) FROM dbo.tblItemTransD d WHERE d.flditemID = i.fldID), 0) * ISNULL(u.fldCost, 0)) AS fldTotalAmount,
+          N'ر.س' AS fldCurrency
+        FROM dbo.tblItem i
+        LEFT JOIN dbo.tblItemsUnit u ON (i.fldID = u.flditemID AND u.fldID = (SELECT MIN(u2.fldID) FROM dbo.tblItemsUnit u2 WHERE u2.flditemID = i.fldID))
+        WHERE i.fldIsActive = 1
+        ORDER BY i.fldCode ASC
+      `;
+      result = await fallbackReq.query(fbQuery);
+    }
+
+    res.json({ success: true, source: "database", data: result.recordset });
+  } catch (err) {
+    console.error("Error in GET /api/inventory-reports/opening-stock:", err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 2. GET /api/inventory-reports/warehouse-quantities (تقرير الكميات في المستودع)
+app.get('/api/inventory-reports/warehouse-quantities', async (req, res) => {
+  const isConnected = globalPool !== null && globalPool.connected;
+  if (!isConnected) return res.json({ success: true, source: "mock", data: [] });
+
+  try {
+    const request = globalPool.request();
+    const { storeId, catgId, search } = req.query;
+    let whereClauses = ["i.fldIsActive = 1"];
+
+    if (catgId && parseInt(catgId) > 0) {
+      request.input('catgId', sql.Int, parseInt(catgId));
+      whereClauses.push("i.fldCatgID = @catgId");
+    }
+    if (search && search.trim()) {
+      request.input('search', sql.NVarChar, '%' + search.trim() + '%');
+      whereClauses.push("(i.fldName LIKE @search OR i.fldCode LIKE @search)");
+    }
+
+    const query = `
+      SELECT 
+        i.fldID AS fldItemID,
+        i.fldCode AS fldItemCode,
+        i.fldName AS fldItemName,
+        ISNULL(u.fldUnitName, N'حبه') AS fldUnitName,
+        ISNULL((SELECT SUM(d.fldQTY) FROM dbo.tblItemTransD d WHERE d.flditemID = i.fldID), 0) AS fldStockQty,
+        ISNULL(u.fldCost, 0) AS fldCostPrice,
+        ISNULL(u.fldSalesPrice1, 0) AS fldSellingPrice,
+        (ISNULL((SELECT SUM(d.fldQTY) FROM dbo.tblItemTransD d WHERE d.flditemID = i.fldID), 0) * ISNULL(u.fldCost, 0)) AS fldTotalCostValue,
+        (ISNULL((SELECT SUM(d.fldQTY) FROM dbo.tblItemTransD d WHERE d.flditemID = i.fldID), 0) * ISNULL(u.fldSalesPrice1, 0)) AS fldTotalSellingValue,
+        ISNULL(s.fldName, N'المستودع الرئيسي') AS fldStoreName,
+        N'الفرع الرئيسي' AS fldBranchName
+      FROM dbo.tblItem i
+      LEFT JOIN dbo.tblItemsUnit u ON (i.fldID = u.flditemID AND u.fldID = (SELECT MIN(u2.fldID) FROM dbo.tblItemsUnit u2 WHERE u2.flditemID = i.fldID))
+      LEFT JOIN dbo.tblStore s ON 1=1
+      WHERE ` + whereClauses.join(' AND ') + `
+      ORDER BY i.fldCode ASC
+    `;
+
+    const result = await request.query(query);
+    res.json({ success: true, source: "database", data: result.recordset });
+  } catch (err) {
+    console.error("Error in GET /api/inventory-reports/warehouse-quantities:", err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 3. GET /api/inventory-reports/item-movement (كشف حركة الاصناف)
+app.get('/api/inventory-reports/item-movement', async (req, res) => {
+  const isConnected = globalPool !== null && globalPool.connected;
+  if (!isConnected) return res.json({ success: true, source: "mock", data: [] });
+
+  try {
+    const request = globalPool.request();
+    let whereClauses = ["1=1"];
+    whereClauses.push(...buildInventoryReportsWhere(req, request, 't'));
+
+    const { itemId, search } = req.query;
+    if (itemId && parseInt(itemId) > 0) {
+      request.input('itemId', sql.Int, parseInt(itemId));
+      whereClauses.push("d.flditemID = @itemId");
+    }
+    if (search && search.trim()) {
+      request.input('search', sql.NVarChar, '%' + search.trim() + '%');
+      whereClauses.push("(i.fldName LIKE @search OR i.fldCode LIKE @search OR t.fldDescription LIKE @search)");
+    }
+
+    const query = `
+      SELECT 
+        d.fldID AS fldDetailID,
+        t.fldID AS fldTransID,
+        t.fldTransNo,
+        CONVERT(VARCHAR(10), t.fldDate, 120) AS fldDate,
+        t.fldTransType,
+        CASE 
+          WHEN t.fldTransType = 20 THEN N'فاتورة مشتريات'
+          WHEN t.fldTransType = 21 THEN N'مردود مشتريات'
+          WHEN t.fldTransType = 22 THEN N'أمر توريد مخزني'
+          WHEN t.fldTransType = 23 THEN N'أمر صرف مخزني'
+          WHEN t.fldTransType = 28 THEN N'تحويل مخزني'
+          WHEN t.fldTransType = 30 THEN N'فاتورة مبيعات'
+          WHEN t.fldTransType = 31 THEN N'مردود مبيعات'
+          WHEN t.fldTransType = 242 THEN N'رصيد أول المدة'
+          ELSE N'حركة مخزنية'
+        END AS fldTransTypeName,
+        COALESCE(i.fldCode, CAST(d.flditemID AS VARCHAR)) AS fldItemCode,
+        COALESCE(i.fldName, d.fldDescription, N'صنف') AS fldItemName,
+        ISNULL(u.fldUnitName, N'حبه') AS fldUnitName,
+        CASE WHEN t.fldTransType IN (20, 22, 26, 27, 31, 242) THEN ISNULL(d.fldQTY, 0) ELSE 0 END AS fldInQty,
+        CASE WHEN t.fldTransType IN (21, 23, 24, 25, 30) THEN ISNULL(d.fldQTY, 0) ELSE 0 END AS fldOutQty,
+        ISNULL(d.fldCost, ISNULL(d.fldPrice, 0)) AS fldUnitPrice,
+        ISNULL(d.fldTotalPrice, (ISNULL(d.fldQTY, 0) * ISNULL(d.fldCost, 0))) AS fldTotalAmount,
+        ISNULL(s.fldName, N'المستودع الرئيسي') AS fldStoreName,
+        ISNULL(a.fldName, t.fldName) AS fldCustomerSupplierName,
+        ISNULL(b.fldName, N'الفرع الرئيسي') AS fldBranchName
+      FROM dbo.tblItemTransD d
+      INNER JOIN dbo.tblTransAction t ON d.fldTransID = t.fldID
+      LEFT JOIN dbo.tblItem i ON d.flditemID = i.fldID
+      LEFT JOIN dbo.tblItemsUnit u ON d.fldUnityID = u.fldID
+      LEFT JOIN dbo.tblBranchList b ON t.fldBranchNo = b.fldID
+      LEFT JOIN dbo.tblStore s ON ISNULL(d.fldstoreID, t.fldstoreID) = s.fldID
+      LEFT JOIN dbo.tblAccount a ON ISNULL(t.fldAccNumberID, t.fldVoisherAccID) = a.fldID
+      WHERE ` + whereClauses.join(' AND ') + `
+      ORDER BY t.fldDate DESC, t.fldTransNo DESC, d.fldID ASC
+    `;
+
+    const result = await request.query(query);
+    res.json({ success: true, source: "database", data: result.recordset });
+  } catch (err) {
+    console.error("Error in GET /api/inventory-reports/item-movement:", err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 4. GET /api/inventory-reports/trans-movement (عرض حركة مخزنية)
+app.get('/api/inventory-reports/trans-movement', async (req, res) => {
+  const isConnected = globalPool !== null && globalPool.connected;
+  if (!isConnected) return res.json({ success: true, source: "mock", data: [] });
+
+  try {
+    const request = globalPool.request();
+    let whereClauses = ["t.fldTransType IN (20, 21, 22, 23, 24, 25, 26, 27, 28, 30, 31, 242)"];
+    whereClauses.push(...buildInventoryReportsWhere(req, request, 't'));
+
+    const query = `
+      SELECT 
+        t.fldID AS fldTransID,
+        t.fldTransNo,
+        CONVERT(VARCHAR(10), t.fldDate, 120) AS fldDate,
+        t.fldTransType,
+        CASE 
+          WHEN t.fldTransType = 20 THEN N'مشتريات'
+          WHEN t.fldTransType = 21 THEN N'مردود مشتريات'
+          WHEN t.fldTransType = 22 THEN N'أمر توريد'
+          WHEN t.fldTransType = 23 THEN N'أمر صرف'
+          WHEN t.fldTransType = 28 THEN N'تحويل مخزني'
+          WHEN t.fldTransType = 30 THEN N'مبيعات'
+          WHEN t.fldTransType = 31 THEN N'مردود مبيعات'
+          WHEN t.fldTransType = 242 THEN N'رصيد أول المدة'
+          ELSE N'حركة مخزنية'
+        END AS fldTransTypeName,
+        ISNULL(t.fldDescription, N'-') AS fldDescription,
+        ISNULL(b.fldName, N'الفرع الرئيسي') AS fldBranchName,
+        ISNULL(s.fldName, N'المستودع الرئيسي') AS fldStoreName,
+        ISNULL(t.fldVoisherTotal, 0) AS fldTotalAmount,
+        ISNULL(a.fldName, t.fldName) AS fldPartyName,
+        COALESCE((SELECT COUNT(*) FROM dbo.tblItemTransD d WHERE d.fldTransID = t.fldID), 0) AS fldItemsCount,
+        COALESCE((SELECT SUM(d.fldQTY) FROM dbo.tblItemTransD d WHERE d.fldTransID = t.fldID), 0) AS fldTotalQty
+      FROM dbo.tblTransAction t
+      LEFT JOIN dbo.tblBranchList b ON t.fldBranchNo = b.fldID
+      LEFT JOIN dbo.tblStore s ON t.fldstoreID = s.fldID
+      LEFT JOIN dbo.tblAccount a ON ISNULL(t.fldAccNumberID, t.fldVoisherAccID) = a.fldID
+      WHERE ` + whereClauses.join(' AND ') + `
+      ORDER BY t.fldDate DESC, t.fldTransNo DESC
+    `;
+
+    const result = await request.query(query);
+    res.json({ success: true, source: "database", data: result.recordset });
+  } catch (err) {
+    console.error("Error in GET /api/inventory-reports/trans-movement:", err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 5. GET /api/inventory-reports/in-out-movement (حركة المخزون وارد منصرف)
+app.get('/api/inventory-reports/in-out-movement', async (req, res) => {
+  const isConnected = globalPool !== null && globalPool.connected;
+  if (!isConnected) return res.json({ success: true, source: "mock", data: [] });
+
+  try {
+    const request = globalPool.request();
+    let whereClauses = ["1=1"];
+    whereClauses.push(...buildInventoryReportsWhere(req, request, 't'));
+
+    const query = `
+      SELECT 
+        d.flditemID,
+        COALESCE(i.fldCode, CAST(d.flditemID AS VARCHAR)) AS fldItemCode,
+        COALESCE(i.fldName, d.fldDescription, N'صنف') AS fldItemName,
+        ISNULL(u.fldUnitName, N'حبه') AS fldUnitName,
+        SUM(CASE WHEN t.fldTransType IN (20, 22, 26, 27, 31, 242) THEN ISNULL(d.fldQTY, 0) ELSE 0 END) AS fldTotalInQty,
+        SUM(CASE WHEN t.fldTransType IN (20, 22, 26, 27, 31, 242) THEN ISNULL(d.fldTotalPrice, (ISNULL(d.fldQTY, 0) * ISNULL(d.fldCost, 0))) ELSE 0 END) AS fldTotalInValue,
+        SUM(CASE WHEN t.fldTransType IN (21, 23, 24, 25, 30) THEN ISNULL(d.fldQTY, 0) ELSE 0 END) AS fldTotalOutQty,
+        SUM(CASE WHEN t.fldTransType IN (21, 23, 24, 25, 30) THEN ISNULL(d.fldTotalPrice, (ISNULL(d.fldQTY, 0) * ISNULL(d.fldPrice, 0))) ELSE 0 END) AS fldTotalOutValue,
+        (SUM(CASE WHEN t.fldTransType IN (20, 22, 26, 27, 31, 242) THEN ISNULL(d.fldQTY, 0) ELSE 0 END) - SUM(CASE WHEN t.fldTransType IN (21, 23, 24, 25, 30) THEN ISNULL(d.fldQTY, 0) ELSE 0 END)) AS fldBalanceQty
+      FROM dbo.tblItemTransD d
+      INNER JOIN dbo.tblTransAction t ON d.fldTransID = t.fldID
+      LEFT JOIN dbo.tblItem i ON d.flditemID = i.fldID
+      LEFT JOIN dbo.tblItemsUnit u ON d.fldUnityID = u.fldID
+      WHERE ` + whereClauses.join(' AND ') + `
+      GROUP BY d.flditemID, i.fldCode, i.fldName, d.fldDescription, u.fldUnitName
+      ORDER BY fldTotalInValue DESC
+    `;
+
+    const result = await request.query(query);
+    res.json({ success: true, source: "database", data: result.recordset });
+  } catch (err) {
+    console.error("Error in GET /api/inventory-reports/in-out-movement:", err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 6. GET /api/inventory-reports/in-out-summary (حركة المخزون وارد منصرف اجمالي)
+app.get('/api/inventory-reports/in-out-summary', async (req, res) => {
+  const isConnected = globalPool !== null && globalPool.connected;
+  if (!isConnected) return res.json({ success: true, source: "mock", data: [] });
+
+  try {
+    const request = globalPool.request();
+    let whereClauses = ["1=1"];
+    whereClauses.push(...buildInventoryReportsWhere(req, request, 't'));
+
+    const query = `
+      SELECT 
+        d.flditemID,
+        COALESCE(i.fldCode, CAST(d.flditemID AS VARCHAR)) AS fldItemCode,
+        COALESCE(i.fldName, d.fldDescription, N'صنف') AS fldItemName,
+        ISNULL(u.fldUnitName, N'حبه') AS fldUnitName,
+        SUM(CASE WHEN t.fldTransType = 242 THEN ISNULL(d.fldQTY, 0) ELSE 0 END) AS fldOpeningQty,
+        SUM(CASE WHEN t.fldTransType IN (20, 22, 26, 27, 31) THEN ISNULL(d.fldQTY, 0) ELSE 0 END) AS fldPeriodInQty,
+        SUM(CASE WHEN t.fldTransType IN (21, 23, 24, 25, 30) THEN ISNULL(d.fldQTY, 0) ELSE 0 END) AS fldPeriodOutQty,
+        (SUM(CASE WHEN t.fldTransType IN (20, 22, 26, 27, 31, 242) THEN ISNULL(d.fldQTY, 0) ELSE 0 END) - SUM(CASE WHEN t.fldTransType IN (21, 23, 24, 25, 30) THEN ISNULL(d.fldQTY, 0) ELSE 0 END)) AS fldEndingStockQty,
+        ISNULL(u.fldCost, 0) AS fldAvgCost,
+        ((SUM(CASE WHEN t.fldTransType IN (20, 22, 26, 27, 31, 242) THEN ISNULL(d.fldQTY, 0) ELSE 0 END) - SUM(CASE WHEN t.fldTransType IN (21, 23, 24, 25, 30) THEN ISNULL(d.fldQTY, 0) ELSE 0 END)) * ISNULL(u.fldCost, 0)) AS fldEndingStockVal
+      FROM dbo.tblItemTransD d
+      INNER JOIN dbo.tblTransAction t ON d.fldTransID = t.fldID
+      LEFT JOIN dbo.tblItem i ON d.flditemID = i.fldID
+      LEFT JOIN dbo.tblItemsUnit u ON d.fldUnityID = u.fldID
+      WHERE ` + whereClauses.join(' AND ') + `
+      GROUP BY d.flditemID, i.fldCode, i.fldName, d.fldDescription, u.fldUnitName, u.fldCost
+      ORDER BY fldEndingStockVal DESC
+    `;
+
+    const result = await request.query(query);
+    res.json({ success: true, source: "database", data: result.recordset });
+  } catch (err) {
+    console.error("Error in GET /api/inventory-reports/in-out-summary:", err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 7. GET /api/inventory-reports/expired-zero-stock (كشف بقائمة الاصناف المنتهيه)
+app.get('/api/inventory-reports/expired-zero-stock', async (req, res) => {
+  const isConnected = globalPool !== null && globalPool.connected;
+  if (!isConnected) return res.json({ success: true, source: "mock", data: [] });
+
+  try {
+    const request = globalPool.request();
+    const { search } = req.query;
+    let whereClauses = ["(i.fldExpDate <= GETDATE() OR i.fldIsActive = 0 OR NOT EXISTS (SELECT 1 FROM dbo.tblItemTransD d WHERE d.flditemID = i.fldID))"];
+
+    if (search && search.trim()) {
+      request.input('search', sql.NVarChar, '%' + search.trim() + '%');
+      whereClauses.push("(i.fldName LIKE @search OR i.fldCode LIKE @search)");
+    }
+
+    const query = `
+      SELECT 
+        i.fldID AS fldItemID,
+        i.fldCode AS fldItemCode,
+        i.fldName AS fldItemName,
+        ISNULL(u.fldUnitName, N'حبه') AS fldUnitName,
+        ISNULL((SELECT SUM(d.fldQTY) FROM dbo.tblItemTransD d WHERE d.flditemID = i.fldID), 0) AS fldStockQty,
+        ISNULL(u.fldCost, 0) AS fldCostPrice,
+        ISNULL(u.fldSalesPrice1, 0) AS fldSellingPrice,
+        CONVERT(VARCHAR(10), i.fldExpDate, 120) AS fldExpDate,
+        CASE 
+          WHEN i.fldExpDate IS NOT NULL AND i.fldExpDate <= GETDATE() THEN N'منتهي الصلاحية'
+          WHEN ISNULL((SELECT SUM(d.fldQTY) FROM dbo.tblItemTransD d WHERE d.flditemID = i.fldID), 0) <= 0 THEN N'رصيد صفري / نفد'
+          WHEN i.fldIsActive = 0 THEN N'صنف غير نشط'
+          ELSE N'تنبيه مخزني'
+        END AS fldStatusReason
+      FROM dbo.tblItem i
+      LEFT JOIN dbo.tblItemsUnit u ON (i.fldID = u.flditemID AND u.fldID = (SELECT MIN(u2.fldID) FROM dbo.tblItemsUnit u2 WHERE u2.flditemID = i.fldID))
+      WHERE ` + whereClauses.join(' AND ') + `
+      ORDER BY i.fldExpDate ASC, i.fldCode ASC
+    `;
+
+    const result = await request.query(query);
+    res.json({ success: true, source: "database", data: result.recordset });
+  } catch (err) {
+    console.error("Error in GET /api/inventory-reports/expired-zero-stock:", err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 8. POST /api/inventory-reports/send-whatsapp-pdf
+app.post('/api/inventory-reports/send-whatsapp-pdf', async (req, res) => {
+  const { html, phone, title, caption, landscape } = req.body;
+  if (!html || !phone) {
+    return res.status(400).json({ success: false, error: "HTML content and phone number are required" });
+  }
+
+  let cleanPhone = String(phone).replace(/[^0-9]/g, '');
+  if (!cleanPhone.includes('@c.us')) {
+    if (!cleanPhone.startsWith('967') && cleanPhone.length === 9) cleanPhone = '967' + cleanPhone;
+    cleanPhone = cleanPhone + '@c.us';
+  }
+
+  if (clientStatus !== "ready" || !whatsappClient) {
+    return res.status(503).json({ success: false, error: "خادم الواتساب غير متصل حالياً. يرجى مسح رمز QR أو الاتصال أولاً." });
+  }
+
+  try {
+    const pdfBuffer = await renderPosPdfBuffer(html, landscape !== false);
+    const fileName = `InventoryReport_${Date.now()}.pdf`;
+    const tempFilePath = path.join(scratchDir, fileName);
+    fs.writeFileSync(tempFilePath, pdfBuffer);
+
+    const media = MessageMedia.fromFilePath(tempFilePath);
+    let chatId = cleanPhone;
+    if (whatsappClient && typeof whatsappClient.getNumberId === 'function') {
+      try {
+        const numId = await whatsappClient.getNumberId(cleanPhone.replace('@c.us', ''));
+        if (numId && numId._serialized) chatId = numId._serialized;
+      } catch (e) {}
+    }
+
+    await whatsappClient.sendMessage(chatId, media, {
+      caption: caption || `تقرير: ${title || 'تقرير المخزون'} من نظام مستكشف الحسابات`
+    });
+
+    try { fs.unlinkSync(tempFilePath); } catch (e) {}
+    res.json({ success: true, message: `تم إرسال تقرير PDF بنجاح إلى الرقم (${phone})` });
+  } catch (err) {
+    console.error("Error sending inventory report WhatsApp PDF:", err);
+    res.status(500).json({ success: false, error: "فشل إرسال ملف PDF: " + err.message });
+  }
+});
+
+// 9. POST /api/inventory-reports/download-pdf
+app.post('/api/inventory-reports/download-pdf', async (req, res) => {
+  const { html, title, landscape } = req.body;
+  if (!html) {
+    return res.status(400).json({ success: false, error: "HTML content is required" });
+  }
+
+  try {
+    const pdfBuffer = await renderPosPdfBuffer(html, landscape !== false);
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(title || 'Inventory_Report')}_${Date.now()}.pdf"`);
+    res.end(Buffer.from(pdfBuffer));
+  } catch (err) {
+    console.error("Error downloading inventory report PDF:", err);
+    res.status(500).json({ success: false, error: "فشل توليد ملف PDF: " + err.message });
+  }
+});
+
+
+
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });

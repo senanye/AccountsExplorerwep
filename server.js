@@ -4212,9 +4212,8 @@ app.get('/api/general-ledger', async (req, res) => {
 
 // 9-extra5b. Retrieve Account Reports (Balances, Debit, Credit, etc.)
 app.get('/api/accounts-reports', async (req, res) => {
-
   const {
-    reportType, // balances, debit, credit
+    reportType, // balances, debit, credit, opening-balances, journal-entries, final-reports, currency-diffs, balances-local, zero-balances
     branchNo,
     startDate,
     endDate,
@@ -4227,31 +4226,50 @@ app.get('/api/accounts-reports', async (req, res) => {
 
   const isConnected = globalPool !== null && globalPool.connected;
   if (!isConnected) {
-    // Generate mock account reports data
-    const mockData = [
-      { fldID: 28, fldNumber: "1211", fldName: "الصندوق الرئيسي", fldBranchNo: 1, CurrencyName: "دولار امريكي", CurrencySymbol: "$", PreviousBalance: 0, PreviousBalanceLocal: 0, PeriodDebit: 22.0, PeriodCredit: 0, PeriodDebitLocal: 22.0, PeriodCreditLocal: 0, Balance: 22.0, BalanceLocal: 22.0, fldAccType: 1, TotalDebit: 22.0, TotalCredit: 0 },
-      { fldID: 412, fldNumber: "1111001", fldName: "مكيف جيرمي اسبليت طن واحد", fldBranchNo: 1, CurrencyName: "دولار امريكي", CurrencySymbol: "$", PreviousBalance: 70, PreviousBalanceLocal: 70, PeriodDebit: 0, PeriodCredit: 0, PeriodDebitLocal: 0, PeriodCreditLocal: 0, Balance: 70, BalanceLocal: 70, fldAccType: 1, TotalDebit: 0, TotalCredit: 0 }
-    ];
-    let filtered = mockData;
-    if (reportType === 'debit') {
-      filtered = mockData.filter(d => d.Balance > 0);
-    } else if (reportType === 'credit') {
-      filtered = mockData.filter(d => d.Balance < 0);
-    }
-    return res.json({ success: true, source: "mock", data: filtered });
+    return res.json({ success: true, source: "mock", data: [] });
   }
 
   try {
     const request = globalPool.request();
-    request.timeout = 60000; // 60 seconds timeout for large datasets
+    request.timeout = 60000;
     const start = startDate ? new Date(startDate) : new Date(new Date().getFullYear() + '-01-01');
     const end = endDate ? new Date(endDate + 'T23:59:59') : new Date();
     request.input('startDate', sql.DateTime, start);
     request.input('endDate', sql.DateTime, end);
 
+    let whereClauses = ["t.fldDate <= @endDate"];
+
+    if (detailType === 'totals') {
+      whereClauses.push("a.fldIs_Primary = 1");
+    } else if (detailType === 'detailed') {
+      whereClauses.push("(a.fldIs_Primary = 0 OR a.fldIs_Primary IS NULL)");
+    }
+
+    if (branchNo && parseInt(branchNo) > 0) {
+      request.input('branchNo', sql.Int, parseInt(branchNo));
+      whereClauses.push("m.fldBranchNo = @branchNo");
+    }
+    if (currencyId && parseInt(currencyId) > 0) {
+      request.input('currencyId', sql.Int, parseInt(currencyId));
+      whereClauses.push("m.fldMoneyID = @currencyId");
+    }
+    if (costCenterId && parseInt(costCenterId) > 0) {
+      request.input('costCenterId', sql.Int, parseInt(costCenterId));
+      whereClauses.push("m.fldCenterCostID = @costCenterId");
+    }
+    if (groupId && parseInt(groupId) >= 0 && groupId !== '') {
+      request.input('groupId', sql.Int, parseInt(groupId));
+      whereClauses.push("a.fldGroupID = @groupId");
+    }
+    if (accType && parseInt(accType) > 0) {
+      request.input('accType', sql.Int, parseInt(accType));
+      whereClauses.push("a.fldAccType = @accType");
+    }
+
+    const whereStr = whereClauses.join(' AND ');
     let query = '';
 
-    if (reportType === 'balances' || reportType === 'balances-local' || reportType === 'zero-balances') {
+    if (reportType === 'balances' || reportType === 'balances-local' || reportType === 'zero-balances' || reportType === 'debit' || reportType === 'credit') {
       query = `
         SELECT 
           a.fldID,
@@ -4275,40 +4293,17 @@ app.get('/api/accounts-reports', async (req, res) => {
         INNER JOIN dbo.tblTransAction t ON m.fldTransID = t.fldID
         LEFT JOIN dbo.tblBranchList b ON m.fldBranchNo = b.fldID
         LEFT JOIN dbo.tblMoney cur ON m.fldMoneyID = cur.fldID
-        WHERE t.fldDate <= @endDate
-      `;
-
-      if (detailType === 'totals') {
-        query += ` AND a.fldIs_Primary = 1`;
-      } else if (detailType === 'detailed') {
-        query += ` AND (a.fldIs_Primary = 0 OR a.fldIs_Primary IS NULL)`;
-      }
-
-      if (branchNo && parseInt(branchNo) > 0) {
-        request.input('branchNo', sql.Int, parseInt(branchNo));
-        query += ` AND m.fldBranchNo = @branchNo`;
-      }
-      if (currencyId && parseInt(currencyId) > 0) {
-        request.input('currencyId', sql.Int, parseInt(currencyId));
-        query += ` AND m.fldMoneyID = @currencyId`;
-      }
-      if (costCenterId && parseInt(costCenterId) > 0) {
-        request.input('costCenterId', sql.Int, parseInt(costCenterId));
-        query += ` AND m.fldCenterCostID = @costCenterId`;
-      }
-      if (groupId && parseInt(groupId) >= 0 && groupId !== '') {
-        request.input('groupId', sql.Int, parseInt(groupId));
-        query += ` AND a.fldGroupID = @groupId`;
-      }
-      if (accType && parseInt(accType) > 0) {
-        request.input('accType', sql.Int, parseInt(accType));
-        query += ` AND a.fldAccType = @accType`;
-      }
-
-      query += `
+        WHERE ${whereStr}
         GROUP BY a.fldID, a.fldNumber, a.fldName, m.fldBranchNo, b.fldName, a.fldAccType, cur.fldName, cur.fldsymbol
-        ORDER BY a.fldNumber
       `;
+
+      if (reportType === 'debit') {
+        query += ` HAVING (ISNULL(SUM(CASE WHEN t.fldDate < @startDate THEN m.fldDebit - m.fldCredit ELSE 0 END), 0) + ISNULL(SUM(CASE WHEN t.fldDate >= @startDate AND t.fldDate <= @endDate THEN m.fldDebit ELSE 0 END), 0) - ISNULL(SUM(CASE WHEN t.fldDate >= @startDate AND t.fldDate <= @endDate THEN m.fldCredit ELSE 0 END), 0)) > 0`;
+      } else if (reportType === 'credit') {
+        query += ` HAVING (ISNULL(SUM(CASE WHEN t.fldDate < @startDate THEN m.fldDebit - m.fldCredit ELSE 0 END), 0) + ISNULL(SUM(CASE WHEN t.fldDate >= @startDate AND t.fldDate <= @endDate THEN m.fldDebit ELSE 0 END), 0) - ISNULL(SUM(CASE WHEN t.fldDate >= @startDate AND t.fldDate <= @endDate THEN m.fldCredit ELSE 0 END), 0)) < 0`;
+      }
+
+      query += ` ORDER BY a.fldNumber ASC`;
 
     } else if (reportType === 'opening-balances') {
       query = `
@@ -4316,49 +4311,25 @@ app.get('/api/accounts-reports', async (req, res) => {
           a.fldID,
           a.fldNumber,
           a.fldName,
-          m.fldBranchNo,
+          ISNULL(m.fldBranchNo, 1) AS fldBranchNo,
+          ISNULL(b.fldName, N'الفرع الرئيسي') AS BranchName,
           a.fldAccType,
-          cur.fldName AS CurrencyName,
-          cur.fldsymbol AS CurrencySymbol,
+          ISNULL(cur.fldName, N'ريال سعودي') AS CurrencyName,
+          ISNULL(cur.fldsymbol, N'ر.س') AS CurrencySymbol,
           ISNULL(SUM(m.fldDebit - m.fldCredit), 0) AS PreviousBalance,
-          ISNULL(SUM(m.Debit - m.Credit), 0) AS PreviousBalanceLocal
-        FROM dbo.tblMoneyMove m
+          ISNULL(SUM(m.Debit - m.Credit), 0) AS PreviousBalanceLocal,
+          CASE WHEN ISNULL(SUM(m.fldDebit - m.fldCredit), 0) > 0 THEN ISNULL(SUM(m.fldDebit - m.fldCredit), 0) ELSE 0 END AS PeriodDebit,
+          CASE WHEN ISNULL(SUM(m.fldDebit - m.fldCredit), 0) < 0 THEN ABS(ISNULL(SUM(m.fldDebit - m.fldCredit), 0)) ELSE 0 END AS PeriodCredit,
+          ISNULL(SUM(m.fldDebit - m.fldCredit), 0) AS Balance,
+          ISNULL(SUM(m.fldDebit - m.fldCredit), 0) AS CumulativeBalance
+        FROM dbo.tblAccount a
+        INNER JOIN dbo.tblMoneyMove m ON a.fldID = m.fldAccID
         INNER JOIN dbo.tblTransAction t ON m.fldTransID = t.fldID
-        INNER JOIN dbo.tblAccount a ON m.fldAccID = a.fldID
+        LEFT JOIN dbo.tblBranchList b ON m.fldBranchNo = b.fldID
         LEFT JOIN dbo.tblMoney cur ON m.fldMoneyID = cur.fldID
         WHERE t.fldDate < @startDate
-      `;
-
-      if (detailType === 'totals') {
-        query += ` AND a.fldIs_Primary = 1`;
-      } else {
-        query += ` AND (a.fldIs_Primary = 0 OR a.fldIs_Primary IS NULL)`;
-      }
-
-      if (branchNo) {
-        request.input('branchNo', sql.Int, parseInt(branchNo));
-        query += ` AND m.fldBranchNo = @branchNo`;
-      }
-      if (currencyId) {
-        request.input('currencyId', sql.Int, parseInt(currencyId));
-        query += ` AND m.fldMoneyID = @currencyId`;
-      }
-      if (costCenterId) {
-        request.input('costCenterId', sql.Int, parseInt(costCenterId));
-        query += ` AND m.fldCenterCostID = @costCenterId`;
-      }
-      if (groupId) {
-        request.input('groupId', sql.Int, parseInt(groupId));
-        query += ` AND a.fldGroupID = @groupId`;
-      }
-      if (accType) {
-        request.input('accType', sql.Int, parseInt(accType));
-        query += ` AND a.fldAccType = @accType`;
-      }
-
-      query += `
         GROUP BY a.fldID, a.fldNumber, a.fldName, m.fldBranchNo, b.fldName, a.fldAccType, cur.fldName, cur.fldsymbol
-        ORDER BY a.fldNumber
+        ORDER BY a.fldNumber ASC
       `;
 
     } else if (reportType === 'journal-entries') {
@@ -4366,102 +4337,64 @@ app.get('/api/accounts-reports', async (req, res) => {
         SELECT 
           t.fldID AS TransID,
           t.fldTransNo AS TransNo,
-          mn.fldName AS TransTypeName,
-          t.fldDate AS TransDate,
+          CASE 
+            WHEN t.fldTransType = 1 THEN N'سند قبض'
+            WHEN t.fldTransType = 2 THEN N'سند صرف'
+            WHEN t.fldTransType = 3 THEN N'قيد يومية'
+            WHEN t.fldTransType = 20 THEN N'فاتورة مشتريات'
+            WHEN t.fldTransType = 21 THEN N'مردود مشتريات'
+            WHEN t.fldTransType = 30 THEN N'فاتورة مبيعات'
+            WHEN t.fldTransType = 31 THEN N'مردود مبيعات'
+            WHEN t.fldTransType = 40 THEN N'فاتورة إيجار'
+            WHEN t.fldTransType = 41 THEN N'فاتورة كهرباء'
+            ELSE N'قيد محاسبي'
+          END AS TransTypeName,
+          CONVERT(VARCHAR(10), t.fldDate, 120) AS TransDate,
           a.fldNumber AS AccountNumber,
           a.fldName AS AccountName,
           m.fldNote AS Note,
-          m.fldDebit AS Debit,
-          m.fldCredit AS Credit,
-          cur.fldsymbol AS CurrencySymbol
+          ISNULL(m.fldDebit, 0) AS Debit,
+          ISNULL(m.fldCredit, 0) AS Credit,
+          ISNULL(cur.fldsymbol, N'ر.س') AS CurrencySymbol,
+          ISNULL(b.fldName, N'الفرع الرئيسي') AS BranchName
         FROM dbo.tblMoneyMove m
         INNER JOIN dbo.tblTransAction t ON m.fldTransID = t.fldID
         INNER JOIN dbo.tblAccount a ON m.fldAccID = a.fldID
+        LEFT JOIN dbo.tblBranchList b ON m.fldBranchNo = b.fldID
         LEFT JOIN dbo.tblMoney cur ON m.fldMoneyID = cur.fldID
-        LEFT JOIN dbo.tblMenus mn ON t.fldTransType = mn.fldID
         WHERE t.fldDate >= @startDate AND t.fldDate <= @endDate
+        ORDER BY t.fldDate DESC, t.fldTransNo DESC, a.fldNumber ASC
       `;
-
-      if (detailType === 'totals') {
-        query += ` AND a.fldIs_Primary = 1`;
-      } else {
-        query += ` AND (a.fldIs_Primary = 0 OR a.fldIs_Primary IS NULL)`;
-      }
-
-      if (branchNo) {
-        request.input('branchNo', sql.Int, parseInt(branchNo));
-        query += ` AND m.fldBranchNo = @branchNo`;
-      }
-      if (currencyId) {
-        request.input('currencyId', sql.Int, parseInt(currencyId));
-        query += ` AND m.fldMoneyID = @currencyId`;
-      }
-      if (costCenterId) {
-        request.input('costCenterId', sql.Int, parseInt(costCenterId));
-        query += ` AND m.fldCenterCostID = @costCenterId`;
-      }
-      if (groupId) {
-        request.input('groupId', sql.Int, parseInt(groupId));
-        query += ` AND a.fldGroupID = @groupId`;
-      }
-      if (accType) {
-        request.input('accType', sql.Int, parseInt(accType));
-        query += ` AND a.fldAccType = @accType`;
-      }
-
-      query += ` ORDER BY t.fldDate, t.fldTransNo, a.fldNumber`;
 
     } else if (reportType === 'currency-diffs') {
       query = `
         SELECT 
           t.fldID AS TransID,
           t.fldTransNo AS TransNo,
-          mn.fldName AS TransTypeName,
-          t.fldDate AS TransDate,
+          CASE 
+            WHEN t.fldTransType = 1 THEN N'سند قبض'
+            WHEN t.fldTransType = 2 THEN N'سند صرف'
+            WHEN t.fldTransType = 3 THEN N'قيد يومية'
+            ELSE N'فروق عملات'
+          END AS TransTypeName,
+          CONVERT(VARCHAR(10), t.fldDate, 120) AS TransDate,
           a.fldNumber AS AccountNumber,
           a.fldName AS AccountName,
           m.fldNote AS Note,
-          m.Debit AS DebitLocal,
-          m.Credit AS CreditLocal,
-          cur.fldsymbol AS CurrencySymbol
+          ISNULL(m.Debit, 0) AS DebitLocal,
+          ISNULL(m.Credit, 0) AS CreditLocal,
+          (ISNULL(m.Debit, 0) - ISNULL(m.Credit, 0)) AS DiffLocal,
+          ISNULL(cur.fldsymbol, N'ر.س') AS CurrencySymbol,
+          ISNULL(b.fldName, N'الفرع الرئيسي') AS BranchName
         FROM dbo.tblMoneyMove m
         INNER JOIN dbo.tblTransAction t ON m.fldTransID = t.fldID
         INNER JOIN dbo.tblAccount a ON m.fldAccID = a.fldID
+        LEFT JOIN dbo.tblBranchList b ON m.fldBranchNo = b.fldID
         LEFT JOIN dbo.tblMoney cur ON m.fldMoneyID = cur.fldID
-        LEFT JOIN dbo.tblMenus mn ON t.fldTransType = mn.fldID
         WHERE t.fldDate >= @startDate AND t.fldDate <= @endDate
-          AND m.fldDebit = 0 AND m.fldCredit = 0
           AND (m.Debit > 0 OR m.Credit > 0)
+        ORDER BY t.fldDate DESC, t.fldTransNo DESC, a.fldNumber ASC
       `;
-
-      if (detailType === 'totals') {
-        query += ` AND a.fldIs_Primary = 1`;
-      } else {
-        query += ` AND (a.fldIs_Primary = 0 OR a.fldIs_Primary IS NULL)`;
-      }
-
-      if (branchNo) {
-        request.input('branchNo', sql.Int, parseInt(branchNo));
-        query += ` AND m.fldBranchNo = @branchNo`;
-      }
-      if (currencyId) {
-        request.input('currencyId', sql.Int, parseInt(currencyId));
-        query += ` AND m.fldMoneyID = @currencyId`;
-      }
-      if (costCenterId) {
-        request.input('costCenterId', sql.Int, parseInt(costCenterId));
-        query += ` AND m.fldCenterCostID = @costCenterId`;
-      }
-      if (groupId) {
-        request.input('groupId', sql.Int, parseInt(groupId));
-        query += ` AND a.fldGroupID = @groupId`;
-      }
-      if (accType) {
-        request.input('accType', sql.Int, parseInt(accType));
-        query += ` AND a.fldAccType = @accType`;
-      }
-
-      query += ` ORDER BY t.fldDate, t.fldTransNo, a.fldNumber`;
 
     } else if (reportType === 'final-reports') {
       query = `
@@ -4470,111 +4403,32 @@ app.get('/api/accounts-reports', async (req, res) => {
           a.fldNumber,
           a.fldName,
           a.fldAccType,
-          cur.fldsymbol AS CurrencySymbol,
+          CASE 
+            WHEN a.fldAccType = 1 THEN N'1-ميزانيه'
+            WHEN a.fldAccType = 2 THEN N'2-أرباح وخسائر'
+            WHEN a.fldAccType = 3 THEN N'3-متاجرة'
+            WHEN a.fldAccType = 4 THEN N'4-تشغيل'
+            ELSE N'حساب ختامي'
+          END AS FinalAccountName,
+          ISNULL(cur.fldName, N'ريال سعودي') AS CurrencyName,
+          ISNULL(cur.fldsymbol, N'ر.س') AS CurrencySymbol,
           ISNULL(SUM(CASE WHEN t.fldDate >= @startDate THEN m.fldDebit ELSE 0 END), 0) AS TotalDebit,
           ISNULL(SUM(CASE WHEN t.fldDate >= @startDate THEN m.fldCredit ELSE 0 END), 0) AS TotalCredit,
           ISNULL(SUM(m.fldDebit - m.fldCredit), 0) AS Balance,
-          ISNULL(SUM(m.Debit - m.Credit), 0) AS BalanceLocal
-        FROM dbo.tblMoneyMove m
+          ISNULL(SUM(m.Debit - m.Credit), 0) AS BalanceLocal,
+          ISNULL(b.fldName, N'الفرع الرئيسي') AS BranchName
+        FROM dbo.tblAccount a
+        INNER JOIN dbo.tblMoneyMove m ON a.fldID = m.fldAccID
         INNER JOIN dbo.tblTransAction t ON m.fldTransID = t.fldID
-        INNER JOIN dbo.tblAccount a ON m.fldAccID = a.fldID
+        LEFT JOIN dbo.tblBranchList b ON m.fldBranchNo = b.fldID
         LEFT JOIN dbo.tblMoney cur ON m.fldMoneyID = cur.fldID
-        WHERE t.fldDate <= @endDate
+        WHERE ${whereStr}
+        GROUP BY a.fldID, a.fldNumber, a.fldName, a.fldAccType, b.fldName, cur.fldName, cur.fldsymbol
+        ORDER BY a.fldAccType ASC, a.fldNumber ASC
       `;
-
-      if (detailType === 'totals') {
-        query += ` AND a.fldIs_Primary = 1`;
-      } else {
-        query += ` AND (a.fldIs_Primary = 0 OR a.fldIs_Primary IS NULL)`;
-      }
-
-      if (branchNo) {
-        request.input('branchNo', sql.Int, parseInt(branchNo));
-        query += ` AND m.fldBranchNo = @branchNo`;
-      }
-      if (currencyId) {
-        request.input('currencyId', sql.Int, parseInt(currencyId));
-        query += ` AND m.fldMoneyID = @currencyId`;
-      }
-      if (costCenterId) {
-        request.input('costCenterId', sql.Int, parseInt(costCenterId));
-        query += ` AND m.fldCenterCostID = @costCenterId`;
-      }
-      if (groupId) {
-        request.input('groupId', sql.Int, parseInt(groupId));
-        query += ` AND a.fldGroupID = @groupId`;
-      }
-      if (accType) {
-        request.input('accType', sql.Int, parseInt(accType));
-        query += ` AND a.fldAccType = @accType`;
-      }
-
-      query += `
-        GROUP BY a.fldID, a.fldNumber, a.fldName, a.fldAccType, cur.fldsymbol
-        ORDER BY a.fldNumber
-      `;
-
-    } else {
-      // debit or credit reports
-      query = `
-        SELECT 
-          a.fldID,
-          a.fldNumber,
-          a.fldName,
-          a.fldAccType,
-          cur.fldsymbol AS CurrencySymbol,
-          ISNULL(SUM(CASE WHEN t.fldDate >= @startDate THEN m.fldDebit ELSE 0 END), 0) AS TotalDebit,
-          ISNULL(SUM(CASE WHEN t.fldDate >= @startDate THEN m.fldCredit ELSE 0 END), 0) AS TotalCredit,
-          ISNULL(SUM(m.fldDebit - m.fldCredit), 0) AS Balance,
-          ISNULL(SUM(m.Debit - m.Credit), 0) AS BalanceLocal
-        FROM dbo.tblMoneyMove m
-        INNER JOIN dbo.tblTransAction t ON m.fldTransID = t.fldID
-        INNER JOIN dbo.tblAccount a ON m.fldAccID = a.fldID
-        LEFT JOIN dbo.tblMoney cur ON m.fldMoneyID = cur.fldID
-        WHERE t.fldDate <= @endDate
-      `;
-
-      if (detailType === 'totals') {
-        query += ` AND a.fldIs_Primary = 1`;
-      } else {
-        query += ` AND (a.fldIs_Primary = 0 OR a.fldIs_Primary IS NULL)`;
-      }
-
-      if (branchNo) {
-        request.input('branchNo', sql.Int, parseInt(branchNo));
-        query += ` AND m.fldBranchNo = @branchNo`;
-      }
-      if (currencyId) {
-        request.input('currencyId', sql.Int, parseInt(currencyId));
-        query += ` AND m.fldMoneyID = @currencyId`;
-      }
-      if (costCenterId) {
-        request.input('costCenterId', sql.Int, parseInt(costCenterId));
-        query += ` AND m.fldCenterCostID = @costCenterId`;
-      }
-      if (groupId) {
-        request.input('groupId', sql.Int, parseInt(groupId));
-        query += ` AND a.fldGroupID = @groupId`;
-      }
-      if (accType) {
-        request.input('accType', sql.Int, parseInt(accType));
-        query += ` AND a.fldAccType = @accType`;
-      }
-
-      query += `
-        GROUP BY a.fldID, a.fldNumber, a.fldName, a.fldAccType, cur.fldsymbol
-      `;
-
-      if (reportType === 'debit') {
-        query += ` HAVING ISNULL(SUM(m.fldDebit - m.fldCredit), 0) > 0`;
-      } else {
-        query += ` HAVING ISNULL(SUM(m.fldDebit - m.fldCredit), 0) < 0`;
-      }
-
-      query += ` ORDER BY a.fldNumber`;
     }
 
-    console.log(`Executing Account Reports (${reportType}) Query:`);
+        console.log(`Executing Account Reports (${reportType}) Query:`);
     const result = await request.query(query);
     res.json({ success: true, source: "database", data: result.recordset });
   } catch (err) {

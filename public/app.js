@@ -18053,8 +18053,9 @@ window.renderAccountReportsTable = function(tabId) {
   const endDate = document.getElementById(`arEndDate-${tabId}`)?.value || '';
   if (!thead || !tbody) return;
 
-  if (reportType === 'balances' || reportType === 'balances-local' || reportType === 'zero-balances') {
-    // Exact Match Columns to media_1787906640173.png
+  if (reportType === 'balances' || reportType === 'debit' || reportType === 'credit' || reportType === 'zero-balances') {
+    // 11 Columns matching media_1787906640173.png
+    const balTitle = reportType === 'debit' ? 'الرصيد المدين' : (reportType === 'credit' ? 'الرصيد الدائن' : 'الرصيد');
     thead.innerHTML = `
       <tr style="position: sticky; top: 0; z-index: 10; background: #f8fafc; border-bottom: 2px solid #cbd5e1; color: #334155; font-weight: 800;">
         <th style="padding: 7px 8px; width: 110px; white-space: nowrap;">الفرع</th>
@@ -18064,7 +18065,7 @@ window.renderAccountReportsTable = function(tabId) {
         <th style="padding: 7px 8px; width: 100px; text-align: right; white-space: nowrap;">السابقة</th>
         <th style="padding: 7px 8px; width: 100px; text-align: right; white-space: nowrap;">مدين</th>
         <th style="padding: 7px 8px; width: 100px; text-align: right; white-space: nowrap;">دائن</th>
-        <th style="padding: 7px 10px; width: 110px; text-align: right; white-space: nowrap;">الرصيد</th>
+        <th style="padding: 7px 10px; width: 110px; text-align: right; white-space: nowrap;">${balTitle}</th>
         <th style="padding: 7px 10px; width: 110px; text-align: right; white-space: nowrap;">الحالية</th>
         <th style="padding: 7px 8px; width: 95px; white-space: nowrap;">من تاريخ</th>
         <th style="padding: 7px 8px; width: 95px; white-space: nowrap;">الى تاريخ</th>
@@ -18072,7 +18073,7 @@ window.renderAccountReportsTable = function(tabId) {
     `;
 
     if (!list || list.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="11" style="padding: 25px; text-align: center; color: #94a3b8; font-weight: bold;">لا توجد أرصدة حسابات مطابقة لمعايير البحث</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="11" style="padding: 25px; text-align: center; color: #94a3b8; font-weight: bold;">لا توجد بيانات مطابقة لمعايير البحث</td></tr>`;
       updateAccountReportsSummary(tabId, 0, '');
       return;
     }
@@ -18118,6 +18119,115 @@ window.renderAccountReportsTable = function(tabId) {
 
     tbody.innerHTML = html;
     updateAccountReportsSummary(tabId, list.length, `إجمالي السابقة: <span style="color: #475569; margin: 0 4px;">${sumPrev.toLocaleString('en-US', {minimumFractionDigits:2})}</span> | إجمالي مدين: <span style="color: #059669; margin: 0 4px;">${sumDebit.toLocaleString('en-US', {minimumFractionDigits:2})}</span> | إجمالي دائن: <span style="color: #dc2626; margin: 0 4px;">${sumCredit.toLocaleString('en-US', {minimumFractionDigits:2})}</span> | صافي الرصيد: <span style="color: #0f766e; margin: 0 4px; font-size: 0.95rem;">${sumCurrent.toLocaleString('en-US', {minimumFractionDigits:2})}</span>`);
+
+  } else if (reportType === 'balances-local') {
+    thead.innerHTML = `
+      <tr style="position: sticky; top: 0; z-index: 10; background: #f8fafc; border-bottom: 2px solid #cbd5e1; color: #334155; font-weight: 800;">
+        <th style="padding: 7px 8px; width: 110px; white-space: nowrap;">الفرع</th>
+        <th style="padding: 7px 6px; width: 95px; white-space: nowrap;">رقم الحساب</th>
+        <th style="padding: 7px 14px; min-width: 220px; text-align: right; white-space: nowrap;">اسم الحساب</th>
+        <th style="padding: 7px 8px; width: 90px; white-space: nowrap;">العمله</th>
+        <th style="padding: 7px 8px; width: 100px; text-align: right; white-space: nowrap;">السابقة محلي</th>
+        <th style="padding: 7px 8px; width: 100px; text-align: right; white-space: nowrap;">مدين محلي</th>
+        <th style="padding: 7px 8px; width: 100px; text-align: right; white-space: nowrap;">دائن محلي</th>
+        <th style="padding: 7px 10px; width: 110px; text-align: right; white-space: nowrap;">الرصيد محلي</th>
+        <th style="padding: 7px 10px; width: 110px; text-align: right; white-space: nowrap;">الحالية محلي</th>
+        <th style="padding: 7px 8px; width: 95px; white-space: nowrap;">من تاريخ</th>
+        <th style="padding: 7px 8px; width: 95px; white-space: nowrap;">الى تاريخ</th>
+      </tr>
+    `;
+
+    if (!list || list.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="11" style="padding: 25px; text-align: center; color: #94a3b8; font-weight: bold;">لا توجد بيانات مطابقة لمعايير البحث</td></tr>`;
+      updateAccountReportsSummary(tabId, 0, '');
+      return;
+    }
+
+    let sumPrev = 0, sumDebit = 0, sumCredit = 0, sumCurrent = 0;
+    let html = '';
+
+    list.forEach((row, idx) => {
+      const prev = parseFloat(row.PreviousBalanceLocal) || 0;
+      const deb = parseFloat(row.PeriodDebitLocal) || 0;
+      const cr = parseFloat(row.PeriodCreditLocal) || 0;
+      const bal = deb - cr;
+      const current = prev + deb - cr;
+
+      sumPrev += prev;
+      sumDebit += deb;
+      sumCredit += cr;
+      sumCurrent += current;
+
+      html += `
+        <tr style="border-bottom: 1px solid #e2e8f0; background: ${idx % 2 === 0 ? '#ffffff' : '#f8fafc'};">
+          <td style="padding: 5px 8px; font-weight: bold; color: #0284c7; white-space: nowrap;">${row.BranchName || 'الفرع الرئيسي'}</td>
+          <td style="padding: 5px 6px; font-family: monospace; font-weight: bold; color: #1e3a8a; white-space: nowrap;">${row.fldNumber}</td>
+          <td style="padding: 5px 14px; text-align: right; font-weight: bold; color: #1e293b; white-space: nowrap;">${row.fldName}</td>
+          <td style="padding: 5px 8px; font-family: monospace; white-space: nowrap;">${row.CurrencyName || 'ريال سعودي'}</td>
+          <td style="padding: 5px 8px; text-align: right; font-family: monospace; white-space: nowrap;">${prev.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+          <td style="padding: 5px 8px; text-align: right; font-family: monospace; color: #059669; font-weight: bold; white-space: nowrap;">${deb.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+          <td style="padding: 5px 8px; text-align: right; font-family: monospace; color: #dc2626; font-weight: bold; white-space: nowrap;">${cr.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+          <td style="padding: 5px 10px; text-align: right; font-family: monospace; font-weight: bold; color: ${bal < 0 ? '#dc2626' : '#059669'}; white-space: nowrap;">${bal.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+          <td style="padding: 5px 10px; text-align: right; font-weight: 900; font-family: monospace; color: #0f766e; white-space: nowrap;">${current.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+          <td style="padding: 5px 8px; font-family: monospace; font-size: 0.76rem; color: #64748b; white-space: nowrap;">${startDate || '-'}</td>
+          <td style="padding: 5px 8px; font-family: monospace; font-size: 0.76rem; color: #64748b; white-space: nowrap;">${endDate || '-'}</td>
+        </tr>
+      `;
+    });
+
+    tbody.innerHTML = html;
+    updateAccountReportsSummary(tabId, list.length, `إجمالي السابقة: <span style="color: #475569; margin: 0 4px;">${sumPrev.toLocaleString('en-US', {minimumFractionDigits:2})}</span> | إجمالي مدين: <span style="color: #059669; margin: 0 4px;">${sumDebit.toLocaleString('en-US', {minimumFractionDigits:2})}</span> | إجمالي دائن: <span style="color: #dc2626; margin: 0 4px;">${sumCredit.toLocaleString('en-US', {minimumFractionDigits:2})}</span> | صافي الرصيد المحلي: <span style="color: #0f766e; margin: 0 4px; font-size: 0.95rem;">${sumCurrent.toLocaleString('en-US', {minimumFractionDigits:2})}</span>`);
+
+  } else if (reportType === 'opening-balances') {
+    thead.innerHTML = `
+      <tr style="position: sticky; top: 0; z-index: 10; background: #f8fafc; border-bottom: 2px solid #cbd5e1; color: #334155; font-weight: 800;">
+        <th style="padding: 7px 8px; width: 110px; white-space: nowrap;">الفرع</th>
+        <th style="padding: 7px 6px; width: 95px; white-space: nowrap;">رقم الحساب</th>
+        <th style="padding: 7px 14px; min-width: 220px; text-align: right; white-space: nowrap;">اسم الحساب</th>
+        <th style="padding: 7px 8px; width: 90px; white-space: nowrap;">العمله</th>
+        <th style="padding: 7px 8px; width: 110px; text-align: right; white-space: nowrap;">مدين افتتاحي</th>
+        <th style="padding: 7px 8px; width: 110px; text-align: right; white-space: nowrap;">دائن افتتاحي</th>
+        <th style="padding: 7px 10px; width: 120px; text-align: right; white-space: nowrap;">الرصيد الافتتاحي</th>
+        <th style="padding: 7px 8px; width: 95px; white-space: nowrap;">من تاريخ</th>
+        <th style="padding: 7px 8px; width: 95px; white-space: nowrap;">الى تاريخ</th>
+      </tr>
+    `;
+
+    if (!list || list.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="9" style="padding: 25px; text-align: center; color: #94a3b8; font-weight: bold;">لا توجد أرصدة افتتاحية مسجلة قبل تاريخ البداية</td></tr>`;
+      updateAccountReportsSummary(tabId, 0, '');
+      return;
+    }
+
+    let sumDebit = 0, sumCredit = 0, sumBal = 0;
+    let html = '';
+
+    list.forEach((row, idx) => {
+      const deb = parseFloat(row.PeriodDebit) || 0;
+      const cr = parseFloat(row.PeriodCredit) || 0;
+      const bal = parseFloat(row.Balance) || 0;
+
+      sumDebit += deb;
+      sumCredit += cr;
+      sumBal += bal;
+
+      html += `
+        <tr style="border-bottom: 1px solid #e2e8f0; background: ${idx % 2 === 0 ? '#ffffff' : '#f8fafc'};">
+          <td style="padding: 5px 8px; font-weight: bold; color: #0284c7;">${row.BranchName || 'الفرع الرئيسي'}</td>
+          <td style="padding: 5px 6px; font-family: monospace; font-weight: bold; color: #1e3a8a;">${row.fldNumber}</td>
+          <td style="padding: 5px 14px; text-align: right; font-weight: bold; color: #1e293b;">${row.fldName}</td>
+          <td style="padding: 5px 8px; font-family: monospace;">${row.CurrencyName || 'ريال سعودي'}</td>
+          <td style="padding: 5px 8px; text-align: right; font-family: monospace; color: #059669; font-weight: bold;">${deb.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+          <td style="padding: 5px 8px; text-align: right; font-family: monospace; color: #dc2626; font-weight: bold;">${cr.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+          <td style="padding: 5px 10px; text-align: right; font-weight: 900; font-family: monospace; color: ${bal >= 0 ? '#059669' : '#dc2626'};">${bal.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+          <td style="padding: 5px 8px; font-family: monospace; font-size: 0.76rem; color: #64748b;">${startDate || '-'}</td>
+          <td style="padding: 5px 8px; font-family: monospace; font-size: 0.76rem; color: #64748b;">${endDate || '-'}</td>
+        </tr>
+      `;
+    });
+
+    tbody.innerHTML = html;
+    updateAccountReportsSummary(tabId, list.length, `إجمالي مدين افتتاحي: <span style="color: #059669; margin: 0 4px;">${sumDebit.toLocaleString('en-US', {minimumFractionDigits:2})}</span> | إجمالي دائن افتتاحي: <span style="color: #dc2626; margin: 0 4px;">${sumCredit.toLocaleString('en-US', {minimumFractionDigits:2})}</span> | الفارق: <span style="color: #0f766e; margin: 0 4px;">${sumBal.toLocaleString('en-US', {minimumFractionDigits:2})}</span>`);
 
   } else if (reportType === 'journal-entries' || reportType === 'currency-diffs') {
     thead.innerHTML = `
@@ -18170,36 +18280,33 @@ window.renderAccountReportsTable = function(tabId) {
     tbody.innerHTML = html;
     updateAccountReportsSummary(tabId, list.length, `إجمالي مدين: <span style="color: #059669; margin: 0 4px;">${sumDebit.toLocaleString('en-US', {minimumFractionDigits:2})}</span> | إجمالي دائن: <span style="color: #dc2626; margin: 0 4px;">${sumCredit.toLocaleString('en-US', {minimumFractionDigits:2})}</span> | الفارق: <span style="color: #0f766e; margin: 0 4px;">${(sumDebit - sumCredit).toLocaleString('en-US', {minimumFractionDigits:2})}</span>`);
 
-  } else {
-    // Debit / Credit / Opening Balances / Final Reports
+  } else if (reportType === 'final-reports') {
     thead.innerHTML = `
       <tr style="position: sticky; top: 0; z-index: 10; background: #f8fafc; border-bottom: 2px solid #cbd5e1; color: #334155; font-weight: 800;">
+        <th style="padding: 7px 8px; width: 110px; white-space: nowrap;">الفرع</th>
         <th style="padding: 7px 6px; width: 95px; white-space: nowrap;">رقم الحساب</th>
         <th style="padding: 7px 14px; min-width: 220px; text-align: right; white-space: nowrap;">اسم الحساب</th>
+        <th style="padding: 7px 10px; width: 110px; white-space: nowrap;">الحساب الختامي</th>
         <th style="padding: 7px 8px; width: 90px; white-space: nowrap;">العمله</th>
         <th style="padding: 7px 8px; width: 110px; text-align: right; white-space: nowrap;">إجمالي مدين</th>
         <th style="padding: 7px 8px; width: 110px; text-align: right; white-space: nowrap;">إجمالي دائن</th>
         <th style="padding: 7px 10px; width: 120px; text-align: right; white-space: nowrap;">الرصيد</th>
-        <th style="padding: 7px 8px; width: 95px; white-space: nowrap;">من تاريخ</th>
-        <th style="padding: 7px 8px; width: 95px; white-space: nowrap;">الى تاريخ</th>
       </tr>
     `;
 
     if (!list || list.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="8" style="padding: 25px; text-align: center; color: #94a3b8; font-weight: bold;">لا توجد بيانات مطابقة</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="8" style="padding: 25px; text-align: center; color: #94a3b8; font-weight: bold;">لا توجد بيانات تقارير ختامية</td></tr>`;
       updateAccountReportsSummary(tabId, 0, '');
       return;
     }
 
-    let sumDebit = 0;
-    let sumCredit = 0;
-    let sumBal = 0;
+    let sumDebit = 0, sumCredit = 0, sumBal = 0;
     let html = '';
 
     list.forEach((row, idx) => {
-      const deb = parseFloat(row.TotalDebit || row.PeriodDebit || 0);
-      const cr = parseFloat(row.TotalCredit || row.PeriodCredit || 0);
-      const bal = parseFloat(row.Balance !== undefined ? row.Balance : (deb - cr));
+      const deb = parseFloat(row.TotalDebit) || 0;
+      const cr = parseFloat(row.TotalCredit) || 0;
+      const bal = parseFloat(row.Balance) || 0;
 
       sumDebit += deb;
       sumCredit += cr;
@@ -18207,14 +18314,14 @@ window.renderAccountReportsTable = function(tabId) {
 
       html += `
         <tr style="border-bottom: 1px solid #e2e8f0; background: ${idx % 2 === 0 ? '#ffffff' : '#f8fafc'};">
+          <td style="padding: 5px 8px; font-weight: bold; color: #0284c7;">${row.BranchName || 'الفرع الرئيسي'}</td>
           <td style="padding: 5px 6px; font-family: monospace; font-weight: bold; color: #1e3a8a;">${row.fldNumber}</td>
           <td style="padding: 5px 14px; text-align: right; font-weight: bold; color: #1e293b;">${row.fldName}</td>
+          <td style="padding: 5px 10px; font-weight: bold; color: #4338ca;">${row.FinalAccountName || 'ميزانيه'}</td>
           <td style="padding: 5px 8px; font-family: monospace;">${row.CurrencyName || 'ريال سعودي'}</td>
           <td style="padding: 5px 8px; text-align: right; font-family: monospace; color: #059669; font-weight: bold;">${deb.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
           <td style="padding: 5px 8px; text-align: right; font-family: monospace; color: #dc2626; font-weight: bold;">${cr.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
           <td style="padding: 5px 10px; text-align: right; font-weight: 900; font-family: monospace; color: ${bal >= 0 ? '#059669' : '#dc2626'};">${bal.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
-          <td style="padding: 5px 8px; font-family: monospace; font-size: 0.76rem; color: #64748b;">${startDate || '-'}</td>
-          <td style="padding: 5px 8px; font-family: monospace; font-size: 0.76rem; color: #64748b;">${endDate || '-'}</td>
         </tr>
       `;
     });
@@ -18224,14 +18331,7 @@ window.renderAccountReportsTable = function(tabId) {
   }
 };
 
-function updateAccountReportsSummary(tabId, count, totalsHtml) {
-  const countEl = document.getElementById(`arCount-${tabId}`);
-  const totalsEl = document.getElementById(`arTotals-${tabId}`);
-  if (countEl) countEl.innerHTML = `عدد السجلات: <span style="color: #0284c7; font-size: 0.9rem;">${count}</span>`;
-  if (totalsEl) totalsEl.innerHTML = totalsHtml || '';
-}
 
-// PRINT & EXCEL EXPORT FOR ACCOUNTS REPORTS
 window.generateAccountReportsPrintHtml = function(tabId) {
   const repSettings = state.accountReports[tabId] || { reportType: 'balances' };
   const reportType = repSettings.reportType || 'balances';

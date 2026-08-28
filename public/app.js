@@ -33296,11 +33296,10 @@ function renderServiceShopsReport(tabId, list) {
   updateServiceReportSummary(tabId, list.length, `إجمالي الإيجارات: <span style="color: #059669; margin: 0 4px;">$${totalRent.toLocaleString('en-US', {minimumFractionDigits:2})}</span> | إجمالي الأرصدة: <span style="color: ${totalBal > 0 ? '#dc2626' : '#059669'}; margin: 0 4px;">$${totalBal.toLocaleString('en-US', {minimumFractionDigits:2})}</span>`);
 }
 
-// 2. RENDER MONTHLY ELECTRICITY BAR CHART & TABLE REPORT (Matching media_1787891728651.png)
+// 2. RENDER MONTHLY ELECTRICITY REPORT (Matching media_1787895035219.png & media_1787891728651.png)
 function renderServiceMonthlyElecReport(tabId, list) {
   const repState = state.serviceReports[tabId] || {};
-  const chartData = repState.data?.chartData || repState.lastChartData || [];
-  if (repState.data?.chartData) repState.lastChartData = repState.data.chartData;
+  const currentView = repState.elecView || 'table'; // 'table' or 'chart'
 
   const thead = document.getElementById(`serviceReportThead-${tabId}`);
   const tbody = document.getElementById(`serviceReportTbody-${tabId}`);
@@ -33309,185 +33308,237 @@ function renderServiceMonthlyElecReport(tabId, list) {
   const branchEl = document.getElementById(`srvRepBranch-${tabId}`);
   const branchName = branchEl ? branchEl.options[branchEl.selectedIndex]?.text : 'الفرع الرئيسي';
 
-  // Organize chartData by Year & Month
-  // Distinct years sorted
-  const years = [...new Set(chartData.map(d => d.fldYear))].sort((a,b) => a - b);
-  if (years.length === 0) years.push(2025, 2026);
+  if (currentView === 'chart') {
+    // CHART VIEW (Matching media_1787891728651.png)
+    const chartData = repState.data?.chartData || repState.lastChartData || [];
+    if (repState.data?.chartData) repState.lastChartData = repState.data.chartData;
 
-  // Palette matching media_1787891728651.png (Dark Red 2025, Light Rosy Red 2026, etc.)
-  const yearColors = {
-    0: { bar: '#8B2626', border: '#5c1919', light: '#a33535', label: '#7a1f1f' },
-    1: { bar: '#D87070', border: '#b85353', light: '#ea9191', label: '#a04848' },
-    2: { bar: '#3b82f6', border: '#1d4ed8', light: '#60a5fa', label: '#1e40af' },
-    3: { bar: '#10b981', border: '#047857', light: '#34d399', label: '#065f46' }
-  };
+    const years = [...new Set(chartData.map(d => d.fldYear))].sort((a,b) => a - b);
+    if (years.length === 0) years.push(2025, 2026);
 
-  // Find max units for Y-axis scale
-  let maxUnits = 0;
-  chartData.forEach(d => {
-    if (d.fldTotalUnits > maxUnits) maxUnits = d.fldTotalUnits;
-  });
-  if (maxUnits === 0) maxUnits = 70000;
-  // Round up to nearest 10,000
-  const yMax = Math.ceil(maxUnits / 10000) * 10000;
-  const yTicks = 7;
-  const yStep = yMax / yTicks;
+    const yearColors = {
+      0: { bar: '#8B2626', border: '#5c1919', light: '#a33535', label: '#7a1f1f' },
+      1: { bar: '#D87070', border: '#b85353', light: '#ea9191', label: '#a04848' },
+      2: { bar: '#3b82f6', border: '#1d4ed8', light: '#60a5fa', label: '#1e40af' },
+      3: { bar: '#10b981', border: '#047857', light: '#34d399', label: '#065f46' }
+    };
 
-  // Build Year Map: dataMap[year][month] = units
-  const dataMap = {};
-  years.forEach(y => { dataMap[y] = {}; });
-  chartData.forEach(d => {
-    if (!dataMap[d.fldYear]) dataMap[d.fldYear] = {};
-    dataMap[d.fldYear][d.fldMonth] = d.fldTotalUnits;
-  });
+    let maxUnits = 0;
+    chartData.forEach(d => { if (d.fldTotalUnits > maxUnits) maxUnits = d.fldTotalUnits; });
+    if (maxUnits === 0) maxUnits = 70000;
+    const yMax = Math.ceil(maxUnits / 10000) * 10000;
+    const yTicks = 7;
+    const yStep = yMax / yTicks;
 
-  // Generate SVG Bar Chart
-  const svgWidth = 850;
-  const svgHeight = 360;
-  const padLeft = 65;
-  const padRight = 85;
-  const padTop = 30;
-  const padBottom = 40;
-  const chartW = svgWidth - padLeft - padRight;
-  const chartH = svgHeight - padTop - padBottom;
-
-  // Y-axis grid lines and labels
-  let gridLinesHtml = '';
-  for (let i = 0; i <= yTicks; i++) {
-    const val = Math.round(i * yStep);
-    const yPos = padTop + chartH - (i / yTicks) * chartH;
-    gridLinesHtml += `
-      <line x1="${padLeft}" y1="${yPos}" x2="${padLeft + chartW}" y2="${yPos}" stroke="#e2e8f0" stroke-width="1" />
-      <text x="${padLeft - 8}" y="${yPos + 4}" font-size="11" font-family="monospace" text-anchor="end" fill="#475569">${val}</text>
-    `;
-  }
-
-  // Legend HTML
-  let legendHtml = `
-    <g transform="translate(${svgWidth - padRight + 10}, ${padTop + 5})">
-      <rect x="0" y="0" width="70" height="${years.length * 22 + 8}" fill="#ffffff" stroke="#cbd5e1" rx="3" />
-  `;
-  years.forEach((y, yIdx) => {
-    const col = yearColors[yIdx % 4].bar;
-    legendHtml += `
-      <rect x="8" y="${8 + yIdx * 22}" width="16" height="14" fill="${col}" stroke="#334155" stroke-width="0.5" />
-      <text x="30" y="${20 + yIdx * 22}" font-size="12" font-weight="bold" font-family="monospace" fill="#1e293b">${y}</text>
-    `;
-  });
-  legendHtml += `</g>`;
-
-  // Bars per Month (1..12)
-  const monthSlotW = chartW / 12;
-  const numYears = years.length;
-  const barW = Math.max(8, Math.min(22, (monthSlotW - 8) / numYears));
-  const groupW = numYears * barW;
-
-  let barsHtml = '';
-  for (let m = 1; m <= 12; m++) {
-    const slotCenterX = padLeft + (m - 0.5) * monthSlotW;
-    const startX = slotCenterX - groupW / 2;
-
-    // X-axis month label
-    barsHtml += `
-      <text x="${slotCenterX}" y="${padTop + chartH + 18}" font-size="12" font-weight="bold" font-family="monospace" text-anchor="middle" fill="#1e293b">${m}</text>
-      <line x1="${slotCenterX}" y1="${padTop + chartH}" x2="${slotCenterX}" y2="${padTop + chartH + 5}" stroke="#94a3b8" stroke-width="1" />
-    `;
-
-    // Bars for each year
-    years.forEach((y, yIdx) => {
-      const units = dataMap[y] && dataMap[y][m] ? dataMap[y][m] : 0;
-      if (units > 0) {
-        const barH = (units / yMax) * chartH;
-        const bX = startX + yIdx * barW;
-        const bY = padTop + chartH - barH;
-        const col = yearColors[yIdx % 4];
-
-        // Bar rect
-        barsHtml += `
-          <rect x="${bX}" y="${bY}" width="${barW - 1.5}" height="${barH}" fill="${col.bar}" stroke="${col.border}" stroke-width="0.5" rx="1">
-            <title>${y} - شهر ${m}: ${units.toLocaleString()} ك.و</title>
-          </rect>
-        `;
-
-        // Value Badge Label
-        const badgeW = 46;
-        const badgeH = 15;
-        const badgeX = bX + (barW - 1.5)/2 - badgeW/2;
-        const badgeY = Math.max(padTop - 8, bY - badgeH - 2);
-
-        barsHtml += `
-          <rect x="${badgeX}" y="${badgeY}" width="${badgeW}" height="${badgeH}" fill="#ffffff" stroke="${col.label}" stroke-width="1" rx="2" opacity="0.95" />
-          <text x="${badgeX + badgeW/2}" y="${badgeY + 11}" font-size="9.5" font-weight="bold" font-family="monospace" text-anchor="middle" fill="${col.label}">${units.toLocaleString()}</text>
-        `;
-      }
+    const dataMap = {};
+    years.forEach(y => { dataMap[y] = {}; });
+    chartData.forEach(d => {
+      if (!dataMap[d.fldYear]) dataMap[d.fldYear] = {};
+      dataMap[d.fldYear][d.fldMonth] = d.fldTotalUnits;
     });
+
+    const svgWidth = 850;
+    const svgHeight = 360;
+    const padLeft = 65;
+    const padRight = 85;
+    const padTop = 30;
+    const padBottom = 40;
+    const chartW = svgWidth - padLeft - padRight;
+    const chartH = svgHeight - padTop - padBottom;
+
+    let gridLinesHtml = '';
+    for (let i = 0; i <= yTicks; i++) {
+      const val = Math.round(i * yStep);
+      const yPos = padTop + chartH - (i / yTicks) * chartH;
+      gridLinesHtml += `
+        <line x1="${padLeft}" y1="${yPos}" x2="${padLeft + chartW}" y2="${yPos}" stroke="#e2e8f0" stroke-width="1" />
+        <text x="${padLeft - 8}" y="${yPos + 4}" font-size="11" font-family="monospace" text-anchor="end" fill="#475569">${val}</text>
+      `;
+    }
+
+    let legendHtml = `
+      <g transform="translate(${svgWidth - padRight + 10}, ${padTop + 5})">
+        <rect x="0" y="0" width="70" height="${years.length * 22 + 8}" fill="#ffffff" stroke="#cbd5e1" rx="3" />
+    `;
+    years.forEach((y, yIdx) => {
+      const col = yearColors[yIdx % 4].bar;
+      legendHtml += `
+        <rect x="8" y="${8 + yIdx * 22}" width="16" height="14" fill="${col}" stroke="#334155" stroke-width="0.5" />
+        <text x="30" y="${20 + yIdx * 22}" font-size="12" font-weight="bold" font-family="monospace" fill="#1e293b">${y}</text>
+      `;
+    });
+    legendHtml += `</g>`;
+
+    const monthSlotW = chartW / 12;
+    const numYears = years.length;
+    const barW = Math.max(8, Math.min(22, (monthSlotW - 8) / numYears));
+    const groupW = numYears * barW;
+
+    let barsHtml = '';
+    for (let m = 1; m <= 12; m++) {
+      const slotCenterX = padLeft + (m - 0.5) * monthSlotW;
+      const startX = slotCenterX - groupW / 2;
+
+      barsHtml += `
+        <text x="${slotCenterX}" y="${padTop + chartH + 18}" font-size="12" font-weight="bold" font-family="monospace" text-anchor="middle" fill="#1e293b">${m}</text>
+        <line x1="${slotCenterX}" y1="${padTop + chartH}" x2="${slotCenterX}" y2="${padTop + chartH + 5}" stroke="#94a3b8" stroke-width="1" />
+      `;
+
+      years.forEach((y, yIdx) => {
+        const units = dataMap[y] && dataMap[y][m] ? dataMap[y][m] : 0;
+        if (units > 0) {
+          const barH = (units / yMax) * chartH;
+          const bX = startX + yIdx * barW;
+          const bY = padTop + chartH - barH;
+          const col = yearColors[yIdx % 4];
+
+          barsHtml += `
+            <rect x="${bX}" y="${bY}" width="${barW - 1.5}" height="${barH}" fill="${col.bar}" stroke="${col.border}" stroke-width="0.5" rx="1">
+              <title>${y} - شهر ${m}: ${units.toLocaleString()} ك.و</title>
+            </rect>
+          `;
+
+          const badgeW = 46;
+          const badgeH = 15;
+          const badgeX = bX + (barW - 1.5)/2 - badgeW/2;
+          const badgeY = Math.max(padTop - 8, bY - badgeH - 2);
+
+          barsHtml += `
+            <rect x="${badgeX}" y="${badgeY}" width="${badgeW}" height="${badgeH}" fill="#ffffff" stroke="${col.label}" stroke-width="1" rx="2" opacity="0.95" />
+            <text x="${badgeX + badgeW/2}" y="${badgeY + 11}" font-size="9.5" font-weight="bold" font-family="monospace" text-anchor="middle" fill="${col.label}">${units.toLocaleString()}</text>
+          `;
+        }
+      });
+    }
+
+    const chartBoxHtml = `
+      <rect x="${padLeft}" y="${padTop}" width="${chartW}" height="${chartH}" fill="none" stroke="#94a3b8" stroke-width="1.5" />
+    `;
+
+    thead.innerHTML = '';
+    let tableRowsHtml = '';
+    let grandTotalUnits = 0;
+
+    chartData.forEach((row, rIdx) => {
+      grandTotalUnits += row.fldTotalUnits || 0;
+      tableRowsHtml += `
+        <tr style="border-bottom: 1px solid #cbd5e1; background: ${rIdx % 2 === 0 ? '#ffffff' : '#f8fafc'}; text-align: center;">
+          <td style="padding: 6px 12px; font-weight: bold; font-family: monospace; color: #1e3a8a; border: 1px solid #cbd5e1; width: 120px;">${row.fldYear}</td>
+          <td style="padding: 6px 12px; font-weight: bold; font-family: monospace; color: #334155; border: 1px solid #cbd5e1; width: 120px;">${row.fldMonth}</td>
+          <td style="padding: 6px 16px; text-align: right; font-weight: 900; font-family: monospace; color: #0f172a; font-size: 0.95rem; border: 1px solid #cbd5e1;">${parseFloat(row.fldTotalUnits || 0).toLocaleString()}</td>
+        </tr>
+      `;
+    });
+
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="15" style="padding: 10px; background: #ffffff;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <button type="button" onclick="toggleMonthlyElecView('${tabId}', 'table')" class="btn btn-primary btn-sm" style="font-weight: 800; font-size: 0.8rem; display: flex; align-items: center; gap: 6px;">
+              <i class="fa-solid fa-table-list"></i> الانتقال لعرض جدول الفواتير
+            </button>
+            <div style="font-size: 1.1rem; font-weight: 900; color: #1e293b;">
+              تقرير استهلاك الكهرباء كيلووات حسب الشهر والسنة ${branchName}
+            </div>
+            <div></div>
+          </div>
+          <div id="elecChartContainer-${tabId}" style="max-width: 900px; margin: 0 auto; background: #ffffff; padding: 12px; border: 1px solid #cbd5e1; border-radius: 6px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); text-align: center;">
+            <div style="width: 100%; overflow-x: auto; display: flex; justify-content: center;">
+              <svg id="elecChartSvg-${tabId}" viewBox="0 0 ${svgWidth} ${svgHeight}" style="width: 100%; max-width: 850px; height: auto; background: #ffffff;">
+                ${gridLinesHtml}
+                ${chartBoxHtml}
+                ${barsHtml}
+                ${legendHtml}
+              </svg>
+            </div>
+            <div style="margin-top: 14px; display: flex; justify-content: center;">
+              <table style="width: 100%; max-width: 600px; border-collapse: collapse; border: 1.5px solid #334155; font-size: 0.85rem;">
+                <thead>
+                  <tr style="background: #e2e8f0; color: #1e293b; font-weight: 900; border-bottom: 2px solid #334155;">
+                    <th style="padding: 6px 12px; border: 1px solid #334155; width: 120px; text-align: center;">السنة</th>
+                    <th style="padding: 6px 12px; border: 1px solid #334155; width: 120px; text-align: center;">الشهر</th>
+                    <th style="padding: 6px 16px; border: 1px solid #334155; text-align: right;">إجمالي</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${tableRowsHtml}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </td>
+      </tr>
+    `;
+
+    updateServiceReportSummary(tabId, chartData.length, `إجمالي الاستهلاك العام: <span style="color: #8B2626; font-size: 1.05rem; margin: 0 6px;">${grandTotalUnits.toLocaleString()} ك.و</span> | <a href="javascript:void(0)" onclick="toggleMonthlyElecView('${tabId}', 'table')" style="color: #0284c7; text-decoration: underline; margin-right: 8px;">عرض جدول الفواتير التفصيلي</a>`);
+    return;
   }
 
-  // Chart Outline Border
-  const chartBoxHtml = `
-    <rect x="${padLeft}" y="${padTop}" width="${chartW}" height="${chartH}" fill="none" stroke="#94a3b8" stroke-width="1.5" />
+  // TABLE VIEW (Matching media_1787895035219.png)
+  thead.innerHTML = `
+    <tr style="position: sticky; top: 0; z-index: 10; background: #f8fafc; border-bottom: 2px solid #cbd5e1; color: #334155; font-weight: 800;">
+      <th style="padding: 8px 6px; width: 75px; min-width: 75px; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">رقم الفاتورة</th>
+      <th style="padding: 8px 8px; width: 105px; min-width: 105px; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">التاريخ</th>
+      <th style="padding: 8px 6px; width: 75px; min-width: 75px; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">رقم المحل</th>
+      <th style="padding: 8px 12px; min-width: 160px; text-align: right; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">اسم المحل</th>
+      <th style="padding: 8px 14px; min-width: 240px; text-align: right; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">اسم المستأجر</th>
+      <th style="padding: 8px 8px; width: 95px; min-width: 95px; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">العداد</th>
+      <th style="padding: 8px 6px; width: 80px; min-width: 80px; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">السابقة</th>
+      <th style="padding: 8px 6px; width: 80px; min-width: 80px; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">الحالية</th>
+      <th style="padding: 8px 8px; width: 100px; min-width: 100px; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">الاستهلاك (ك.و)</th>
+      <th style="padding: 8px 6px; width: 80px; min-width: 80px; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">سعر الوحدة</th>
+      <th style="padding: 8px 10px; width: 120px; min-width: 120px; text-align: right; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">قيمة الاستهلاك</th>
+      <th style="padding: 8px 10px; width: 100px; min-width: 100px; text-align: right; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">إجمالي الرسوم</th>
+      <th style="padding: 8px 12px; width: 130px; min-width: 130px; text-align: right; position: sticky; top: 0; background: #f8fafc; white-space: nowrap;">صافي الفاتورة</th>
+    </tr>
   `;
 
-  // Render Whole Container: Chart on Top + Table on Bottom (Exact Match to media_1787891728651.png)
-  thead.innerHTML = '';
-  
-  let tableRowsHtml = '';
-  let grandTotalUnits = 0;
+  let totalUnits = 0;
+  let totalUsage = 0;
+  let totalFees = 0;
+  let totalNet = 0;
+  let html = '';
 
-  chartData.forEach((row, rIdx) => {
-    grandTotalUnits += row.fldTotalUnits || 0;
-    tableRowsHtml += `
-      <tr style="border-bottom: 1px solid #cbd5e1; background: ${rIdx % 2 === 0 ? '#ffffff' : '#f8fafc'}; text-align: center;">
-        <td style="padding: 6px 12px; font-weight: bold; font-family: monospace; color: #1e3a8a; border: 1px solid #cbd5e1; width: 120px;">${row.fldYear}</td>
-        <td style="padding: 6px 12px; font-weight: bold; font-family: monospace; color: #334155; border: 1px solid #cbd5e1; width: 120px;">${row.fldMonth}</td>
-        <td style="padding: 6px 16px; text-align: right; font-weight: 900; font-family: monospace; color: #0f172a; font-size: 0.95rem; border: 1px solid #cbd5e1;">${parseFloat(row.fldTotalUnits || 0).toLocaleString()}</td>
+  list.forEach((e, idx) => {
+    const units = parseFloat(e.fldUnits || 0);
+    const usage = parseFloat(e.fldTotalPrice || 0);
+    const fees = parseFloat(e.fldServicesCostElectricity || 0) + parseFloat(e.fldCleaningFees || 0) + parseFloat(e.fldLocalFees || 0) + parseFloat(e.fldFuel || 0) + parseFloat(e.fldlTaxTota_D || 0);
+    const net = parseFloat(e.fldNetTotal || (usage + fees));
+
+    totalUnits += units;
+    totalUsage += usage;
+    totalFees += fees;
+    totalNet += net;
+
+    html += `
+      <tr style="border-bottom: 1px solid #e2e8f0; background: ${idx % 2 === 0 ? '#ffffff' : '#f8fafc'}; transition: background 0.15s;">
+        <td style="padding: 6px 6px; font-weight: bold; font-family: monospace; color: #1e3a8a; white-space: nowrap;">${e.fldTransNo || e.fldTransID}</td>
+        <td style="padding: 6px 8px; font-family: monospace; white-space: nowrap; text-align: center;">${e.fldDate || ''}</td>
+        <td style="padding: 6px 6px; font-weight: 800; font-family: monospace; color: #0284c7; white-space: nowrap;">#${e.fldShopNumber || ''}</td>
+        <td style="padding: 6px 12px; text-align: right; font-weight: bold; color: #1e293b; white-space: nowrap;">${e.fldShopName || ''}</td>
+        <td style="padding: 6px 14px; text-align: right; color: #334155; white-space: nowrap;">${e.fldCustomerName || ''}</td>
+        <td style="padding: 6px 8px; font-family: monospace; white-space: nowrap; text-align: center;">${e.fldtheCounter || '-'}</td>
+        <td style="padding: 6px 6px; font-family: monospace; white-space: nowrap; text-align: center;">${parseFloat(e.fldPreviousReading||0).toFixed(0)}</td>
+        <td style="padding: 6px 6px; font-family: monospace; white-space: nowrap; text-align: center;">${parseFloat(e.fldCurrentreading||0).toFixed(0)}</td>
+        <td style="padding: 6px 8px; font-family: monospace; font-weight: bold; color: #d97706; white-space: nowrap; text-align: center;">${units.toLocaleString()}</td>
+        <td style="padding: 6px 6px; font-family: monospace; white-space: nowrap; text-align: center;">${parseFloat(e.fldUnitCost||600).toFixed(0)}</td>
+        <td style="padding: 6px 10px; text-align: right; font-family: monospace; font-weight: bold; color: #059669; white-space: nowrap;">${usage.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+        <td style="padding: 6px 10px; text-align: right; font-family: monospace; color: #64748b; white-space: nowrap;">${fees.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+        <td style="padding: 6px 12px; text-align: right; font-weight: 900; font-family: monospace; color: #0f766e; font-size: 0.92rem; white-space: nowrap;">${net.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
       </tr>
     `;
   });
 
-  tbody.innerHTML = `
-    <tr>
-      <td colspan="15" style="padding: 12px; background: #ffffff;">
-        <div id="elecChartContainer-${tabId}" style="max-width: 900px; margin: 0 auto; background: #ffffff; padding: 12px; border: 1px solid #cbd5e1; border-radius: 6px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); text-align: center;">
-          
-          <!-- Chart Title matching media_1787891728651.png -->
-          <div style="font-size: 1.15rem; font-weight: 900; color: #1e293b; margin-bottom: 8px;">
-            تقرير استهلاك الكهرباء كيلووات حسب الشهر والسنة ${branchName}
-          </div>
-
-          <!-- SVG Chart -->
-          <div style="width: 100%; overflow-x: auto; display: flex; justify-content: center;">
-            <svg id="elecChartSvg-${tabId}" viewBox="0 0 ${svgWidth} ${svgHeight}" style="width: 100%; max-width: 850px; height: auto; background: #ffffff;">
-              ${gridLinesHtml}
-              ${chartBoxHtml}
-              ${barsHtml}
-              ${legendHtml}
-            </svg>
-          </div>
-
-          <!-- Data Table Below Chart matching media_1787891728651.png -->
-          <div style="margin-top: 14px; display: flex; justify-content: center;">
-            <table style="width: 100%; max-width: 600px; border-collapse: collapse; border: 1.5px solid #334155; font-size: 0.85rem;">
-              <thead>
-                <tr style="background: #e2e8f0; color: #1e293b; font-weight: 900; border-bottom: 2px solid #334155;">
-                  <th style="padding: 6px 12px; border: 1px solid #334155; width: 120px; text-align: center;">السنة</th>
-                  <th style="padding: 6px 12px; border: 1px solid #334155; width: 120px; text-align: center;">الشهر</th>
-                  <th style="padding: 6px 16px; border: 1px solid #334155; text-align: right;">إجمالي</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${tableRowsHtml}
-              </tbody>
-            </table>
-          </div>
-
-        </div>
-      </td>
-    </tr>
-  `;
-
-  updateServiceReportSummary(tabId, chartData.length, `إجمالي الاستهلاك العام: <span style="color: #8B2626; font-size: 1.05rem; margin: 0 6px;">${grandTotalUnits.toLocaleString()} ك.و</span> عبر <b>${chartData.length}</b> فترة شهرية`);
+  tbody.innerHTML = html;
+  updateServiceReportSummary(tabId, list.length, `إجمالي الكيلوواط: <span style="color: #d97706; margin: 0 4px;">${totalUnits.toLocaleString()} ك.و</span> | إجمالي الاستهلاك: <span style="color: #059669; margin: 0 4px;">${totalUsage.toLocaleString('en-US', {minimumFractionDigits:2})}</span> | صافي الفواتير: <span style="color: #0f766e; margin: 0 4px;">${totalNet.toLocaleString('en-US', {minimumFractionDigits:2})}</span> | <a href="javascript:void(0)" onclick="toggleMonthlyElecView('${tabId}', 'chart')" style="color: #8B2626; font-weight: bold; text-decoration: underline; margin-right: 8px;"><i class="fa-solid fa-chart-column"></i> عرض الرسم البياني المقارن</a>`);
 }
+
+window.toggleMonthlyElecView = function(tabId, viewMode) {
+  state.serviceReports[tabId] = state.serviceReports[tabId] || {};
+  state.serviceReports[tabId].elecView = viewMode;
+  renderServiceMonthlyElecReport(tabId, state.serviceReports[tabId].data || []);
+};
+
 
 // 3. RENDER COST CENTER REVENUE REPORT
 function renderServiceCostCenterReport(tabId, list) {

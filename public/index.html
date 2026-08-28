@@ -230,6 +230,12 @@
           <span>ملصق الباركود</span>
         </button>
 
+        <!-- Live System Update Notification Badge / Button -->
+        <button class="pos-hdr-btn update-hdr-btn" id="updateHdrBtn" onclick="openSystemUpdateModal()" title="يتوفر تحديث جديد للنظام! انقر لتثبيت التحديث" style="display: none; background: linear-gradient(135deg, #10b981, #059669); color: white; border: 1px solid #047857; font-weight: 800; animation: pulse 2s infinite;">
+          <i class="fa-solid fa-cloud-arrow-down fa-bounce"></i>
+          <span id="updateHdrBtnText">تحديث متوفر</span>
+        </button>
+
         
 
         
@@ -3412,6 +3418,79 @@ FROM dbo.tblMenus LEFT OUTER JOIN
         <button type="button" class="btn btn-secondary" onclick="closeShopModal()" style="padding: 6px 16px;">
           إلغاء
         </button>
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- ======================================================== -->
+  <!-- Update Notification Prompt Modal (إشعار التحديث الفوري: تحديث أو لاحقاً) -->
+  <!-- ======================================================== -->
+  <div class="modal-overlay" id="updatePromptModal" style="z-index: 1070; display: none;">
+    <div class="modal-container" style="max-width: 550px; width: 92vw; border-radius: 12px; overflow: hidden; box-shadow: 0 20px 45px rgba(0,0,0,0.35); border: 2px solid #0284c7;">
+      
+      <!-- Modal Header -->
+      <div style="background: linear-gradient(135deg, #0284c7, #0369a1); color: white; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,0.22); display: flex; align-items: center; justify-content: center; font-size: 1.3rem;">
+            <i class="fa-solid fa-cloud-arrow-down fa-bounce"></i>
+          </div>
+          <div>
+            <h4 style="margin: 0; font-weight: 900; font-size: 1.1rem; letter-spacing: -0.2px;">يتوفر تحديث جديد للنظام</h4>
+            <span style="font-size: 0.78rem; opacity: 0.95;">تم العثور على إصدار أحدث جاهز للتحميل والتثبيت التلقائي</span>
+          </div>
+        </div>
+        <button type="button" class="close-btn" onclick="dismissUpdatePrompt()" style="color: white; font-size: 1.6rem; background: transparent; border: none; cursor: pointer;">&times;</button>
+      </div>
+
+      <!-- Modal Body -->
+      <div style="padding: 18px 20px; background: #ffffff; direction: rtl; text-align: right;">
+        
+        <!-- Versions Info Bar -->
+        <div style="display: flex; justify-content: space-between; align-items: center; background: #f0f9ff; border: 1.5px solid #bae6fd; border-radius: 8px; padding: 12px 18px; margin-bottom: 14px;">
+          <div>
+            <div style="font-size: 0.76rem; color: #64748b; font-weight: 800;">الإصدار المثبت حالياً:</div>
+            <div id="promptCurrentVer" style="font-size: 1rem; font-weight: 900; color: #475569; font-family: monospace; margin-top: 2px;">v1.0.0</div>
+          </div>
+          <div style="font-size: 1.4rem; color: #0284c7;">
+            <i class="fa-solid fa-arrow-left"></i>
+          </div>
+          <div>
+            <div style="font-size: 0.76rem; color: #0369a1; font-weight: 800;">الإصدار الجديد المتوفر:</div>
+            <div id="promptLatestVer" style="font-size: 1.15rem; font-weight: 900; color: #0284c7; font-family: monospace; margin-top: 2px;">v1.0.1</div>
+          </div>
+        </div>
+
+        <!-- Release Notes Box -->
+        <div style="margin-bottom: 14px;">
+          <div style="font-weight: 800; font-size: 0.84rem; color: #334155; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
+            <i class="fa-solid fa-sparkles" style="color: #f59e0b;"></i> ما الجديد في هذا التحديث:
+          </div>
+          <div id="promptChangelog" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px 12px; font-size: 0.84rem; color: #1e293b; max-height: 120px; overflow-y: auto; line-height: 1.6; white-space: pre-wrap; font-weight: 500;">
+            تحسينات عامة وإصلاحات في التقارير وسرعة النظام.
+          </div>
+        </div>
+
+        <!-- Safe backup notice -->
+        <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; padding: 10px 12px; font-size: 0.8rem; color: #166534; display: flex; align-items: center; gap: 8px;">
+          <i class="fa-solid fa-shield-halved" style="font-size: 1.2rem; color: #16a34a;"></i>
+          <span>التحديث آمن وسريع ويقوم تلقائياً بإنشاء نسخة احتياطية لكافة ملفاتك وقواعد البيانات قبل التثبيت.</span>
+        </div>
+
+      </div>
+
+      <!-- Modal Footer (تحديث الآن / لاحقاً) -->
+      <div style="background: #f8fafc; border-top: 1px solid #e2e8f0; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; gap: 12px;">
+        
+        <button type="button" class="btn btn-secondary" onclick="dismissUpdatePrompt()" style="font-weight: 800; padding: 8px 20px; font-size: 0.88rem; display: flex; align-items: center; gap: 6px; color: #475569; border: 1px solid #cbd5e1; border-radius: 6px;">
+          <i class="fa-solid fa-clock"></i> لاحقاً
+        </button>
+
+        <button type="button" class="btn" onclick="acceptUpdateFromPrompt()" style="background: linear-gradient(135deg, #10b981, #059669); color: white; font-weight: 900; padding: 8px 26px; font-size: 0.94rem; border-radius: 6px; border: none; display: flex; align-items: center; gap: 8px; box-shadow: 0 3px 8px rgba(16,185,129,0.35); cursor: pointer;">
+          <i class="fa-solid fa-rocket"></i> تحديث الآن
+        </button>
+
       </div>
 
     </div>

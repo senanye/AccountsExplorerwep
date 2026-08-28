@@ -162,22 +162,31 @@ async function checkForUpdates() {
         result.publishedAt = commit.commit && commit.commit.committer ? commit.commit.committer.date : new Date().toISOString();
         result.downloadUrl = `https://github.com/${repo}/archive/refs/heads/${branch}.zip`;
 
+        // Get local commit sha if available
+        let localSha = config.lastInstalledCommitSha || '';
+        try {
+          if (fs.existsSync(path.join(__dirname, '.git'))) {
+            localSha = execSync('git rev-parse --short HEAD', { cwd: __dirname, encoding: 'utf8' }).trim();
+          }
+        } catch(e) {}
+
         // Check remote package.json version
         const pkgUrl = `https://raw.githubusercontent.com/${repo}/${branch}/package.json`;
         const pkgRes = await fetchJsonFromUrl(pkgUrl, headers);
 
         if (pkgRes.status === 200 && pkgRes.data && pkgRes.data.version) {
           result.latestVersion = pkgRes.data.version;
-          if (compareVersions(result.latestVersion, result.currentVersion) > 0) {
-            result.hasUpdate = true;
-            result.releaseTitle = `إصدار جديد ${result.latestVersion}`;
-            result.releaseNotes = `أحدث التغييرات: ${result.commitMessage}`;
-          } else {
-            result.releaseTitle = `النظام محدث (الإصدار ${result.currentVersion})`;
-            result.releaseNotes = `آخر التزام: ${result.commitMessage} [${result.commitSha}]`;
-          }
+        }
+
+        const isVersionNewer = compareVersions(result.latestVersion, result.currentVersion) > 0;
+        const isCommitNewer = localSha && result.commitSha && localSha !== result.commitSha;
+
+        if (isVersionNewer || isCommitNewer) {
+          result.hasUpdate = true;
+          result.releaseTitle = `يتوفر تحديث جديد (${result.latestVersion || 'إصدار أحدث'})`;
+          result.releaseNotes = `أحدث التغييرات: ${result.commitMessage} [${result.commitSha}]`;
         } else {
-          result.releaseTitle = `المستودع: ${repo} (${branch})`;
+          result.releaseTitle = `النظام محدث (الإصدار ${result.currentVersion})`;
           result.releaseNotes = `آخر التزام: ${result.commitMessage} [${result.commitSha}]`;
         }
       } else if (commitRes.status === 409) {

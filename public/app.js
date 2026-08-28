@@ -30119,6 +30119,9 @@ window.checkSystemUpdates = async function(silent = false) {
   const commitBadge = document.getElementById('updaterCommitBadge');
   const changelogBody = document.getElementById('updaterChangelogBody');
   const badgeDot = document.getElementById('updaterBadgeDot');
+  const loginBadgeDot = document.getElementById('updaterLoginBadgeDot');
+  const updateHdrBtn = document.getElementById('updateHdrBtn');
+  const updateHdrBtnText = document.getElementById('updateHdrBtnText');
 
   if (!silent && checkBtn) {
     checkBtn.disabled = true;
@@ -30131,41 +30134,73 @@ window.checkSystemUpdates = async function(silent = false) {
 
     if (!data.success) {
       if (!silent) {
-        banner.className = 'updater-status-banner error';
-        bannerIcon.className = 'fa-solid fa-triangle-exclamation banner-icon';
-        bannerTitle.innerText = 'تعذر الاتصال بـ GitHub';
-        bannerDesc.innerText = data.error || 'يرجى التحقق من اتصال الإنترنت وإعدادات المستودع.';
+        if (banner) {
+          banner.className = 'updater-status-banner error';
+          bannerIcon.className = 'fa-solid fa-triangle-exclamation banner-icon';
+          bannerTitle.innerText = 'تعذر الاتصال بـ GitHub';
+          bannerDesc.innerText = data.error || 'يرجى التحقق من اتصال الإنترنت وإعدادات المستودع.';
+        }
         showToast(data.error || 'فشل فحص التحديثات.', 'error');
       }
       return;
     }
 
-    if (latestVerBadge) latestVerBadge.innerText = 'v' + (data.latestVersion || data.currentVersion);
+    const curVer = data.currentVersion || '1.0.0';
+    const latestVer = data.latestVersion || curVer;
+    const releaseText = data.releaseNotes || (data.commitMessage ? `آخر تحديث: ${data.commitMessage}` : 'تحسينات عامة وإصلاحات للنظام.');
+
+    if (latestVerBadge) latestVerBadge.innerText = 'v' + latestVer;
     if (commitBadge) commitBadge.innerText = data.commitSha ? `[${data.commitSha}]` : (data.publishedAt ? data.publishedAt.split('T')[0] : '--');
-    if (changelogBody) {
-      changelogBody.innerText = data.releaseNotes || (data.commitMessage ? `آخر تحديث: ${data.commitMessage}` : 'لا توجد ملاحظات إضافية.');
-    }
+    if (changelogBody) changelogBody.innerText = releaseText;
 
     if (data.hasUpdate) {
-      // Update available!
+      // 1. Show Top Header Button & Login Badges
+      if (updateHdrBtn) {
+        updateHdrBtn.style.display = 'flex';
+        if (updateHdrBtnText) updateHdrBtnText.innerText = `تحديث v${latestVer}`;
+      }
+      if (badgeDot) badgeDot.classList.remove('hidden');
+      if (loginBadgeDot) loginBadgeDot.classList.remove('hidden');
+
+      // 2. Update Inside Modal Banner
       if (banner) banner.className = 'updater-status-banner update-available';
       if (bannerIcon) bannerIcon.className = 'fa-solid fa-circle-arrow-up banner-icon';
-      if (bannerTitle) bannerTitle.innerText = `يتوفر تحديث جديد (v${data.latestVersion})!`;
-      if (bannerDesc) bannerDesc.innerText = `تم العثور على إصدار أحدث جاهز للتحميل والتثبيت. انقر على الزر الأخضر لتحديث النظام الآن.`;
+      if (bannerTitle) bannerTitle.innerText = `يتوفر تحديث جديد (v${latestVer})!`;
+      if (bannerDesc) bannerDesc.innerText = `تم العثور على إصدار أحدث جاهز للتحميل والتثبيت. انقر على الزر لتحديث النظام الآن.`;
       if (applyBtn) applyBtn.disabled = false;
-      if (badgeDot) badgeDot.classList.remove('hidden');
+
+      // 3. Populate and Show the Interactive Prompt Modal (تحديث الآن أو لاحقاً)
+      const promptCurrentVer = document.getElementById('promptCurrentVer');
+      const promptLatestVer = document.getElementById('promptLatestVer');
+      const promptChangelog = document.getElementById('promptChangelog');
+      if (promptCurrentVer) promptCurrentVer.innerText = 'v' + curVer;
+      if (promptLatestVer) promptLatestVer.innerText = 'v' + latestVer;
+      if (promptChangelog) promptChangelog.innerText = releaseText;
+
+      const isDismissed = sessionStorage.getItem('updatePromptDismissed');
+      if (!isDismissed || !silent) {
+        const promptModal = document.getElementById('updatePromptModal');
+        if (promptModal) promptModal.style.display = 'flex';
+      }
 
       if (!silent) {
-        showToast(`يتوفر تحديث جديد للنظام v${data.latestVersion}!`, 'success');
+        showToast(`يتوفر تحديث جديد للنظام v${latestVer}!`, 'success');
       }
+
     } else {
       // Up to date
+      if (updateHdrBtn) updateHdrBtn.style.display = 'none';
+      if (badgeDot) badgeDot.classList.add('hidden');
+      if (loginBadgeDot) loginBadgeDot.classList.add('hidden');
+
       if (banner) banner.className = 'updater-status-banner success';
       if (bannerIcon) bannerIcon.className = 'fa-solid fa-circle-check banner-icon';
       if (bannerTitle) bannerTitle.innerText = 'نظامك محدث إلى آخر إصدار';
-      if (bannerDesc) bannerDesc.innerText = `أنت تستخدم أحدث نسخة متوفرة من البرنامج (v${data.currentVersion}).`;
+      if (bannerDesc) bannerDesc.innerText = `أنت تستخدم أحدث نسخة متوفرة من البرنامج (v${curVer}).`;
       if (applyBtn) applyBtn.disabled = true;
-      if (badgeDot) badgeDot.classList.add('hidden');
+
+      const promptModal = document.getElementById('updatePromptModal');
+      if (promptModal) promptModal.style.display = 'none';
 
       if (!silent) {
         showToast('نظامك محدث بالكامل، لا توجد تحديثات جديدة.', 'info');
@@ -30184,11 +30219,22 @@ window.checkSystemUpdates = async function(silent = false) {
   }
 };
 
-window.applySystemUpdate = async function() {
-  if (!confirm("هل أنت متأكد من رغبتك في تثبيت التحديث الآن؟\nسيتم إنشاء نسخة احتياطية آمنة وتطبيق التحديث وإعادة تشغيل النظام.")) {
-    return;
-  }
+window.dismissUpdatePrompt = function() {
+  const promptModal = document.getElementById('updatePromptModal');
+  if (promptModal) promptModal.style.display = 'none';
+  sessionStorage.setItem('updatePromptDismissed', 'true');
+  showToast("تم تأجيل التحديث. يمكنك تحديث النظام لاحقاً من زر التحديث في الشريط العلوي.", "info");
+};
 
+window.acceptUpdateFromPrompt = async function() {
+  const promptModal = document.getElementById('updatePromptModal');
+  if (promptModal) promptModal.style.display = 'none';
+  
+  openSystemUpdateModal();
+  await applySystemUpdate();
+};
+
+window.applySystemUpdate = async function() {
   const applyBtn = document.getElementById('updaterApplyBtn');
   const checkBtn = document.getElementById('updaterCheckBtn');
   const progressWrapper = document.getElementById('updaterProgressWrapper');
@@ -30358,12 +30404,19 @@ window.rollbackToBackup = async function(backupId) {
   }
 };
 
-// Automatic Silent Check on Startup
+// Automatic Silent Check on Startup & Periodic Background Checker
 setTimeout(() => {
   if (typeof checkSystemUpdates === 'function') {
     checkSystemUpdates(true);
   }
-}, 3000);
+}, 4000);
+
+// Recurring background check every 30 minutes
+setInterval(() => {
+  if (typeof checkSystemUpdates === 'function') {
+    checkSystemUpdates(true);
+  }
+}, 30 * 60 * 1000);
 
 
 // ========================================================

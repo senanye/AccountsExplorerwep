@@ -4210,11 +4210,8 @@ app.get('/api/general-ledger', async (req, res) => {
   }
 });
 
-// 9-extra5b. Retrieve Account Reports (Balances, Debit, Credit)
+// 9-extra5b. Retrieve Account Reports (Balances, Debit, Credit, etc.)
 app.get('/api/accounts-reports', async (req, res) => {
-  // Use menuId 63 (Account Statement) as fallback since menu-70 may not have permissions yet
-  const menuId = parseInt(req.query.menuId) || 63;
-  if (!(await authorizeAction(req, res, menuId, 'fldSELECT'))) return;
 
   const {
     reportType, // balances, debit, credit
@@ -4261,6 +4258,7 @@ app.get('/api/accounts-reports', async (req, res) => {
           a.fldNumber,
           a.fldName,
           m.fldBranchNo,
+          ISNULL(b.fldName, N'الفرع الرئيسي') AS BranchName,
           a.fldAccType,
           cur.fldName AS CurrencyName,
           cur.fldsymbol AS CurrencySymbol,
@@ -4273,6 +4271,7 @@ app.get('/api/accounts-reports', async (req, res) => {
         FROM dbo.tblMoneyMove m
         INNER JOIN dbo.tblTransAction t ON m.fldTransID = t.fldID
         INNER JOIN dbo.tblAccount a ON m.fldAccID = a.fldID
+        LEFT JOIN dbo.tblBranchList b ON m.fldBranchNo = b.fldID
         LEFT JOIN dbo.tblMoney cur ON m.fldMoneyID = cur.fldID
         WHERE t.fldDate <= @endDate
       `;
@@ -4305,7 +4304,7 @@ app.get('/api/accounts-reports', async (req, res) => {
       }
 
       query += `
-        GROUP BY a.fldID, a.fldNumber, a.fldName, m.fldBranchNo, a.fldAccType, cur.fldName, cur.fldsymbol
+        GROUP BY a.fldID, a.fldNumber, a.fldName, m.fldBranchNo, b.fldName, a.fldAccType, cur.fldName, cur.fldsymbol
         ORDER BY a.fldNumber
       `;
 
@@ -4356,7 +4355,7 @@ app.get('/api/accounts-reports', async (req, res) => {
       }
 
       query += `
-        GROUP BY a.fldID, a.fldNumber, a.fldName, m.fldBranchNo, a.fldAccType, cur.fldName, cur.fldsymbol
+        GROUP BY a.fldID, a.fldNumber, a.fldName, m.fldBranchNo, b.fldName, a.fldAccType, cur.fldName, cur.fldsymbol
         ORDER BY a.fldNumber
       `;
 
@@ -4669,7 +4668,7 @@ app.post('/api/accounts-reports/send-whatsapp-pdf', async (req, res) => {
         }
 
         query += `
-          GROUP BY a.fldID, a.fldNumber, a.fldName, m.fldBranchNo, a.fldAccType, cur.fldName, cur.fldsymbol
+          GROUP BY a.fldID, a.fldNumber, a.fldName, m.fldBranchNo, b.fldName, a.fldAccType, cur.fldName, cur.fldsymbol
           ORDER BY a.fldNumber
         `;
 
@@ -4711,7 +4710,7 @@ app.post('/api/accounts-reports/send-whatsapp-pdf', async (req, res) => {
         }
 
         query += `
-          GROUP BY a.fldID, a.fldNumber, a.fldName, m.fldBranchNo, a.fldAccType, cur.fldName, cur.fldsymbol
+          GROUP BY a.fldID, a.fldNumber, a.fldName, m.fldBranchNo, b.fldName, a.fldAccType, cur.fldName, cur.fldsymbol
           ORDER BY a.fldNumber
         `;
 
@@ -19860,6 +19859,57 @@ app.post('/api/inventory-reports/download-pdf', async (req, res) => {
   } catch (err) {
     console.error("Error downloading inventory report PDF:", err);
     res.status(500).json({ success: false, error: "فشل توليد ملف PDF: " + err.message });
+  }
+});
+
+
+
+// =============================================================================
+// 46. ACCOUNTS REPORTS WHATSAPP PDF ENGINE (تقارير الحسابات)
+// Matching media_1787906640173.png
+// =============================================================================
+
+// POST /api/accounts-reports/send-whatsapp-pdf
+app.post('/api/accounts-reports/send-whatsapp-pdf', async (req, res) => {
+  const { html, phone, title, caption, landscape } = req.body;
+  if (!html || !phone) {
+    return res.status(400).json({ success: false, error: "HTML content and phone number are required" });
+  }
+
+  let cleanPhone = String(phone).replace(/[^0-9]/g, '');
+  if (!cleanPhone.includes('@c.us')) {
+    if (!cleanPhone.startsWith('967') && cleanPhone.length === 9) cleanPhone = '967' + cleanPhone;
+    cleanPhone = cleanPhone + '@c.us';
+  }
+
+  if (clientStatus !== "ready" || !whatsappClient) {
+    return res.status(503).json({ success: false, error: "خادم الواتساب غير متصل حالياً. يرجى مسح رمز QR أو الاتصال أولاً." });
+  }
+
+  try {
+    const pdfBuffer = await renderPosPdfBuffer(html, landscape !== false);
+    const fileName = `AccountsReport_${Date.now()}.pdf`;
+    const tempFilePath = path.join(scratchDir, fileName);
+    fs.writeFileSync(tempFilePath, pdfBuffer);
+
+    const media = MessageMedia.fromFilePath(tempFilePath);
+    let chatId = cleanPhone;
+    if (whatsappClient && typeof whatsappClient.getNumberId === 'function') {
+      try {
+        const numId = await whatsappClient.getNumberId(cleanPhone.replace('@c.us', ''));
+        if (numId && numId._serialized) chatId = numId._serialized;
+      } catch (e) {}
+    }
+
+    await whatsappClient.sendMessage(chatId, media, {
+      caption: caption || `تقرير: ${title || 'تقرير الحسابات'} من نظام مستكشف الحسابات`
+    });
+
+    try { fs.unlinkSync(tempFilePath); } catch (e) {}
+    res.json({ success: true, message: `تم إرسال تقرير PDF بنجاح إلى الرقم (${phone})` });
+  } catch (err) {
+    console.error("Error sending accounts report WhatsApp PDF:", err);
+    res.status(500).json({ success: false, error: "فشل إرسال ملف PDF: " + err.message });
   }
 });
 

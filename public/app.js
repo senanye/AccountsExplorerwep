@@ -870,7 +870,7 @@ async function openTab(tabId, tabTitle, iconClass, colorClass, bypassPermission 
     initCostCenterStatementTab(tabId);
   } else if (tabTitle === "كشف حركة مجموعة حسابات" || tabId === "menu-69" || tabTitle.includes("مجموعة حسابات")) {
     initAccountGroupStatementTab(tabId);
-  } else if (tabTitle === "تقارير الحسابات" || tabId === "menu-70" || tabTitle.includes("تقارير الحسابات")) {
+  } else if (tabTitle === "ارصدة حسابات" || tabTitle === "أرصدة حسابات" || tabTitle === "تقارير الحسابات" || tabId === "menu-70" || tabId === "menu-65" || tabId === "accounts-reports-tab" || tabTitle.includes("ارصدة حسابات") || tabTitle.includes("تقارير الحسابات")) {
     initAccountReportsTab(tabId);
   } else if (tabTitle === "الحسابات الختامية" || tabId === "menu-66" || tabTitle.includes("الحسابات الختامية")) {
     initFinalAccountsTab(tabId);
@@ -1002,7 +1002,7 @@ function getScreenContent(tabId, tabTitle, iconClass, colorClass) {
   const isAccountGroupStatement = tabTitle === "كشف حركة مجموعة حسابات" || tabId === "menu-69" || tabTitle.includes("مجموعة حسابات");
   const isGeneralLedger = tabTitle === "دفتر الاستاذ العام" || tabId === "menu-64" || tabTitle.includes("الاستاذ العام");
   const isTrialBalance = tabTitle === "تدقيق ميزان المراجعة" || tabId === "menu-402" || tabTitle.includes("ميزان المراجعة");
-  const isAccountReports = tabTitle === "تقارير الحسابات" || tabId === "menu-70" || tabTitle.includes("تقارير الحسابات");
+  const isAccountReports = tabTitle === "ارصدة حسابات" || tabTitle === "أرصدة حسابات" || tabTitle === "تقارير الحسابات" || tabId === "menu-70" || tabId === "menu-65" || tabId === "accounts-reports-tab" || tabTitle.includes("ارصدة حسابات") || tabTitle.includes("تقارير الحسابات");
   const isFinalAccounts = tabTitle === "الحسابات الختامية" || tabId === "menu-66" || tabTitle.includes("الحسابات الختامية");
   const isItemCard = tabTitle === "معلومات كرت الصنف" || tabId === "menu-201" || tabTitle.includes("كرت الصنف") || tabTitle.includes("بطاقة الصنف");
   const isItemsExplorer = tabTitle === "الاصناف" || tabTitle === "الأصناف" || tabId === "menu-1076" || tabTitle === "مستكشف الاصناف" || tabTitle === "مستكشف الأصناف" || tabId === "menu-202" || tabId === "menu-501" || tabTitle.includes("السلع والمنتجات") || tabTitle.includes("اصناف") || tabTitle.includes("أصناف");
@@ -5865,161 +5865,246 @@ function getScreenContent(tabId, tabTitle, iconClass, colorClass) {
     `;
   } else if (isAccountReports) {
     bodyHtml = `
-      <!-- Account Reports Toolbar -->
-      <div class="accounts-toolbar" style="display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; height: auto; padding: 8px 15px;">
-        <button class="accounts-toolbar-btn ar-type-btn active" id="btn-ar-balances-${tabId}" onclick="switchAccountReportType('${tabId}', 'balances')">
-          <i class="fa-solid fa-scale-balanced" style="color: #3182ce;"></i>أرصدة حسابات
-        </button>
-        <button class="accounts-toolbar-btn ar-type-btn" id="btn-ar-debit-${tabId}" onclick="switchAccountReportType('${tabId}', 'debit')">
-          <i class="fa-solid fa-circle-arrow-down" style="color: #38a169;"></i>الحسابات المدينة
-        </button>
-        <button class="accounts-toolbar-btn ar-type-btn" id="btn-ar-credit-${tabId}" onclick="switchAccountReportType('${tabId}', 'credit')">
-          <i class="fa-solid fa-circle-arrow-up" style="color: #e53e3e;"></i>الحسابات الدائنة
-        </button>
-        <button class="accounts-toolbar-btn ar-type-btn" id="btn-ar-opening-balances-${tabId}" onclick="switchAccountReportType('${tabId}', 'opening-balances')">
-          <i class="fa-solid fa-chart-pie" style="color: #805ad5;"></i>الميزانية الافتتاحية
-        </button>
-        <button class="accounts-toolbar-btn ar-type-btn" id="btn-ar-journal-entries-${tabId}" onclick="switchAccountReportType('${tabId}', 'journal-entries')">
-          <i class="fa-solid fa-book-open" style="color: #d69e2e;"></i>القيود اليومية
-        </button>
-        <button class="accounts-toolbar-btn ar-type-btn" id="btn-ar-final-reports-${tabId}" onclick="switchAccountReportType('${tabId}', 'final-reports')">
-          <i class="fa-solid fa-square-poll-vertical" style="color: #319795;"></i>التقارير الختامية
-        </button>
-        <button class="accounts-toolbar-btn ar-type-btn" id="btn-ar-currency-diffs-${tabId}" onclick="switchAccountReportType('${tabId}', 'currency-diffs')">
-          <i class="fa-solid fa-coins" style="color: #e53e3e;"></i>فروق العملات
-        </button>
-        <button class="accounts-toolbar-btn ar-type-btn" id="btn-ar-balances-local-${tabId}" onclick="switchAccountReportType('${tabId}', 'balances-local')">
-          <i class="fa-solid fa-circle-check" style="color: #38a169;"></i>أرصدة مع المقابل
-        </button>
-        <button class="accounts-toolbar-btn ar-type-btn" id="btn-ar-zero-balances-${tabId}" onclick="switchAccountReportType('${tabId}', 'zero-balances')">
-          <i class="fa-solid fa-earth-americas" style="color: #4a5568;"></i>الحسابات الصفرية
-        </button>
-        <div style="flex-grow: 1;"></div>
-        <button class="accounts-toolbar-btn" onclick="fetchAccountReports('${tabId}')">
-          <i class="fa-solid fa-magnifying-glass" style="color: #3182ce;"></i>استعلام
-        </button>
-        <button class="accounts-toolbar-btn" onclick="printAccountReports('${tabId}')">
-          <i class="fa-solid fa-print" style="color: #4a5568;"></i>طباعة
-        </button>
-        <button class="accounts-toolbar-btn" onclick="sendAccountReportsWhatsApp('${tabId}')">
-          <i class="fa-brands fa-whatsapp" style="color: #25d366;"></i>واتس اب
-        </button>
-        <button class="accounts-toolbar-btn" onclick="closeTab('${tabId}')" style="margin-right: auto;">
-          <i class="fa-solid fa-right-from-bracket" style="color: #e53e3e;"></i>خروج
-        </button>
-      </div>
-
-      <!-- Branch Header Banner -->
-      <div id="arBranchHeader-${tabId}" style="display: none; background-color: #f7fafc; padding: 10px 15px; border: 1px solid var(--border-color); border-radius: 6px; margin-top: 15px; font-weight: bold; font-size: 0.95rem; direction: rtl; text-align: right; color: var(--primary); border-right: 4px solid var(--primary);">
-        الفرع: <span id="arBranchNameVal-${tabId}">الفرع الرئيسي</span>
-      </div>
-
-      <!-- Account Reports Filter Panel -->
-      <div class="mock-form" style="background: #fff; padding: 15px; border-radius: 8px; border: 1px solid var(--border-color); direction: rtl; text-align: right; margin-top: 15px; display: grid; grid-template-columns: repeat(12, 1fr); gap: 15px; box-sizing: border-box; width: 100%;">
+      <div class="account-reports-screen" style="direction: rtl; text-align: right; font-family: var(--font-arabic); display: flex; flex-direction: column; gap: 4px; height: 100%; padding: 4px 6px;">
         
-        <!-- Row 1 -->
-        <div class="form-group" style="grid-column: span 3;">
-          <label style="font-weight: bold; font-size: 0.85rem; margin-bottom: 4px; display: block;">الفرع</label>
-          <select id="arBranch-${tabId}" style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem; font-family: var(--font-arabic);"></select>
+        <!-- Top Reports Switcher Ribbon (Matching media_1787906640173.png) -->
+        <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 4px 8px; display: flex; justify-content: space-between; align-items: center; gap: 6px; flex-wrap: wrap; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+          
+          <!-- 9 Report Selector Buttons (Right to Left matching screenshot) -->
+          <div style="display: flex; align-items: center; gap: 4px; flex-wrap: wrap;">
+            
+            <button type="button" id="btn-ar-balances-${tabId}" class="ar-type-btn active" onclick="switchAccountReportType('${tabId}', 'balances')" style="height: 38px; padding: 0 10px; background: #e0f2fe; border: 1.5px solid #0284c7; border-radius: 5px; font-weight: 800; font-size: 0.78rem; color: #0369a1; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; white-space: nowrap;">
+              <i class="fa-solid fa-list-check" style="font-size: 0.9rem;"></i>
+              <span>ارصدة حسابات</span>
+            </button>
+
+            <button type="button" id="btn-ar-debit-${tabId}" class="ar-type-btn" onclick="switchAccountReportType('${tabId}', 'debit')" style="height: 38px; padding: 0 10px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 5px; font-weight: 700; font-size: 0.78rem; color: #475569; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; white-space: nowrap;">
+              <i class="fa-solid fa-user-check" style="color: #059669; font-size: 0.9rem;"></i>
+              <span>تقرير الحسابات المدينه</span>
+            </button>
+
+            <button type="button" id="btn-ar-credit-${tabId}" class="ar-type-btn" onclick="switchAccountReportType('${tabId}', 'credit')" style="height: 38px; padding: 0 10px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 5px; font-weight: 700; font-size: 0.78rem; color: #475569; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; white-space: nowrap;">
+              <i class="fa-solid fa-users" style="color: #dc2626; font-size: 0.9rem;"></i>
+              <span>تقرير الحسابات الدائنه</span>
+            </button>
+
+            <button type="button" id="btn-ar-opening-balances-${tabId}" class="ar-type-btn" onclick="switchAccountReportType('${tabId}', 'opening-balances')" style="height: 38px; padding: 0 10px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 5px; font-weight: 700; font-size: 0.78rem; color: #475569; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; white-space: nowrap;">
+              <i class="fa-solid fa-chart-column" style="color: #8b5cf6; font-size: 0.9rem;"></i>
+              <span>الميزانيه الافتتاحيه</span>
+            </button>
+
+            <button type="button" id="btn-ar-journal-entries-${tabId}" class="ar-type-btn" onclick="switchAccountReportType('${tabId}', 'journal-entries')" style="height: 38px; padding: 0 10px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 5px; font-weight: 700; font-size: 0.78rem; color: #475569; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; white-space: nowrap;">
+              <i class="fa-solid fa-book-journal-whills" style="color: #f59e0b; font-size: 0.9rem;"></i>
+              <span>القيود اليوميه</span>
+            </button>
+
+            <button type="button" id="btn-ar-final-reports-${tabId}" class="ar-type-btn" onclick="switchAccountReportType('${tabId}', 'final-reports')" style="height: 38px; padding: 0 10px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 5px; font-weight: 700; font-size: 0.78rem; color: #475569; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; white-space: nowrap;">
+              <i class="fa-solid fa-chart-pie" style="color: #06b6d4; font-size: 0.9rem;"></i>
+              <span>التقارير الختاميه</span>
+            </button>
+
+            <button type="button" id="btn-ar-currency-diffs-${tabId}" class="ar-type-btn" onclick="switchAccountReportType('${tabId}', 'currency-diffs')" style="height: 38px; padding: 0 10px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 5px; font-weight: 700; font-size: 0.78rem; color: #475569; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; white-space: nowrap;">
+              <i class="fa-solid fa-arrow-right-arrow-left" style="color: #ec4899; font-size: 0.9rem;"></i>
+              <span>كشف حركة فروق العملات</span>
+            </button>
+
+            <button type="button" id="btn-ar-balances-local-${tabId}" class="ar-type-btn" onclick="switchAccountReportType('${tabId}', 'balances-local')" style="height: 38px; padding: 0 10px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 5px; font-weight: 700; font-size: 0.78rem; color: #475569; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; white-space: nowrap;">
+              <i class="fa-solid fa-circle-check" style="color: #10b981; font-size: 0.9rem;"></i>
+              <span>كشف ارصده مع المقابل بالعمله المحليه</span>
+            </button>
+
+            <button type="button" id="btn-ar-all-accounts-${tabId}" class="ar-type-btn" onclick="switchAccountReportType('${tabId}', 'zero-balances')" style="height: 38px; padding: 0 10px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 5px; font-weight: 700; font-size: 0.78rem; color: #475569; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; white-space: nowrap;">
+              <i class="fa-solid fa-globe" style="color: #3b82f6; font-size: 0.9rem;"></i>
+              <span>الحسابات</span>
+            </button>
+
+          </div>
+
+          <!-- Actions: Print, XLS, WhatsApp -->
+          <div style="display: flex; align-items: center; gap: 5px;">
+            <button type="button" onclick="printAccountReports('${tabId}')" class="btn btn-secondary btn-sm" style="height: 32px; padding: 0 10px; font-weight: 800; font-size: 0.8rem; display: flex; align-items: center; gap: 5px;" title="طباعة التقرير">
+              <i class="fa-solid fa-print"></i>
+              <span>طباعه</span>
+            </button>
+
+            <button type="button" onclick="exportAccountReportsExcel('${tabId}')" class="btn btn-secondary btn-sm" style="height: 32px; padding: 0 10px; font-weight: 800; font-size: 0.8rem; display: flex; align-items: center; gap: 5px; color: #047857;" title="تصدير إلى إكسل">
+              <i class="fa-solid fa-file-excel"></i>
+              <span>تصدير XLS</span>
+            </button>
+
+            <button type="button" onclick="openAccountReportsWhatsAppModal('${tabId}')" class="btn btn-sm" style="height: 32px; padding: 0 10px; font-weight: 800; font-size: 0.8rem; background: #25D366; color: #ffffff; border: 1px solid #16a34a; border-radius: 4px; display: flex; align-items: center; gap: 5px;" title="إرسال التقرير عبر الواتساب">
+              <i class="fa-brands fa-whatsapp" style="font-size: 0.95rem;"></i>
+              <span>إرسال PDF</span>
+            </button>
+          </div>
+
         </div>
-        
-        <div class="form-group" style="grid-column: span 3;">
-          <label style="font-weight: bold; font-size: 0.85rem; margin-bottom: 4px; display: block;">من تاريخ</label>
-          <div style="display: flex; align-items: center; gap: 6px;">
-            <input type="checkbox" id="arStartDateCheck-${tabId}" checked style="width: 16px; height: 16px; cursor: pointer;">
-            <input type="date" id="arStartDate-${tabId}" style="flex: 1; padding: 5px 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem; font-family: monospace;">
+
+        <!-- Centered Dynamic Title Header matching media_1787906640173.png -->
+        <div style="text-align: center; margin: 2px 0;">
+          <h3 id="arReportTitleLabel-${tabId}" style="margin: 0; font-size: 1.15rem; font-weight: 900; color: #0f172a; letter-spacing: -0.2px;">ارصدة حسابات</h3>
+        </div>
+
+        <!-- 3-Row Filter Bar (Matching media_1787906640173.png) -->
+        <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 4px 8px; display: flex; flex-direction: column; gap: 4px; font-size: 0.82rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+          
+          <!-- Row 1: الفرع | من تاريخ | العمله | مركز الكلفه -->
+          <div style="display: grid; grid-template-columns: 1.2fr 1.1fr 1.1fr 1.1fr; gap: 8px; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <label style="min-width: 45px; font-weight: 800; color: #334155;">الفرع:</label>
+              <select id="arBranch-${tabId}" class="form-select form-select-sm" style="font-size: 0.8rem; font-weight: 700;">
+                <option value="0">الفرع الرئيسي</option>
+              </select>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <label style="min-width: 55px; font-weight: 800; color: #334155;">من تاريخ:</label>
+              <input type="date" id="arStartDate-${tabId}" class="form-control form-control-sm" style="font-size: 0.8rem; font-family: monospace;">
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <label style="min-width: 45px; font-weight: 800; color: #334155;">العملة:</label>
+              <select id="arCurrency-${tabId}" class="form-select form-select-sm" style="font-size: 0.8rem;">
+                <option value="">ريال سعودي</option>
+              </select>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <label style="min-width: 70px; font-weight: 800; color: #334155;">مركز الكلفة:</label>
+              <select id="arCostCenter-${tabId}" class="form-select form-select-sm" style="font-size: 0.8rem;">
+                <option value="">كافة المراكز</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Row 2: الحساب الختامي | الى تاريخ | العمله | المجموعه -->
+          <div style="display: grid; grid-template-columns: 1.2fr 1.1fr 1.1fr 1.1fr; gap: 8px; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <label style="min-width: 80px; font-weight: 800; color: #334155;">الحساب الختامي:</label>
+              <select id="arFinalAccount-${tabId}" class="form-select form-select-sm" style="font-size: 0.8rem; font-weight: 700;">
+                <option value="">الكل</option>
+                <option value="1">1- ميزانيه</option>
+                <option value="2">2- أرباح وخسائر</option>
+                <option value="3">3- متاجرة</option>
+                <option value="4">4- تشغيل</option>
+              </select>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <label style="min-width: 55px; font-weight: 800; color: #334155;">إلى تاريخ:</label>
+              <input type="date" id="arEndDate-${tabId}" class="form-control form-control-sm" style="font-size: 0.8rem; font-family: monospace;">
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <label style="min-width: 45px; font-weight: 800; color: #334155;">العملة:</label>
+              <select id="arCurrency2-${tabId}" class="form-select form-select-sm" style="font-size: 0.8rem;">
+                <option value="">ريال سعودي</option>
+              </select>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <label style="min-width: 60px; font-weight: 800; color: #334155;">المجموعة:</label>
+              <select id="arGroup-${tabId}" class="form-select form-select-sm" style="font-size: 0.8rem;">
+                <option value="">حساب عام</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Row 3: نوع التقرير | بحث سريع | زر التحديث -->
+          <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+            <div style="display: flex; align-items: center; gap: 6px; max-width: 220px;">
+              <label style="min-width: 65px; font-weight: 800; color: #334155;">نوع التقرير:</label>
+              <select id="arDetailType-${tabId}" class="form-select form-select-sm" style="font-size: 0.8rem; font-weight: 700;">
+                <option value="detailed">تفصيلي</option>
+                <option value="totals">إجمالي</option>
+              </select>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 6px; flex: 1;">
+              <div class="input-group input-group-sm" style="direction: ltr;">
+                <input type="text" id="arSearchInput-${tabId}" class="form-control form-control-sm" placeholder="بحث سريع في التقرير (رقم الحساب، اسم الحساب، العملة)..." style="direction: rtl; font-size: 0.8rem;" oninput="applyAccountReportsQuickSearch('${tabId}')">
+                <button class="btn btn-outline-secondary" type="button" onclick="document.getElementById('arSearchInput-${tabId}').value=''; applyAccountReportsQuickSearch('${tabId}');" title="مسح البحث">
+                  <i class="fa-solid fa-xmark"></i>
+                </button>
+              </div>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <button type="button" onclick="fetchAccountReports('${tabId}')" class="btn btn-primary btn-sm" style="height: 30px; padding: 0 14px; font-weight: 800; font-size: 0.8rem; display: flex; align-items: center; gap: 5px;">
+                <i class="fa-solid fa-arrows-rotate"></i>
+                <span>تحديث التقرير</span>
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Table Grid Container with Grouping Banner matching media_1787906640173.png -->
+        <div style="flex: 1; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+          
+          <!-- Grouping Bar Header -->
+          <div style="background: #f1f5f9; padding: 3px 8px; border-bottom: 1px solid #cbd5e1; font-size: 0.72rem; color: #64748b; font-style: italic; display: flex; align-items: center; gap: 6px;">
+            <i class="fa-solid fa-table-columns" style="color: #94a3b8;"></i>
+            <span>Drag a column header here to group by that column</span>
+          </div>
+
+          <!-- Table with horizontal/vertical scrolling -->
+          <div style="flex: 1; overflow: auto; max-height: calc(100vh - 275px);">
+            <table id="arTable-${tabId}" class="table table-hover table-bordered" style="width: 100%; min-width: 1200px; margin-bottom: 0; font-size: 0.8rem; border-collapse: collapse; text-align: center;">
+              <thead id="arThead-${tabId}" style="position: sticky; top: 0; z-index: 5; background: #f8fafc; border-bottom: 2px solid #cbd5e1;"></thead>
+              <tbody id="arTbody-${tabId}"></tbody>
+            </table>
+          </div>
+
+          <!-- Footer Summary Bar -->
+          <div id="arFooter-${tabId}" style="background: #f8fafc; border-top: 1.5px solid #cbd5e1; padding: 4px 10px; display: flex; justify-content: space-between; align-items: center; font-weight: 800; font-size: 0.8rem; color: #1e293b;">
+            <div id="arCount-${tabId}">عدد السجلات: 0</div>
+            <div id="arTotals-${tabId}"></div>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Account Report WhatsApp Modal -->
+      <div class="modal fade" id="arWhatsAppModal-${tabId}" tabindex="-1" aria-hidden="true" style="direction: rtl;">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content" style="border-radius: 8px; border: 1.5px solid #25D366;">
+            <div class="modal-header" style="background: #25D366; color: #ffffff; padding: 8px 14px;">
+              <h5 class="modal-title" style="font-weight: 900; font-size: 1rem; display: flex; align-items: center; gap: 8px;">
+                <i class="fa-brands fa-whatsapp" style="font-size: 1.3rem;"></i>
+                <span>إرسال تقرير الحسابات (ملف PDF) عبر الواتساب</span>
+              </h5>
+              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" style="padding: 14px;">
+              <div style="margin-bottom: 12px;">
+                <label style="font-weight: 800; color: #1e293b; margin-bottom: 4px; display: block;">رقم هاتف المستلم (مع مفتاح الدولة أو بدونه):</label>
+                <div class="input-group">
+                  <span class="input-group-text" style="background: #f1f5f9;"><i class="fa-solid fa-phone"></i></span>
+                  <input type="text" id="arWaPhone-${tabId}" class="form-control" placeholder="مثال: 777123456 أو 967777123456" style="font-family: monospace; font-weight: bold; font-size: 0.95rem;">
+                </div>
+              </div>
+
+              <div style="margin-bottom: 12px;">
+                <label style="font-weight: 800; color: #1e293b; margin-bottom: 4px; display: block;">نص الرسالة المرفقة مع الملف:</label>
+                <textarea id="arWaCaption-${tabId}" class="form-control" rows="2" style="font-size: 0.85rem;" placeholder="مرفق لكم تقرير أرصدة الحسابات المعتمد بصيغة PDF..."></textarea>
+              </div>
+
+              <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; padding: 8px 10px; font-size: 0.8rem; color: #166534;">
+                <i class="fa-solid fa-circle-info" style="margin-left: 4px;"></i>
+                سيتم تحويل تقرير الحسابات بالكامل مع الترويسة المعتمدة إلى ملف PDF بحجم A4 وإرساله مباشرة عبر خادم الواتساب المدمج في النظام.
+              </div>
+            </div>
+            <div class="modal-footer" style="padding: 6px 12px; background: #f8fafc;">
+              <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">إلغاء</button>
+              <button type="button" onclick="executeSendAccountReportsWhatsApp('${tabId}')" class="btn btn-sm" style="background: #25D366; color: #ffffff; font-weight: 800; display: flex; align-items: center; gap: 6px;">
+                <i class="fa-solid fa-paper-plane"></i>
+                <span>إرسال PDF الآن</span>
+              </button>
+            </div>
           </div>
         </div>
-
-        <div class="form-group" style="grid-column: span 2;">
-          <label style="font-weight: bold; font-size: 0.85rem; margin-bottom: 4px; display: block;">العملة</label>
-          <select id="arCurrency-${tabId}" style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem; font-family: var(--font-arabic);"></select>
-        </div>
-
-        <div class="form-group" style="grid-column: span 2;">
-          <label style="font-weight: bold; font-size: 0.85rem; margin-bottom: 4px; display: block;">مركز الكلفة</label>
-          <select id="arCostCenter-${tabId}" style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem; font-family: var(--font-arabic);"></select>
-        </div>
-
-        <div class="form-group" style="grid-column: span 2;">
-          <label style="font-weight: bold; font-size: 0.85rem; margin-bottom: 4px; display: block;">المجموعة</label>
-          <select id="arGroup-${tabId}" style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem; font-family: var(--font-arabic);"></select>
-        </div>
-
-        <!-- Row 2 -->
-        <div class="form-group" style="grid-column: span 3;">
-          <label style="font-weight: bold; font-size: 0.85rem; margin-bottom: 4px; display: block;">الحساب الختامي</label>
-          <select id="arFinalAccount-${tabId}" style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem; font-family: var(--font-arabic);">
-            <option value="">-- الكل --</option>
-            <option value="1">1-ميزانيه</option>
-            <option value="2">2-أرباح وخسائر</option>
-            <option value="3">3-متاجرة</option>
-          </select>
-        </div>
-
-        <div class="form-group" style="grid-column: span 3;">
-          <label style="font-weight: bold; font-size: 0.85rem; margin-bottom: 4px; display: block;">الى تاريخ</label>
-          <div style="display: flex; align-items: center; gap: 6px;">
-            <input type="checkbox" id="arEndDateCheck-${tabId}" checked style="width: 16px; height: 16px; cursor: pointer;">
-            <input type="date" id="arEndDate-${tabId}" style="flex: 1; padding: 5px 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem; font-family: monospace;">
-          </div>
-        </div>
-
-        <div class="form-group" style="grid-column: span 2;">
-          <label style="font-weight: bold; font-size: 0.85rem; margin-bottom: 4px; display: block;">نوع التقرير</label>
-          <select id="arDetailType-${tabId}" style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem; font-family: var(--font-arabic);">
-            <option value="detailed">تفصيلي</option>
-            <option value="totals">إجمالي</option>
-          </select>
-        </div>
-
-        <div class="form-group" style="grid-column: span 2;">
-          <label style="font-weight: bold; font-size: 0.85rem; margin-bottom: 4px; display: block;">نوع الحساب</label>
-          <select id="arAccType-${tabId}" style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem; font-family: var(--font-arabic);">
-            <option value="all">حساب عام وفرعي</option>
-            <option value="sub" selected>حساب فرعي فقط</option>
-            <option value="general">حساب عام فقط</option>
-          </select>
-        </div>
-
-        <div class="form-group" style="grid-column: span 2; display: flex; align-items: flex-end; padding-bottom: 2px;">
-          <h3 id="arReportTitleLabel-${tabId}" style="margin: 0; font-size: 1.05rem; font-weight: 800; color: var(--primary);">أرصدة حسابات</h3>
-        </div>
-
-      </div>
-
-      <!-- Summary Fields Panel -->
-      <div style="background-color: #fafbfc; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 8px 15px; margin-top: 15px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px 15px; align-items: flex-end; font-size: 0.85rem;">
-        <div class="form-group" style="margin-bottom: 0;">
-          <label style="font-weight: bold; margin-bottom: 3px; display: block; color: var(--success);" id="lbl-sum-debit-${tabId}">إجمالي مدين</label>
-          <input type="text" id="arDebitSum-${tabId}" readonly value="0.00" style="width:100%; border:1px solid #cbd5e1; border-radius:4px; padding:4px 8px; font-weight:bold; font-family:monospace; background-color:#edf2f7; text-align:left; color: var(--success);">
-        </div>
-        <div class="form-group" style="margin-bottom: 0;">
-          <label style="font-weight: bold; margin-bottom: 3px; display: block; color: var(--danger);" id="lbl-sum-credit-${tabId}">إجمالي دائن</label>
-          <input type="text" id="arCreditSum-${tabId}" readonly value="0.00" style="width:100%; border:1px solid #cbd5e1; border-radius:4px; padding:4px 8px; font-weight:bold; font-family:monospace; background-color:#edf2f7; text-align:left; color: var(--danger);">
-        </div>
-        <div class="form-group" style="margin-bottom: 0;">
-          <label style="font-weight: bold; margin-bottom: 3px; display: block; color: #2b6cb0;" id="lbl-sum-balance-${tabId}">الرصيد</label>
-          <input type="text" id="arBalanceSum-${tabId}" readonly value="0.00" style="width:100%; border:1px solid #cbd5e1; border-radius:4px; padding:4px 8px; font-weight:bold; font-family:monospace; background-color:#edf2f7; text-align:left; color: #2b6cb0;">
-        </div>
-        <div class="form-group" style="margin-bottom: 0;" id="arCurrentSumGroup-${tabId}">
-          <label style="font-weight: bold; margin-bottom: 3px; display: block; color: #b7791f;">الحالية</label>
-          <input type="text" id="arCurrentSum-${tabId}" readonly value="0.00" style="width:100%; border:1px solid #cbd5e1; border-radius:4px; padding:4px 8px; font-weight:bold; font-family:monospace; background-color:#edf2f7; text-align:left; color: #b7791f;">
-        </div>
-      </div>
-
-      <!-- Account Reports Grid Wrapper -->
-      <div class="mock-table-wrapper" style="margin-top: 15px; border-radius: 8px; border: 1px solid var(--border-color); overflow: auto; max-height: 460px; box-sizing: border-box; width: 100%;">
-        <table class="mock-table" style="width: 100%; border-collapse: collapse; font-size: 0.8rem; direction: rtl; text-align: right; min-width: 1200px;">
-          <thead id="arTableHead-${tabId}">
-            <!-- Dynamic Headers will be inserted here -->
-          </thead>
-          <tbody id="arTableBody-${tabId}">
-            <tr>
-              <td colspan="11" style="text-align: center; padding: 30px; color: var(--text-muted);">يرجى تحديد الخيارات والضغط على "استعلام" لعرض البيانات</td>
-            </tr>
-          </tbody>
-        </table>
       </div>
     `;
   } else if (isFinalAccounts) {
@@ -17762,271 +17847,552 @@ window.addEventListener('afterprint', () => {
   });
 });
 
+
+// =============================================================================
+// 46. ACCOUNTS REPORTS CONTROLLERS & RENDERERS (تقارير الحسابات / أرصدة حسابات)
+// Matching media_1787906640173.png
+// =============================================================================
+
+const ACCOUNT_REPORT_META = {
+  'balances': { title: 'ارصدة حسابات', icon: 'fa-list-check' },
+  'debit': { title: 'تقرير الحسابات المدينه', icon: 'fa-user-check' },
+  'credit': { title: 'تقرير الحسابات الدائنه', icon: 'fa-users' },
+  'opening-balances': { title: 'الميزانيه الافتتاحيه', icon: 'fa-chart-column' },
+  'journal-entries': { title: 'القيود اليوميه', icon: 'fa-book-journal-whills' },
+  'final-reports': { title: 'التقارير الختاميه', icon: 'fa-chart-pie' },
+  'currency-diffs': { title: 'كشف حركة فروق العملات', icon: 'fa-arrow-right-arrow-left' },
+  'balances-local': { title: 'كشف ارصده مع المقابل بالعمله المحليه', icon: 'fa-circle-check' },
+  'zero-balances': { title: 'الحسابات', icon: 'fa-globe' }
+};
+
 window.switchAccountReportType = function(tabId, reportType) {
-  if (!state.accountReports || !state.accountReports[tabId]) return;
+  state.accountReports = state.accountReports || {};
+  state.accountReports[tabId] = state.accountReports[tabId] || {};
   state.accountReports[tabId].reportType = reportType;
 
-  // Toggle toolbar buttons active class
-  document.querySelectorAll(`#pane-${tabId} .accounts-toolbar-btn.ar-type-btn`).forEach(btn => {
+  // Toggle active button styling
+  document.querySelectorAll(`.ar-type-btn`).forEach(btn => {
     btn.classList.remove('active');
+    btn.style.background = '#f8fafc';
+    btn.style.borderColor = '#cbd5e1';
+    btn.style.color = '#475569';
   });
-  const activeBtn = document.getElementById(`btn-ar-${reportType}-${tabId}`);
-  if (activeBtn) activeBtn.classList.add('active');
 
-  // Clear table body and total values
-  const tbody = document.getElementById(`arTableBody-${tabId}`);
-  if (tbody) {
-    tbody.innerHTML = `<tr><td colspan="11" style="text-align: center; padding: 30px; color: var(--text-muted);">يرجى الضغط على "استعلام" لعرض البيانات</td></tr>`;
+  const activeBtn = document.getElementById(`btn-ar-${reportType}-${tabId}`) || document.getElementById(`btn-ar-${reportType.replace('_', '-')}-${tabId}`);
+  if (activeBtn) {
+    activeBtn.classList.add('active');
+    activeBtn.style.background = '#e0f2fe';
+    activeBtn.style.borderColor = '#0284c7';
+    activeBtn.style.color = '#0369a1';
   }
-  document.getElementById(`arDebitSum-${tabId}`).value = '0.00';
-  document.getElementById(`arCreditSum-${tabId}`).value = '0.00';
-  document.getElementById(`arBalanceSum-${tabId}`).value = '0.00';
-  document.getElementById(`arCurrentSum-${tabId}`).value = '0.00';
 
-  // Update headers and titles
-  const titleLabel = document.getElementById(`arReportTitleLabel-${tabId}`);
-  const header = document.getElementById(`arTableHead-${tabId}`);
-  const currentSumGroup = document.getElementById(`arCurrentSumGroup-${tabId}`);
-
-  const lblDebit = document.getElementById(`lbl-sum-debit-${tabId}`);
-  const lblCredit = document.getElementById(`lbl-sum-credit-${tabId}`);
-  const lblBalance = document.getElementById(`lbl-sum-balance-${tabId}`);
-
-  if (reportType === 'balances' || reportType === 'balances-local' || reportType === 'zero-balances') {
-    if (titleLabel) {
-      if (reportType === 'balances') titleLabel.textContent = "أرصدة حسابات";
-      else if (reportType === 'balances-local') titleLabel.textContent = "أرصدة مع المقابل بالعملة المحلية";
-      else titleLabel.textContent = "الحسابات الصفرية";
-    }
-    if (currentSumGroup) currentSumGroup.style.display = 'block';
-    
-    if (lblDebit) lblDebit.textContent = "إجمالي السابقة";
-    if (lblCredit) lblCredit.textContent = "إجمالي الحركة مدين";
-    if (lblBalance) lblBalance.textContent = "إجمالي الحركة دائن";
-
-    if (header) {
-      header.innerHTML = `
-        <tr style="background-color: #f8fafc; border-bottom: 2px solid #cbd5e1; position: sticky; top: 0; z-index: 10;">
-          <th style="padding: 10px 8px; text-align: center; width: 100px;">رقم الحساب</th>
-          <th style="padding: 10px 8px; text-align: right; width: 260px;">اسم الحساب</th>
-          <th style="padding: 10px 8px; text-align: center; width: 90px;">العملة</th>
-          <th style="padding: 10px 8px; text-align: left; width: 110px; color: var(--primary);">السابقة</th>
-          <th style="padding: 10px 8px; text-align: left; width: 110px; color: var(--success);">مدين</th>
-          <th style="padding: 10px 8px; text-align: left; width: 110px; color: var(--danger);">دائن</th>
-          <th style="padding: 10px 8px; text-align: left; width: 120px;">الرصيد</th>
-          <th style="padding: 10px 8px; text-align: left; width: 120px; color: #b7791f;">الحالية</th>
-          <th style="padding: 10px 8px; text-align: center; width: 100px;">من تاريخ</th>
-          <th style="padding: 10px 8px; text-align: center; width: 100px;">الى تاريخ</th>
-        </tr>
-      `;
-    }
-  } else if (reportType === 'opening-balances') {
-    if (titleLabel) titleLabel.textContent = "تقرير الميزانية الافتتاحية";
-    if (currentSumGroup) currentSumGroup.style.display = 'none';
-
-    if (lblDebit) lblDebit.textContent = "إجمالي مدين افتتاحي";
-    if (lblCredit) lblCredit.textContent = "إجمالي دائن افتتاحي";
-    if (lblBalance) lblBalance.textContent = "الرصيد";
-
-    if (header) {
-      header.innerHTML = `
-        <tr style="background-color: #f8fafc; border-bottom: 2px solid #cbd5e1; position: sticky; top: 0; z-index: 10;">
-          <th style="padding: 10px 8px; text-align: center; width: 100px;">رقم الحساب</th>
-          <th style="padding: 10px 8px; text-align: right; width: 280px;">اسم الحساب</th>
-          <th style="padding: 10px 8px; text-align: center; width: 100px;">العملة</th>
-          <th style="padding: 10px 8px; text-align: left; width: 130px; color: var(--success);">مدين افتتاحي</th>
-          <th style="padding: 10px 8px; text-align: left; width: 130px; color: var(--danger);">دائن افتتاحي</th>
-          <th style="padding: 10px 8px; text-align: left; width: 140px;">الرصيد</th>
-          <th style="padding: 10px 8px; text-align: center; width: 110px;">من تاريخ</th>
-          <th style="padding: 10px 8px; text-align: center; width: 110px;">الى تاريخ</th>
-        </tr>
-      `;
-    }
-  } else if (reportType === 'journal-entries') {
-    if (titleLabel) titleLabel.textContent = "تقرير القيود اليومية";
-    if (currentSumGroup) currentSumGroup.style.display = 'none';
-
-    if (lblDebit) lblDebit.textContent = "إجمالي مدين";
-    if (lblCredit) lblCredit.textContent = "إجمالي دائن";
-    if (lblBalance) lblBalance.textContent = "الفارق";
-
-    if (header) {
-      header.innerHTML = `
-        <tr style="background-color: #f8fafc; border-bottom: 2px solid #cbd5e1; position: sticky; top: 0; z-index: 10;">
-          <th style="padding: 10px 8px; text-align: center; width: 100px;">رقم الحركة</th>
-          <th style="padding: 10px 8px; text-align: center; width: 120px;">نوع الحركة</th>
-          <th style="padding: 10px 8px; text-align: center; width: 110px;">التاريخ</th>
-          <th style="padding: 10px 8px; text-align: center; width: 110px;">رقم الحساب</th>
-          <th style="padding: 10px 8px; text-align: right; width: 220px;">اسم الحساب</th>
-          <th style="padding: 10px 8px; text-align: right; width: 240px;">البيان</th>
-          <th style="padding: 10px 8px; text-align: left; width: 110px; color: var(--success);">مدين</th>
-          <th style="padding: 10px 8px; text-align: left; width: 110px; color: var(--danger);">دائن</th>
-          <th style="padding: 10px 8px; text-align: center; width: 90px;">العملة</th>
-        </tr>
-      `;
-    }
-  } else if (reportType === 'final-reports') {
-    if (titleLabel) titleLabel.textContent = "تقرير الحسابات الختامية";
-    if (currentSumGroup) currentSumGroup.style.display = 'none';
-
-    if (lblDebit) lblDebit.textContent = "إجمالي مدين";
-    if (lblCredit) lblCredit.textContent = "إجمالي دائن";
-    if (lblBalance) lblBalance.textContent = "الرصيد";
-
-    if (header) {
-      header.innerHTML = `
-        <tr style="background-color: #f8fafc; border-bottom: 2px solid #cbd5e1; position: sticky; top: 0; z-index: 10;">
-          <th style="padding: 10px 8px; text-align: center; width: 110px;">رقم الحساب</th>
-          <th style="padding: 10px 8px; text-align: right; width: 280px;">اسم الحساب</th>
-          <th style="padding: 10px 8px; text-align: center; width: 140px;">نوع الحساب الختامي</th>
-          <th style="padding: 10px 8px; text-align: center; width: 90px;">العملة</th>
-          <th style="padding: 10px 8px; text-align: left; width: 130px; color: var(--success);">إجمالي مدين</th>
-          <th style="padding: 10px 8px; text-align: left; width: 130px; color: var(--danger);">إجمالي دائن</th>
-          <th style="padding: 10px 8px; text-align: left; width: 140px;">الرصيد</th>
-        </tr>
-      `;
-    }
-  } else if (reportType === 'currency-diffs') {
-    if (titleLabel) titleLabel.textContent = "كشف حركة فروق العملات";
-    if (currentSumGroup) currentSumGroup.style.display = 'none';
-
-    if (lblDebit) lblDebit.textContent = "إجمالي مدين محلي";
-    if (lblCredit) lblCredit.textContent = "إجمالي دائن محلي";
-    if (lblBalance) lblBalance.textContent = "الفارق محلي";
-
-    if (header) {
-      header.innerHTML = `
-        <tr style="background-color: #f8fafc; border-bottom: 2px solid #cbd5e1; position: sticky; top: 0; z-index: 10;">
-          <th style="padding: 10px 8px; text-align: center; width: 100px;">رقم الحركة</th>
-          <th style="padding: 10px 8px; text-align: center; width: 120px;">نوع الحركة</th>
-          <th style="padding: 10px 8px; text-align: center; width: 110px;">التاريخ</th>
-          <th style="padding: 10px 8px; text-align: center; width: 110px;">رقم الحساب</th>
-          <th style="padding: 10px 8px; text-align: right; width: 220px;">اسم الحساب</th>
-          <th style="padding: 10px 8px; text-align: right; width: 240px;">البيان</th>
-          <th style="padding: 10px 8px; text-align: left; width: 110px; color: var(--success);">مدين محلي</th>
-          <th style="padding: 10px 8px; text-align: left; width: 110px; color: var(--danger);">دائن محلي</th>
-          <th style="padding: 10px 8px; text-align: center; width: 90px;">العملة</th>
-        </tr>
-      `;
-    }
-  } else {
-    // debit or credit reports
-    if (titleLabel) titleLabel.textContent = reportType === 'debit' ? "تقرير الحسابات المدينة" : "تقرير الحسابات الدائنة";
-    if (currentSumGroup) currentSumGroup.style.display = 'none';
-
-    if (lblDebit) lblDebit.textContent = "إجمالي مدين";
-    if (lblCredit) lblCredit.textContent = "إجمالي دائن";
-    if (lblBalance) lblBalance.textContent = "الرصيد";
-
-    if (header) {
-      header.innerHTML = `
-        <tr style="background-color: #f8fafc; border-bottom: 2px solid #cbd5e1; position: sticky; top: 0; z-index: 10;">
-          <th style="padding: 10px 8px; text-align: center; width: 110px;">رقم الحساب</th>
-          <th style="padding: 10px 8px; text-align: right; width: 280px;">اسم الحساب</th>
-          <th style="padding: 10px 8px; text-align: left; width: 130px; color: var(--success);">اجمالي مدين</th>
-          <th style="padding: 10px 8px; text-align: left; width: 130px; color: var(--danger);">اجمالي دائن</th>
-          <th style="padding: 10px 8px; text-align: left; width: 140px;">الرصيد</th>
-          <th style="padding: 10px 8px; text-align: center; width: 90px;">العملة</th>
-          <th style="padding: 10px 8px; text-align: center; width: 130px;">الحساب الختامي</th>
-          <th style="padding: 10px 8px; text-align: center; width: 110px;">من تاريخ</th>
-          <th style="padding: 10px 8px; text-align: center; width: 110px;">الى تاريخ</th>
-        </tr>
-      `;
-    }
+  // Update dynamic centered title banner
+  const titleEl = document.getElementById(`arReportTitleLabel-${tabId}`);
+  if (titleEl && ACCOUNT_REPORT_META[reportType]) {
+    titleEl.innerText = ACCOUNT_REPORT_META[reportType].title;
   }
+
+  fetchAccountReports(tabId);
 };
 
 window.initAccountReportsTab = async function(tabId) {
+  state.accountReports = state.accountReports || {};
+  state.accountReports[tabId] = {
+    reportType: 'balances',
+    data: [],
+    filtered: []
+  };
+
+  // Populate branches
+  const branchSelect = document.getElementById(`arBranch-${tabId}`);
+  if (branchSelect) {
+    try {
+      const bRes = await fetch('/api/branches');
+      const bData = await bRes.json();
+      if (bData.success && Array.isArray(bData.data)) {
+        branchSelect.innerHTML = `<option value="0">الفرع الرئيسي</option>` + bData.data.map(b => `<option value="${b.fldID}">${b.fldName}</option>`).join('');
+      }
+    } catch(e) {}
+  }
+
+  // Populate currencies
+  const cur1 = document.getElementById(`arCurrency-${tabId}`);
+  const cur2 = document.getElementById(`arCurrency2-${tabId}`);
   try {
-    await ensureVoucherMetadata();
-
-    // Initialize state if not present
-    if (!state.accountReports[tabId]) {
-      state.accountReports[tabId] = {
-        reportType: 'balances',
-        data: []
-      };
+    let cRes = await fetch('/api/currencies-list');
+    if (!cRes.ok) cRes = await fetch('/api/currencies');
+    const cData = await cRes.json();
+    const list = cData.data || (Array.isArray(cData) ? cData : []);
+    if (Array.isArray(list) && list.length > 0) {
+      const opts = `<option value="">كل العملات</option>` + list.map(c => `<option value="${c.fldID}">${c.fldName} (${c.fldsymbol || ''})</option>`).join('');
+      if (cur1) cur1.innerHTML = opts;
+      if (cur2) cur2.innerHTML = opts;
     }
+  } catch(e) {}
 
-    // 1. Populate Branches
-    const branchSelect = document.getElementById(`arBranch-${tabId}`);
-    if (branchSelect) {
-      populateSelect(branchSelect, state.userBranches.length > 0 ? state.userBranches : state.branches, 'fldID', 'fldName');
-    }
-
-    // 2. Populate Currencies
-    const currencySelect = document.getElementById(`arCurrency-${tabId}`);
-    if (currencySelect) {
-      currencySelect.innerHTML = '<option value="">كل العملات</option>';
-      populateSelect(currencySelect, state.currencies, 'fldID', 'fldName');
-    }
-
-    // 3. Populate Cost Centers
-    const costCenterSelect = document.getElementById(`arCostCenter-${tabId}`);
-    if (costCenterSelect) {
-      costCenterSelect.innerHTML = '<option value="">كل المراكز</option>';
-      try {
-        const res = await fetch('/api/cost-centers');
-        const ccData = await res.json();
-        const centers = ccData.data || [];
-        populateSelect(costCenterSelect, centers, 'fldID', 'fldName');
-      } catch (e) {
-        console.error("Error loading cost centers for reports:", e);
+  // Populate cost centers
+  const ccSelect = document.getElementById(`arCostCenter-${tabId}`);
+  if (ccSelect) {
+    try {
+      const ccRes = await fetch('/api/cost-centers');
+      const ccData = await ccRes.json();
+      if (ccData.success && Array.isArray(ccData.data)) {
+        ccSelect.innerHTML = `<option value="">كافة المراكز</option>` + ccData.data.map(c => `<option value="${c.fldID}">${c.fldName}</option>`).join('');
       }
-    }
+    } catch(e) {}
+  }
 
-    // 4. Populate Account Groups
-    const groupSelect = document.getElementById(`arGroup-${tabId}`);
-    if (groupSelect) {
-      groupSelect.innerHTML = '<option value="">كل المجموعات</option>';
-      try {
-        const res = await fetch('/api/account-groups');
-        const gData = await res.json();
-        const groups = gData.data || [];
-        populateSelect(groupSelect, groups, 'fldID', 'fldName');
-      } catch (e) {
-        console.error("Error loading account groups for reports:", e);
+  // Populate account groups
+  const gSelect = document.getElementById(`arGroup-${tabId}`);
+  if (gSelect) {
+    try {
+      const gRes = await fetch('/api/account-groups');
+      const gData = await gRes.json();
+      if (gData.success && Array.isArray(gData.data)) {
+        gSelect.innerHTML = `<option value="">كافة المجموعات</option>` + gData.data.map(g => `<option value="${g.fldID}">${g.fldName}</option>`).join('');
       }
+    } catch(e) {}
+  }
+
+  // Set default dates
+  const startEl = document.getElementById(`arStartDate-${tabId}`);
+  const endEl = document.getElementById(`arEndDate-${tabId}`);
+  if (startEl) startEl.value = '2024-08-28';
+  if (endEl) endEl.value = new Date().toISOString().split('T')[0];
+
+  fetchAccountReports(tabId);
+};
+
+window.fetchAccountReports = async function(tabId) {
+  const repSettings = state.accountReports[tabId] || { reportType: 'balances' };
+  const reportType = repSettings.reportType || 'balances';
+  const meta = ACCOUNT_REPORT_META[reportType] || ACCOUNT_REPORT_META.balances;
+
+  const branchNo = document.getElementById(`arBranch-${tabId}`)?.value || '';
+  const startDate = document.getElementById(`arStartDate-${tabId}`)?.value || '';
+  const endDate = document.getElementById(`arEndDate-${tabId}`)?.value || '';
+  const currencyId = document.getElementById(`arCurrency-${tabId}`)?.value || '';
+  const costCenterId = document.getElementById(`arCostCenter-${tabId}`)?.value || '';
+  const groupId = document.getElementById(`arGroup-${tabId}`)?.value || '';
+  const accType = document.getElementById(`arFinalAccount-${tabId}`)?.value || '';
+  const detailType = document.getElementById(`arDetailType-${tabId}`)?.value || 'detailed';
+
+  const tbody = document.getElementById(`arTbody-${tabId}`);
+  if (tbody) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="12" style="padding: 30px; text-align: center; color: #64748b;">
+          <i class="fa-solid fa-spinner fa-spin" style="font-size: 1.5rem; color: #0284c7; margin-bottom: 8px;"></i>
+          <div style="font-weight: bold;">جاري تحميل ${meta.title}...</div>
+        </td>
+      </tr>
+    `;
+  }
+
+  let url = `/api/accounts-reports?reportType=${reportType}`;
+  if (branchNo && parseInt(branchNo) > 0) url += `&branchNo=${branchNo}`;
+  if (startDate) url += `&startDate=${startDate}`;
+  if (endDate) url += `&endDate=${endDate}`;
+  if (currencyId) url += `&currencyId=${currencyId}`;
+  if (costCenterId) url += `&costCenterId=${costCenterId}`;
+  if (groupId) url += `&groupId=${groupId}`;
+  if (accType) url += `&accType=${accType}`;
+  if (detailType) url += `&detailType=${detailType}`;
+
+  try {
+    const res = await fetch(url);
+    const result = await res.json();
+
+    if (!result.success) {
+      if (tbody) {
+        tbody.innerHTML = `<tr><td colspan="12" style="padding: 20px; text-align: center; color: #ef4444; font-weight: bold;">خطأ: ${result.error || 'فشل تحميل البيانات'}</td></tr>`;
+      }
+      return;
     }
 
-    // 5. Setup Dates
-    const startDateInput = document.getElementById(`arStartDate-${tabId}`);
-    const endDateInput = document.getElementById(`arEndDate-${tabId}`);
-    const today = new Date();
-    const currentYear = today.getFullYear();
-    const currentMonth = String(today.getMonth() + 1).padStart(2, '0');
-    
-    if (startDateInput) {
-      startDateInput.value = `${currentYear}-${currentMonth}-01`;
-    }
-    if (endDateInput) {
-      endDateInput.value = today.toISOString().substring(0, 10);
-    }
+    repSettings.data = result.data || [];
+    repSettings.filtered = [...repSettings.data];
 
-    // Toggle Date inputs disabled state based on checkbox
-    const startCheck = document.getElementById(`arStartDateCheck-${tabId}`);
-    if (startCheck && startDateInput) {
-      startCheck.addEventListener('change', () => {
-        startDateInput.disabled = !startCheck.checked;
-      });
-      startDateInput.disabled = !startCheck.checked;
-    }
-
-    const endCheck = document.getElementById(`arEndDateCheck-${tabId}`);
-    if (endCheck && endDateInput) {
-      endCheck.addEventListener('change', () => {
-        endDateInput.disabled = !endCheck.checked;
-      });
-      endDateInput.disabled = !endCheck.checked;
-    }
-
+    applyAccountReportsQuickSearch(tabId);
   } catch (err) {
-    console.error("Error initializing account reports tab:", err);
+    console.error("Error in fetchAccountReports:", err);
+    if (tbody) {
+      tbody.innerHTML = `<tr><td colspan="12" style="padding: 20px; text-align: center; color: #ef4444; font-weight: bold;">فشل الاتصال بالخادم: ${err.message}</td></tr>`;
+    }
   }
 };
 
-// ==================== Item Card (معلومات كرت الصنف) Screen Controllers ====================
+window.applyAccountReportsQuickSearch = function(tabId) {
+  const repSettings = state.accountReports[tabId];
+  if (!repSettings || !repSettings.data) return;
+
+  const search = (document.getElementById(`arSearchInput-${tabId}`)?.value || '').trim().toLowerCase();
+  if (!search) {
+    repSettings.filtered = [...repSettings.data];
+  } else {
+    repSettings.filtered = repSettings.data.filter(row => {
+      return Object.values(row).some(v => v && String(v).toLowerCase().includes(search));
+    });
+  }
+
+  renderAccountReportsTable(tabId);
+};
+
+window.renderAccountReportsTable = function(tabId) {
+  const repSettings = state.accountReports[tabId];
+  if (!repSettings) return;
+
+  const reportType = repSettings.reportType || 'balances';
+  const list = repSettings.filtered || [];
+  const thead = document.getElementById(`arThead-${tabId}`);
+  const tbody = document.getElementById(`arTbody-${tabId}`);
+  const startDate = document.getElementById(`arStartDate-${tabId}`)?.value || '';
+  const endDate = document.getElementById(`arEndDate-${tabId}`)?.value || '';
+  if (!thead || !tbody) return;
+
+  if (reportType === 'balances' || reportType === 'balances-local' || reportType === 'zero-balances') {
+    // Exact Match Columns to media_1787906640173.png
+    thead.innerHTML = `
+      <tr style="position: sticky; top: 0; z-index: 10; background: #f8fafc; border-bottom: 2px solid #cbd5e1; color: #334155; font-weight: 800;">
+        <th style="padding: 7px 8px; width: 110px; white-space: nowrap;">الفرع</th>
+        <th style="padding: 7px 6px; width: 95px; white-space: nowrap;">رقم الحساب</th>
+        <th style="padding: 7px 14px; min-width: 220px; text-align: right; white-space: nowrap;">اسم الحساب</th>
+        <th style="padding: 7px 8px; width: 90px; white-space: nowrap;">العمله</th>
+        <th style="padding: 7px 8px; width: 100px; text-align: right; white-space: nowrap;">السابقة</th>
+        <th style="padding: 7px 8px; width: 100px; text-align: right; white-space: nowrap;">مدين</th>
+        <th style="padding: 7px 8px; width: 100px; text-align: right; white-space: nowrap;">دائن</th>
+        <th style="padding: 7px 10px; width: 110px; text-align: right; white-space: nowrap;">الرصيد</th>
+        <th style="padding: 7px 10px; width: 110px; text-align: right; white-space: nowrap;">الحالية</th>
+        <th style="padding: 7px 8px; width: 95px; white-space: nowrap;">من تاريخ</th>
+        <th style="padding: 7px 8px; width: 95px; white-space: nowrap;">الى تاريخ</th>
+      </tr>
+    `;
+
+    if (!list || list.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="11" style="padding: 25px; text-align: center; color: #94a3b8; font-weight: bold;">لا توجد أرصدة حسابات مطابقة لمعايير البحث</td></tr>`;
+      updateAccountReportsSummary(tabId, 0, '');
+      return;
+    }
+
+    let sumPrev = 0;
+    let sumDebit = 0;
+    let sumCredit = 0;
+    let sumBal = 0;
+    let sumCurrent = 0;
+    let html = '';
+
+    list.forEach((row, idx) => {
+      const prev = parseFloat(row.PreviousBalance) || 0;
+      const deb = parseFloat(row.PeriodDebit) || 0;
+      const cr = parseFloat(row.PeriodCredit) || 0;
+      const bal = parseFloat(row.Balance !== undefined ? row.Balance : (deb - cr));
+      const current = parseFloat(row.CumulativeBalance !== undefined ? row.CumulativeBalance : (prev + deb - cr));
+
+      sumPrev += prev;
+      sumDebit += deb;
+      sumCredit += cr;
+      sumBal += bal;
+      sumCurrent += current;
+
+      const isNeg = bal < 0;
+
+      html += `
+        <tr style="border-bottom: 1px solid #e2e8f0; background: ${idx % 2 === 0 ? '#ffffff' : '#f8fafc'};">
+          <td style="padding: 5px 8px; font-weight: bold; color: #0284c7; white-space: nowrap;">${row.BranchName || 'الفرع الرئيسي'}</td>
+          <td style="padding: 5px 6px; font-family: monospace; font-weight: bold; color: #1e3a8a; white-space: nowrap;">${row.fldNumber}</td>
+          <td style="padding: 5px 14px; text-align: right; font-weight: bold; color: #1e293b; white-space: nowrap;">${row.fldName}</td>
+          <td style="padding: 5px 8px; font-family: monospace; white-space: nowrap;">${row.CurrencyName || 'ريال سعودي'}</td>
+          <td style="padding: 5px 8px; text-align: right; font-family: monospace; white-space: nowrap;">${prev.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+          <td style="padding: 5px 8px; text-align: right; font-family: monospace; color: #059669; font-weight: bold; white-space: nowrap;">${deb > 0 ? deb.toLocaleString('en-US', {minimumFractionDigits:2}) : '0.00'}</td>
+          <td style="padding: 5px 8px; text-align: right; font-family: monospace; color: #dc2626; font-weight: bold; white-space: nowrap;">${cr > 0 ? cr.toLocaleString('en-US', {minimumFractionDigits:2}) : '0.00'}</td>
+          <td style="padding: 5px 10px; text-align: right; font-family: monospace; font-weight: bold; color: ${isNeg ? '#dc2626' : '#059669'}; white-space: nowrap;">${bal < 0 ? `-${Math.abs(bal).toLocaleString('en-US', {minimumFractionDigits:2})}` : bal.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+          <td style="padding: 5px 10px; text-align: right; font-weight: 900; font-family: monospace; color: #0f766e; white-space: nowrap;">${current.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+          <td style="padding: 5px 8px; font-family: monospace; font-size: 0.76rem; color: #64748b; white-space: nowrap;">${startDate || '-'}</td>
+          <td style="padding: 5px 8px; font-family: monospace; font-size: 0.76rem; color: #64748b; white-space: nowrap;">${endDate || '-'}</td>
+        </tr>
+      `;
+    });
+
+    tbody.innerHTML = html;
+    updateAccountReportsSummary(tabId, list.length, `إجمالي السابقة: <span style="color: #475569; margin: 0 4px;">${sumPrev.toLocaleString('en-US', {minimumFractionDigits:2})}</span> | إجمالي مدين: <span style="color: #059669; margin: 0 4px;">${sumDebit.toLocaleString('en-US', {minimumFractionDigits:2})}</span> | إجمالي دائن: <span style="color: #dc2626; margin: 0 4px;">${sumCredit.toLocaleString('en-US', {minimumFractionDigits:2})}</span> | صافي الرصيد: <span style="color: #0f766e; margin: 0 4px; font-size: 0.95rem;">${sumCurrent.toLocaleString('en-US', {minimumFractionDigits:2})}</span>`);
+
+  } else if (reportType === 'journal-entries' || reportType === 'currency-diffs') {
+    thead.innerHTML = `
+      <tr style="position: sticky; top: 0; z-index: 10; background: #f8fafc; border-bottom: 2px solid #cbd5e1; color: #334155; font-weight: 800;">
+        <th style="padding: 7px 6px; width: 75px; white-space: nowrap;">رقم القيد</th>
+        <th style="padding: 7px 6px; width: 95px; white-space: nowrap;">التاريخ</th>
+        <th style="padding: 7px 6px; width: 110px; white-space: nowrap;">نوع الحركة</th>
+        <th style="padding: 7px 6px; width: 95px; white-space: nowrap;">رقم الحساب</th>
+        <th style="padding: 7px 12px; min-width: 200px; text-align: right; white-space: nowrap;">اسم الحساب</th>
+        <th style="padding: 7px 12px; min-width: 220px; text-align: right; white-space: nowrap;">البيان</th>
+        <th style="padding: 7px 8px; width: 100px; text-align: right; white-space: nowrap;">مدين</th>
+        <th style="padding: 7px 8px; width: 100px; text-align: right; white-space: nowrap;">دائن</th>
+        <th style="padding: 7px 8px; width: 85px; white-space: nowrap;">العملة</th>
+      </tr>
+    `;
+
+    if (!list || list.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="9" style="padding: 25px; text-align: center; color: #94a3b8; font-weight: bold;">لا توجد قيود يومية مطابقة</td></tr>`;
+      updateAccountReportsSummary(tabId, 0, '');
+      return;
+    }
+
+    let sumDebit = 0;
+    let sumCredit = 0;
+    let html = '';
+
+    list.forEach((row, idx) => {
+      const deb = parseFloat(row.Debit || row.DebitLocal || 0);
+      const cr = parseFloat(row.Credit || row.CreditLocal || 0);
+      const dateVal = row.TransDate ? String(row.TransDate).split('T')[0] : '';
+
+      sumDebit += deb;
+      sumCredit += cr;
+
+      html += `
+        <tr style="border-bottom: 1px solid #e2e8f0; background: ${idx % 2 === 0 ? '#ffffff' : '#f8fafc'};">
+          <td style="padding: 5px 6px; font-family: monospace; font-weight: bold; color: #1e3a8a;">${row.TransNo || row.TransID}</td>
+          <td style="padding: 5px 6px; font-family: monospace;">${dateVal}</td>
+          <td style="padding: 5px 6px; font-weight: bold; color: #0284c7;">${row.TransTypeName || 'قيد محاسبي'}</td>
+          <td style="padding: 5px 6px; font-family: monospace; font-weight: bold;">${row.AccountNumber || ''}</td>
+          <td style="padding: 5px 12px; text-align: right; font-weight: bold; color: #1e293b;">${row.AccountName || ''}</td>
+          <td style="padding: 5px 12px; text-align: right; font-size: 0.78rem; color: #475569;">${row.Note || '-'}</td>
+          <td style="padding: 5px 8px; text-align: right; font-family: monospace; color: #059669; font-weight: bold;">${deb > 0 ? deb.toLocaleString('en-US', {minimumFractionDigits:2}) : '-'}</td>
+          <td style="padding: 5px 8px; text-align: right; font-family: monospace; color: #dc2626; font-weight: bold;">${cr > 0 ? cr.toLocaleString('en-US', {minimumFractionDigits:2}) : '-'}</td>
+          <td style="padding: 5px 8px; font-family: monospace;">${row.CurrencySymbol || 'ر.س'}</td>
+        </tr>
+      `;
+    });
+
+    tbody.innerHTML = html;
+    updateAccountReportsSummary(tabId, list.length, `إجمالي مدين: <span style="color: #059669; margin: 0 4px;">${sumDebit.toLocaleString('en-US', {minimumFractionDigits:2})}</span> | إجمالي دائن: <span style="color: #dc2626; margin: 0 4px;">${sumCredit.toLocaleString('en-US', {minimumFractionDigits:2})}</span> | الفارق: <span style="color: #0f766e; margin: 0 4px;">${(sumDebit - sumCredit).toLocaleString('en-US', {minimumFractionDigits:2})}</span>`);
+
+  } else {
+    // Debit / Credit / Opening Balances / Final Reports
+    thead.innerHTML = `
+      <tr style="position: sticky; top: 0; z-index: 10; background: #f8fafc; border-bottom: 2px solid #cbd5e1; color: #334155; font-weight: 800;">
+        <th style="padding: 7px 6px; width: 95px; white-space: nowrap;">رقم الحساب</th>
+        <th style="padding: 7px 14px; min-width: 220px; text-align: right; white-space: nowrap;">اسم الحساب</th>
+        <th style="padding: 7px 8px; width: 90px; white-space: nowrap;">العمله</th>
+        <th style="padding: 7px 8px; width: 110px; text-align: right; white-space: nowrap;">إجمالي مدين</th>
+        <th style="padding: 7px 8px; width: 110px; text-align: right; white-space: nowrap;">إجمالي دائن</th>
+        <th style="padding: 7px 10px; width: 120px; text-align: right; white-space: nowrap;">الرصيد</th>
+        <th style="padding: 7px 8px; width: 95px; white-space: nowrap;">من تاريخ</th>
+        <th style="padding: 7px 8px; width: 95px; white-space: nowrap;">الى تاريخ</th>
+      </tr>
+    `;
+
+    if (!list || list.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="8" style="padding: 25px; text-align: center; color: #94a3b8; font-weight: bold;">لا توجد بيانات مطابقة</td></tr>`;
+      updateAccountReportsSummary(tabId, 0, '');
+      return;
+    }
+
+    let sumDebit = 0;
+    let sumCredit = 0;
+    let sumBal = 0;
+    let html = '';
+
+    list.forEach((row, idx) => {
+      const deb = parseFloat(row.TotalDebit || row.PeriodDebit || 0);
+      const cr = parseFloat(row.TotalCredit || row.PeriodCredit || 0);
+      const bal = parseFloat(row.Balance !== undefined ? row.Balance : (deb - cr));
+
+      sumDebit += deb;
+      sumCredit += cr;
+      sumBal += bal;
+
+      html += `
+        <tr style="border-bottom: 1px solid #e2e8f0; background: ${idx % 2 === 0 ? '#ffffff' : '#f8fafc'};">
+          <td style="padding: 5px 6px; font-family: monospace; font-weight: bold; color: #1e3a8a;">${row.fldNumber}</td>
+          <td style="padding: 5px 14px; text-align: right; font-weight: bold; color: #1e293b;">${row.fldName}</td>
+          <td style="padding: 5px 8px; font-family: monospace;">${row.CurrencyName || 'ريال سعودي'}</td>
+          <td style="padding: 5px 8px; text-align: right; font-family: monospace; color: #059669; font-weight: bold;">${deb.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+          <td style="padding: 5px 8px; text-align: right; font-family: monospace; color: #dc2626; font-weight: bold;">${cr.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+          <td style="padding: 5px 10px; text-align: right; font-weight: 900; font-family: monospace; color: ${bal >= 0 ? '#059669' : '#dc2626'};">${bal.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+          <td style="padding: 5px 8px; font-family: monospace; font-size: 0.76rem; color: #64748b;">${startDate || '-'}</td>
+          <td style="padding: 5px 8px; font-family: monospace; font-size: 0.76rem; color: #64748b;">${endDate || '-'}</td>
+        </tr>
+      `;
+    });
+
+    tbody.innerHTML = html;
+    updateAccountReportsSummary(tabId, list.length, `إجمالي مدين: <span style="color: #059669; margin: 0 4px;">${sumDebit.toLocaleString('en-US', {minimumFractionDigits:2})}</span> | إجمالي دائن: <span style="color: #dc2626; margin: 0 4px;">${sumCredit.toLocaleString('en-US', {minimumFractionDigits:2})}</span> | صافي الرصيد: <span style="color: #0f766e; margin: 0 4px; font-size: 0.95rem;">${sumBal.toLocaleString('en-US', {minimumFractionDigits:2})}</span>`);
+  }
+};
+
+function updateAccountReportsSummary(tabId, count, totalsHtml) {
+  const countEl = document.getElementById(`arCount-${tabId}`);
+  const totalsEl = document.getElementById(`arTotals-${tabId}`);
+  if (countEl) countEl.innerHTML = `عدد السجلات: <span style="color: #0284c7; font-size: 0.9rem;">${count}</span>`;
+  if (totalsEl) totalsEl.innerHTML = totalsHtml || '';
+}
+
+// PRINT & EXCEL EXPORT FOR ACCOUNTS REPORTS
+window.generateAccountReportsPrintHtml = function(tabId) {
+  const repSettings = state.accountReports[tabId] || { reportType: 'balances' };
+  const reportType = repSettings.reportType || 'balances';
+  const meta = ACCOUNT_REPORT_META[reportType] || ACCOUNT_REPORT_META.balances;
+
+  const branchEl = document.getElementById(`arBranch-${tabId}`);
+  const branchName = branchEl ? branchEl.options[branchEl.selectedIndex]?.text : 'الفرع الرئيسي';
+  const startDate = document.getElementById(`arStartDate-${tabId}`)?.value || '';
+  const endDate = document.getElementById(`arEndDate-${tabId}`)?.value || '';
+
+  const theadHtml = document.getElementById(`arThead-${tabId}`)?.innerHTML || '';
+  const tbodyHtml = document.getElementById(`arTbody-${tabId}`)?.innerHTML || '';
+  const summaryHtml = document.getElementById(`arTotals-${tabId}`)?.innerHTML || '';
+
+  const savedHeaderImage = localStorage.getItem('reportHeaderImage') || '/api/settings/logo';
+
+  return `
+    <!DOCTYPE html>
+    <html dir="rtl" lang="ar">
+    <head>
+      <meta charset="UTF-8">
+      <title>${meta.title} - ${branchName}</title>
+      <style>
+        @page { size: A4 landscape; margin: 8mm; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 10px; margin: 0; padding: 0; color: #1e293b; direction: rtl; }
+        .print-header-img { width: 100%; max-height: 85px; object-fit: contain; margin-bottom: 6px; display: block; }
+        .report-header-box { border-bottom: 2px solid #0284c7; padding-bottom: 6px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+        .report-title { font-size: 17px; font-weight: 900; color: #1e3a8a; }
+        .report-meta { font-size: 10.5px; color: #475569; }
+        table { width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 9.5px; }
+        th { background: #f1f5f9; color: #1e293b; border: 1px solid #94a3b8; padding: 4px; text-align: center; font-weight: bold; }
+        td { border: 1px solid #cbd5e1; padding: 4px 6px; text-align: center; }
+        tr:nth-child(even) { background-color: #f8fafc; }
+        .summary-box { margin-top: 8px; padding: 6px 10px; background: #f8fafc; border: 1px solid #cbd5e1; font-weight: bold; font-size: 11px; display: flex; justify-content: space-between; }
+        .footer-signatures { margin-top: 18px; display: flex; justify-content: space-between; font-weight: bold; font-size: 10.5px; }
+      </style>
+    </head>
+    <body>
+      <img src="${savedHeaderImage}" class="print-header-img" onerror="this.style.display='none'">
+      <div class="report-header-box">
+        <div>
+          <span class="report-title">${meta.title}</span>
+          <span style="margin-right: 12px; font-size: 12px; color: #0284c7; font-weight: bold;">[ ${branchName} ]</span>
+        </div>
+        <div class="report-meta">
+          <span>الفترة: من ${startDate || 'البداية'} إلى ${endDate || 'اليوم'}</span> |
+          <span>تاريخ الطباعة: ${new Date().toLocaleDateString('ar-EG')}</span>
+        </div>
+      </div>
+
+      <table>
+        <thead>${theadHtml}</thead>
+        <tbody>${tbodyHtml}</tbody>
+      </table>
+
+      <div class="summary-box">${summaryHtml}</div>
+
+      <div class="footer-signatures">
+        <div>المحاسب المسؤول: ..........................</div>
+        <div>المراجعة والتدقيق: ..........................</div>
+        <div>المدير المالي: ..........................</div>
+        <div>اعتماد الإدارة: ..........................</div>
+      </div>
+    </body>
+    </html>
+  `;
+};
+
+window.printAccountReports = function(tabId) {
+  const html = generateAccountReportsPrintHtml(tabId);
+  const printWindow = window.open('', '_blank');
+  if (!printWindow) {
+    alert("يرجى السماح بالنوافذ المنبثقة للطباعة");
+    return;
+  }
+  printWindow.document.open();
+  printWindow.document.write(html);
+  printWindow.document.close();
+  setTimeout(() => {
+    printWindow.focus();
+    printWindow.print();
+  }, 400);
+};
+
+window.exportAccountReportsExcel = function(tabId) {
+  const repSettings = state.accountReports[tabId] || { reportType: 'balances' };
+  const reportType = repSettings.reportType || 'balances';
+  const meta = ACCOUNT_REPORT_META[reportType] || ACCOUNT_REPORT_META.balances;
+  const list = repSettings.filtered || [];
+
+  if (!list || list.length === 0) {
+    showNotification("لا توجد بيانات لتصديرها", "warning");
+    return;
+  }
+
+  let tableHtml = document.getElementById(`arTable-${tabId}`)?.outerHTML || '';
+  const uri = 'data:application/vnd.ms-excel;base64,';
+  const template = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="UTF-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>' + meta.title + '</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head><body dir="rtl">' + tableHtml + '</body></html>';
+  const base64 = function(s) { return window.btoa(unescape(encodeURIComponent(s))); };
+
+  const a = document.createElement('a');
+  a.href = uri + base64(template);
+  a.download = `${meta.title}_${new Date().toISOString().split('T')[0]}.xls`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  showNotification("تم تصدير ملف الإكسل بنجاح", "success");
+};
+
+// WHATSAPP PDF FOR ACCOUNTS REPORTS
+window.openAccountReportsWhatsAppModal = function(tabId) {
+  const modalEl = document.getElementById(`arWhatsAppModal-${tabId}`);
+  if (!modalEl) return;
+  const modal = new bootstrap.Modal(modalEl);
+  modal.show();
+};
+
+window.executeSendAccountReportsWhatsApp = async function(tabId) {
+  const repSettings = state.accountReports[tabId] || { reportType: 'balances' };
+  const reportType = repSettings.reportType || 'balances';
+  const meta = ACCOUNT_REPORT_META[reportType] || ACCOUNT_REPORT_META.balances;
+
+  const phone = document.getElementById(`arWaPhone-${tabId}`)?.value || '';
+  const caption = document.getElementById(`arWaCaption-${tabId}`)?.value || '';
+
+  if (!phone || !phone.trim()) {
+    showNotification("يرجى إدخال رقم هاتف المستلم", "error");
+    return;
+  }
+
+  const html = generateAccountReportsPrintHtml(tabId);
+  const modalEl = document.getElementById(`arWhatsAppModal-${tabId}`);
+  const bsModal = bootstrap.Modal.getInstance(modalEl);
+
+  showNotification("جاري توليد ملف PDF وإرساله عبر الواتساب...", "info");
+
+  try {
+    const res = await fetch('/api/accounts-reports/send-whatsapp-pdf', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        html,
+        phone: phone.trim(),
+        title: meta.title,
+        caption: caption || `مرفق لكم: ${meta.title} من نظام مستكشف الحسابات`,
+        landscape: true
+      })
+    });
+
+    const json = await res.json();
+    if (json.success) {
+      if (bsModal) bsModal.hide();
+      showNotification(json.message || "تم إرسال التقرير بنجاح عبر الواتساب", "success");
+    } else {
+      showNotification("فشل الإرسال: " + (json.error || 'خطأ غير معروف'), "error");
+    }
+  } catch (err) {
+    console.error("Error sending accounts report WhatsApp:", err);
+    showNotification("فشل إرسال ملف PDF: " + err.message, "error");
+  }
+};
+
 window.initItemCardTab = async function(tabId) {
+
   try {
     // 1. Load branches list into branch selector dropdown
     const branchSelect = document.getElementById(`itemCardBranch-${tabId}`);

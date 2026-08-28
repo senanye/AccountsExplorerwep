@@ -898,6 +898,8 @@ async function openTab(tabId, tabTitle, iconClass, colorClass, bypassPermission 
     initStoreTransferTab(tabId);
   } else if (tabTitle === "استعلام التحويلات" || tabTitle === "استعلام التحويلات المخزنية" || tabId.includes("transfer-explorer")) {
     initTransferExplorerTab(tabId);
+  } else if (tabTitle === "تقارير المبيعات" || tabId === "menu-39" || tabId === "sales-reports-tab" || tabTitle.includes("تقارير المبيعات")) {
+    initSalesReportsTab(tabId);
   } else if (tabTitle === "تقارير الخدمات" || tabId === "menu-43" || tabId === "service-reports-tab" || tabTitle.includes("تقارير الخدمات")) {
     initServiceReportsTab(tabId);
   } else if (tabTitle === "قائمة المحلات" || tabId === "menu-42" || tabTitle.includes("المحلات") || tabTitle.includes("قائمة المحلات")) {
@@ -1004,6 +1006,7 @@ function getScreenContent(tabId, tabTitle, iconClass, colorClass) {
   const isItemsExplorer = tabTitle === "الاصناف" || tabTitle === "الأصناف" || tabId === "menu-1076" || tabTitle === "مستكشف الاصناف" || tabTitle === "مستكشف الأصناف" || tabId === "menu-202" || tabId === "menu-501" || tabTitle.includes("السلع والمنتجات") || tabTitle.includes("اصناف") || tabTitle.includes("أصناف");
   const isPurchasesExplorer = tabTitle === "عرض مشتريات" || tabTitle === "المشتريات" || tabId === "menu-20";
   const isPurchasesInvoice = tabTitle === "مشتريات" || tabTitle === "فاتورة المشتريات" || tabId.includes("menu-20-invoice") || tabId.includes("purchase-inv") || (tabTitle.includes("مشتريات") && !tabTitle.includes("عرض") && !tabTitle.includes("تقارير"));
+  const isSalesReports = tabTitle === "تقارير المبيعات" || tabId === "menu-39" || tabId === "sales-reports-tab" || tabTitle.includes("تقارير المبيعات");
   const isServiceReports = tabTitle === "تقارير الخدمات" || tabId === "menu-43" || tabId === "service-reports-tab" || tabTitle.includes("تقارير الخدمات");
   const isShopsList = (tabTitle === "قائمة المحلات" || tabId === "menu-42" || tabTitle.includes("المحلات") || tabTitle.includes("قائمة المحلات")) && !isServiceReports;
   const isSalesReturnExplorer = tabTitle === "مردود المبيعات" || tabTitle === "مردود مبيعات" || tabTitle === "استعلام مردود المبيعات" || tabId === "menu-31" || tabId === "sales-return-explorer" || tabId === "menu-31-explorer";
@@ -1017,7 +1020,287 @@ function getScreenContent(tabId, tabTitle, iconClass, colorClass) {
 
   let bodyHtml = '';
 
-  if (isServiceReports) {
+  if (isSalesReports) {
+    bodyHtml = `
+      <div class="sales-reports-screen" style="direction: rtl; text-align: right; font-family: var(--font-arabic); display: flex; flex-direction: column; gap: 4px; height: 100%; padding: 4px 6px;">
+        
+        <!-- Top Reports Switcher Ribbon (14 Reports matching media_1787896292492.png) -->
+        <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 4px 8px; display: flex; justify-content: space-between; align-items: center; gap: 6px; flex-wrap: wrap; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+          
+          <!-- 14 Report Selector Buttons -->
+          <div style="display: flex; align-items: center; gap: 3px; flex-wrap: wrap; overflow-x: auto; max-width: calc(100% - 240px); padding-bottom: 2px;">
+            
+            <button type="button" id="btnSalesRep-movement-${tabId}" class="sales-rep-btn active" onclick="switchSalesReport('${tabId}', 'movement')" style="height: 38px; padding: 0 8px; background: #e0f2fe; border: 1.5px solid #0284c7; border-radius: 5px; font-weight: 800; font-size: 0.76rem; color: #0369a1; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; white-space: nowrap;">
+              <i class="fa-solid fa-cart-shopping" style="font-size: 0.9rem;"></i>
+              <span>حركة المبيعات</span>
+            </button>
+
+            <button type="button" id="btnSalesRep-sales_returns-${tabId}" class="sales-rep-btn" onclick="switchSalesReport('${tabId}', 'sales_returns')" style="height: 38px; padding: 0 8px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 5px; font-weight: 700; font-size: 0.76rem; color: #475569; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; white-space: nowrap;">
+              <i class="fa-solid fa-rotate" style="color: #10b981; font-size: 0.9rem;"></i>
+              <span>المبيعات ومرتجعاتها</span>
+            </button>
+
+            <button type="button" id="btnSalesRep-daily_sales-${tabId}" class="sales-rep-btn" onclick="switchSalesReport('${tabId}', 'daily_sales')" style="height: 38px; padding: 0 8px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 5px; font-weight: 700; font-size: 0.76rem; color: #475569; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; white-space: nowrap;">
+              <i class="fa-solid fa-tag" style="color: #f59e0b; font-size: 0.9rem;"></i>
+              <span>مبيعات اليومية</span>
+            </button>
+
+            <button type="button" id="btnSalesRep-returns-${tabId}" class="sales-rep-btn" onclick="switchSalesReport('${tabId}', 'returns')" style="height: 38px; padding: 0 8px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 5px; font-weight: 700; font-size: 0.76rem; color: #475569; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; white-space: nowrap;">
+              <i class="fa-solid fa-arrow-rotate-left" style="color: #ef4444; font-size: 0.9rem;"></i>
+              <span>مردودات مبيعات</span>
+            </button>
+
+            <button type="button" id="btnSalesRep-below_cost-${tabId}" class="sales-rep-btn" onclick="switchSalesReport('${tabId}', 'below_cost')" style="height: 38px; padding: 0 8px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 5px; font-weight: 700; font-size: 0.76rem; color: #475569; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; white-space: nowrap;">
+              <i class="fa-solid fa-chart-line-down" style="color: #dc2626; font-size: 0.9rem;"></i>
+              <span>بأقل من الكلفة</span>
+            </button>
+
+            <button type="button" id="btnSalesRep-free_sales-${tabId}" class="sales-rep-btn" onclick="switchSalesReport('${tabId}', 'free_sales')" style="height: 38px; padding: 0 8px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 5px; font-weight: 700; font-size: 0.76rem; color: #475569; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; white-space: nowrap;">
+              <i class="fa-solid fa-gift" style="color: #ec4899; font-size: 0.9rem;"></i>
+              <span>المبيعات المجانية</span>
+            </button>
+
+            <button type="button" id="btnSalesRep-detailed_movement-${tabId}" class="sales-rep-btn" onclick="switchSalesReport('${tabId}', 'detailed_movement')" style="height: 38px; padding: 0 8px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 5px; font-weight: 700; font-size: 0.76rem; color: #475569; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; white-space: nowrap;">
+              <i class="fa-solid fa-chart-pie" style="color: #6366f1; font-size: 0.9rem;"></i>
+              <span>حركة تفصيلية</span>
+            </button>
+
+            <button type="button" id="btnSalesRep-movement_summary-${tabId}" class="sales-rep-btn" onclick="switchSalesReport('${tabId}', 'movement_summary')" style="height: 38px; padding: 0 8px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 5px; font-weight: 700; font-size: 0.76rem; color: #475569; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; white-space: nowrap;">
+              <i class="fa-solid fa-boxes-stacked" style="color: #8b5cf6; font-size: 0.9rem;"></i>
+              <span>حركة إجمالية</span>
+            </button>
+
+            <button type="button" id="btnSalesRep-by_account-${tabId}" class="sales-rep-btn" onclick="switchSalesReport('${tabId}', 'by_account')" style="height: 38px; padding: 0 8px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 5px; font-weight: 700; font-size: 0.76rem; color: #475569; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; white-space: nowrap;">
+              <i class="fa-solid fa-user-tag" style="color: #0284c7; font-size: 0.9rem;"></i>
+              <span>مبيعات لحساب</span>
+            </button>
+
+            <button type="button" id="btnSalesRep-credit_sales-${tabId}" class="sales-rep-btn" onclick="switchSalesReport('${tabId}', 'credit_sales')" style="height: 38px; padding: 0 8px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 5px; font-weight: 700; font-size: 0.76rem; color: #475569; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; white-space: nowrap;">
+              <i class="fa-solid fa-users" style="color: #d97706; font-size: 0.9rem;"></i>
+              <span>مبيعات آجلة لعميل</span>
+            </button>
+
+            <button type="button" id="btnSalesRep-profit_by_invoice-${tabId}" class="sales-rep-btn" onclick="switchSalesReport('${tabId}', 'profit_by_invoice')" style="height: 38px; padding: 0 8px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 5px; font-weight: 700; font-size: 0.76rem; color: #475569; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; white-space: nowrap;">
+              <i class="fa-solid fa-chart-simple" style="color: #059669; font-size: 0.9rem;"></i>
+              <span>أرباح الفاتورة</span>
+            </button>
+
+            <button type="button" id="btnSalesRep-profit_by_item-${tabId}" class="sales-rep-btn" onclick="switchSalesReport('${tabId}', 'profit_by_item')" style="height: 38px; padding: 0 8px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 5px; font-weight: 700; font-size: 0.76rem; color: #475569; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; white-space: nowrap;">
+              <i class="fa-solid fa-briefcase" style="color: #b45309; font-size: 0.9rem;"></i>
+              <span>مجمل أرباح الأصناف</span>
+            </button>
+
+            <button type="button" id="btnSalesRep-daily_summary-${tabId}" class="sales-rep-btn" onclick="switchSalesReport('${tabId}', 'daily_summary')" style="height: 38px; padding: 0 8px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 5px; font-weight: 700; font-size: 0.76rem; color: #475569; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; white-space: nowrap;">
+              <i class="fa-solid fa-file-invoice" style="color: #4338ca; font-size: 0.9rem;"></i>
+              <span>إجمالي اليومية</span>
+            </button>
+
+            <button type="button" id="btnSalesRep-inventory_selling_value-${tabId}" class="sales-rep-btn" onclick="switchSalesReport('${tabId}', 'inventory_selling_value')" style="height: 38px; padding: 0 8px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 5px; font-weight: 700; font-size: 0.76rem; color: #475569; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; white-space: nowrap;">
+              <i class="fa-solid fa-cube" style="color: #0d9488; font-size: 0.9rem;"></i>
+              <span>المخزون بسعر البيع</span>
+            </button>
+          </div>
+
+          <!-- Actions: Print, XLS, WhatsApp -->
+          <div style="display: flex; align-items: center; gap: 4px;">
+            <button type="button" onclick="printCurrentSalesReport('${tabId}')" class="btn btn-secondary btn-sm" style="height: 32px; padding: 0 8px; font-weight: 800; font-size: 0.78rem; display: flex; align-items: center; gap: 4px;" title="طباعة التقرير">
+              <i class="fa-solid fa-print"></i>
+              <span>طباعة</span>
+            </button>
+
+            <button type="button" onclick="exportSalesReportExcel('${tabId}')" class="btn btn-secondary btn-sm" style="height: 32px; padding: 0 8px; font-weight: 800; font-size: 0.78rem; display: flex; align-items: center; gap: 4px; color: #047857;" title="تصدير إلى إكسل">
+              <i class="fa-solid fa-file-excel"></i>
+              <span>تصدير XLS</span>
+            </button>
+
+            <button type="button" onclick="openSalesReportWhatsAppModal('${tabId}')" class="btn btn-sm" style="height: 32px; padding: 0 8px; font-weight: 800; font-size: 0.78rem; background: #25D366; color: #ffffff; border: 1px solid #16a34a; border-radius: 4px; display: flex; align-items: center; gap: 4px;" title="إرسال التقرير عبر الواتساب">
+              <i class="fa-brands fa-whatsapp" style="font-size: 0.95rem;"></i>
+              <span>إرسال PDF</span>
+            </button>
+          </div>
+
+        </div>
+
+        <!-- Centered Dynamic Title Header matching media_1787896292492.png -->
+        <div style="text-align: center; margin: 2px 0;">
+          <h3 id="salesReportTitle-${tabId}" style="margin: 0; font-size: 1.15rem; font-weight: 900; color: #0f172a; letter-spacing: -0.2px;">حركة المبيعات</h3>
+        </div>
+
+        <!-- 3-Row Filter Bar (Matching media_1787896292492.png) -->
+        <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 4px 8px; display: flex; flex-direction: column; gap: 4px; font-size: 0.82rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+          
+          <!-- Row 1: الفرع | المجموعة | من تاريخ | العمله | طريقة الدفع -->
+          <div style="display: grid; grid-template-columns: 1.2fr 1.1fr 1.1fr 1.1fr 1.1fr; gap: 6px; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <label style="min-width: 45px; font-weight: 800; color: #334155;">الفرع:</label>
+              <select id="salesRepBranch-${tabId}" class="form-select form-select-sm" style="font-size: 0.8rem; font-weight: 700;">
+                <option value="0">الفرع الرئيسي</option>
+              </select>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <label style="min-width: 55px; font-weight: 800; color: #334155;">المجموعة:</label>
+              <select id="salesRepCatg-${tabId}" class="form-select form-select-sm" style="font-size: 0.8rem;">
+                <option value="0">كافة المجموعات</option>
+              </select>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <label style="min-width: 55px; font-weight: 800; color: #334155;">من تاريخ:</label>
+              <input type="date" id="salesRepFromDate-${tabId}" class="form-control form-control-sm" style="font-size: 0.8rem; font-family: monospace;">
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <label style="min-width: 45px; font-weight: 800; color: #334155;">العملة:</label>
+              <select id="salesRepCurrency-${tabId}" class="form-select form-select-sm" style="font-size: 0.8rem;">
+                <option value="0">الكل</option>
+              </select>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <label style="min-width: 65px; font-weight: 800; color: #334155;">طريقة الدفع:</label>
+              <select id="salesRepPaymentType-${tabId}" class="form-select form-select-sm" style="font-size: 0.8rem;">
+                <option value="0">الكل</option>
+                <option value="1">نقد</option>
+                <option value="2">آجل</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Row 2: المستودع | نوع التقرير | الى تاريخ | العمله | الحساب -->
+          <div style="display: grid; grid-template-columns: 1.2fr 1.1fr 1.1fr 1.1fr 1.1fr; gap: 6px; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <label style="min-width: 45px; font-weight: 800; color: #334155;">المستودع:</label>
+              <select id="salesRepStore-${tabId}" class="form-select form-select-sm" style="font-size: 0.8rem;">
+                <option value="0">كافة المستودعات</option>
+              </select>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <label style="min-width: 55px; font-weight: 800; color: #334155;">نوع التقرير:</label>
+              <select id="salesRepReportType-${tabId}" class="form-select form-select-sm" style="font-size: 0.8rem;">
+                <option value="detailed">تفصيلي</option>
+                <option value="summary">إجمالي</option>
+              </select>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <label style="min-width: 55px; font-weight: 800; color: #334155;">إلى تاريخ:</label>
+              <input type="date" id="salesRepToDate-${tabId}" class="form-control form-control-sm" style="font-size: 0.8rem; font-family: monospace;">
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <label style="min-width: 45px; font-weight: 800; color: #334155;">العملة:</label>
+              <select id="salesRepCurrency2-${tabId}" class="form-select form-select-sm" style="font-size: 0.8rem;">
+                <option value="0">الكل</option>
+              </select>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <label style="min-width: 65px; font-weight: 800; color: #334155;">الحساب/العميل:</label>
+              <select id="salesRepAccount-${tabId}" class="form-select form-select-sm" style="font-size: 0.8rem;">
+                <option value="0">[ الكل ]</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Row 3: المندوب | بحث سريع | زر التحديث -->
+          <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+            <div style="display: flex; align-items: center; gap: 6px; flex: 1; max-width: 320px;">
+              <label style="min-width: 45px; font-weight: 800; color: #334155;">المندوب:</label>
+              <select id="salesRepSalesperson-${tabId}" class="form-select form-select-sm" style="font-size: 0.8rem;">
+                <option value="0">[ تحديد المندوب ]</option>
+              </select>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 6px; flex: 1.5;">
+              <div class="input-group input-group-sm" style="direction: ltr;">
+                <input type="text" id="salesRepSearch-${tabId}" class="form-control form-control-sm" placeholder="بحث سريع في التقرير (اسم الصنف، الكود، العميل، رقم الفاتورة)..." style="direction: rtl; font-size: 0.8rem;">
+                <button class="btn btn-outline-secondary" type="button" onclick="document.getElementById('salesRepSearch-${tabId}').value=''; applySalesReportQuickSearch('${tabId}');" title="مسح البحث">
+                  <i class="fa-solid fa-xmark"></i>
+                </button>
+              </div>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <button type="button" onclick="loadActiveSalesReport('${tabId}')" class="btn btn-primary btn-sm" style="height: 30px; padding: 0 14px; font-weight: 800; font-size: 0.8rem; display: flex; align-items: center; gap: 5px;">
+                <i class="fa-solid fa-arrows-rotate"></i>
+                <span>تحديث التقرير</span>
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Table Grid Container with Grouping Banner matching media_1787896292492.png -->
+        <div style="flex: 1; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+          
+          <!-- Grouping Bar Header -->
+          <div style="background: #f1f5f9; padding: 3px 8px; border-bottom: 1px solid #cbd5e1; font-size: 0.72rem; color: #64748b; font-style: italic; display: flex; align-items: center; gap: 6px;">
+            <i class="fa-solid fa-table-columns" style="color: #94a3b8;"></i>
+            <span>Drag a column header here to group by that column</span>
+          </div>
+
+          <!-- Table with horizontal/vertical scrolling -->
+          <div style="flex: 1; overflow: auto; max-height: calc(100vh - 275px);">
+            <table id="salesReportTable-${tabId}" class="table table-hover table-bordered" style="width: 100%; min-width: 1350px; margin-bottom: 0; font-size: 0.8rem; border-collapse: collapse; text-align: center;">
+              <thead id="salesReportThead-${tabId}" style="position: sticky; top: 0; z-index: 5; background: #f8fafc; border-bottom: 2px solid #cbd5e1;"></thead>
+              <tbody id="salesReportTbody-${tabId}"></tbody>
+            </table>
+          </div>
+
+          <!-- Footer Summary Bar -->
+          <div id="salesReportFooter-${tabId}" style="background: #f8fafc; border-top: 1.5px solid #cbd5e1; padding: 4px 10px; display: flex; justify-content: space-between; align-items: center; font-weight: 800; font-size: 0.8rem; color: #1e293b;">
+            <div id="salesReportCount-${tabId}">عدد السجلات: 0</div>
+            <div id="salesReportTotals-${tabId}"></div>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Sales Report WhatsApp Modal -->
+      <div class="modal fade" id="salesReportWhatsAppModal-${tabId}" tabindex="-1" aria-hidden="true" style="direction: rtl;">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content" style="border-radius: 8px; border: 1.5px solid #25D366;">
+            <div class="modal-header" style="background: #25D366; color: #ffffff; padding: 8px 14px;">
+              <h5 class="modal-title" style="font-weight: 900; font-size: 1rem; display: flex; align-items: center; gap: 8px;">
+                <i class="fa-brands fa-whatsapp" style="font-size: 1.3rem;"></i>
+                <span>إرسال تقرير المبيعات (ملف PDF) عبر الواتساب</span>
+              </h5>
+              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" style="padding: 14px;">
+              <div style="margin-bottom: 12px;">
+                <label style="font-weight: 800; color: #1e293b; margin-bottom: 4px; display: block;">رقم هاتف المستلم (مع مفتاح الدولة أو بدونه):</label>
+                <div class="input-group">
+                  <span class="input-group-text" style="background: #f1f5f9;"><i class="fa-solid fa-phone"></i></span>
+                  <input type="text" id="salesRepWaPhone-${tabId}" class="form-control" placeholder="مثال: 777123456 أو 967777123456" style="font-family: monospace; font-weight: bold; font-size: 0.95rem;">
+                </div>
+              </div>
+
+              <div style="margin-bottom: 12px;">
+                <label style="font-weight: 800; color: #1e293b; margin-bottom: 4px; display: block;">نص الرسالة المرفقة مع الملف:</label>
+                <textarea id="salesRepWaCaption-${tabId}" class="form-control" rows="2" style="font-size: 0.85rem;" placeholder="مرفق لكم تقرير المبيعات المعتمد بصيغة PDF..."></textarea>
+              </div>
+
+              <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; padding: 8px 10px; font-size: 0.8rem; color: #166534;">
+                <i class="fa-solid fa-circle-info" style="margin-left: 4px;"></i>
+                سيتم تحويل التقرير الحالي بالكامل مع الترويسة المعتمدة إلى ملف PDF بحجم A4 وإرساله مباشرة عبر خادم الواتساب المدمج في النظام.
+              </div>
+            </div>
+            <div class="modal-footer" style="padding: 6px 12px; background: #f8fafc;">
+              <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">إلغاء</button>
+              <button type="button" onclick="executeSendSalesReportWhatsApp('${tabId}')" class="btn btn-sm" style="background: #25D366; color: #ffffff; font-weight: 800; display: flex; align-items: center; gap: 6px;">
+                <i class="fa-solid fa-paper-plane"></i>
+                <span>إرسال PDF الآن</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  } else if (isServiceReports) {
     bodyHtml = `
       <div class="service-reports-screen" style="direction: rtl; text-align: right; font-family: var(--font-arabic); display: flex; flex-direction: column; gap: 4px; height: 100%; padding: 4px 6px;">
         
@@ -34054,3 +34337,1030 @@ window.sendOverdueNoticeWhatsApp = function(tabId, phone, name, amount) {
     if (captionInput) captionInput.value = `الأخ / ${name} المحترم، يرجى التكرم بسداد المتأخرات المستحقة بمبلغ ($${amount.toLocaleString('en-US', {minimumFractionDigits:2})}). شاكرين تعاونكم.`;
   }, 50);
 };
+
+// =============================================================================
+// 44. SALES REPORTS CONTROLLERS & RENDERERS (تقارير المبيعات)
+// Matching media_1787896292492.png
+// =============================================================================
+
+const SALES_REPORT_META = {
+  movement: { title: 'حركة المبيعات', icon: 'fa-cart-shopping', endpoint: '/api/sales-reports/movement' },
+  sales_returns: { title: 'تقرير المبيعات و مرتجعاتها', icon: 'fa-rotate', endpoint: '/api/sales-reports/sales-and-returns' },
+  daily_sales: { title: 'تقرير مبيعات اليومية', icon: 'fa-tag', endpoint: '/api/sales-reports/daily-sales' },
+  returns: { title: 'تقرير مردودات مبيعات', icon: 'fa-arrow-rotate-left', endpoint: '/api/sales-reports/returns' },
+  below_cost: { title: 'مبيعات بأقل من سعر الكلفة', icon: 'fa-chart-line-down', endpoint: '/api/sales-reports/below-cost' },
+  free_sales: { title: 'المبيعات المجانية', icon: 'fa-gift', endpoint: '/api/sales-reports/free-sales' },
+  detailed_movement: { title: 'حركة المبيعات تفصيلي', icon: 'fa-chart-pie', endpoint: '/api/sales-reports/detailed-movement' },
+  movement_summary: { title: 'تقرير حركة المبيعات', icon: 'fa-boxes-stacked', endpoint: '/api/sales-reports/movement-summary' },
+  by_account: { title: 'تقرير مبيعات لحساب', icon: 'fa-user-tag', endpoint: '/api/sales-reports/by-account' },
+  credit_sales: { title: 'تقرير مبيعات اجله لعميل', icon: 'fa-users', endpoint: '/api/sales-reports/credit-sales' },
+  profit_by_invoice: { title: 'ارباح المبيعات حسب الفاتورة', icon: 'fa-chart-simple', endpoint: '/api/sales-reports/profit-by-invoice' },
+  profit_by_item: { title: 'مجمل ارباح المبيعات لكل صنف', icon: 'fa-briefcase', endpoint: '/api/sales-reports/profit-by-item' },
+  daily_summary: { title: 'اجمالي المبيعات اليومية', icon: 'fa-file-invoice', endpoint: '/api/sales-reports/daily-summary' },
+  inventory_selling_value: { title: 'تقرير قيمة المخزون بسعر البيع', icon: 'fa-cube', endpoint: '/api/sales-reports/inventory-selling-value' }
+};
+
+window.initSalesReportsTab = function(tabId) {
+  state.salesReports = state.salesReports || {};
+  state.salesReports[tabId] = {
+    activeReport: 'movement',
+    data: [],
+    filtered: []
+  };
+
+  // Populate Branches
+  populateSalesBranches(tabId);
+  // Populate Stores
+  populateSalesStores(tabId);
+  // Populate Currencies
+  populateSalesCurrencies(tabId);
+  // Populate Categories
+  populateSalesCategories(tabId);
+  // Populate Accounts
+  populateSalesAccounts(tabId);
+  // Populate Salespersons
+  populateSalespersons(tabId);
+
+  // Set default dates (past 2 years to current as in screenshot 28/08/2024 to 28/08/2026)
+  const fromEl = document.getElementById(`salesRepFromDate-${tabId}`);
+  const toEl = document.getElementById(`salesRepToDate-${tabId}`);
+  if (fromEl) fromEl.value = '2024-08-28';
+  if (toEl) toEl.value = new Date().toISOString().split('T')[0];
+
+  // Attach search event
+  const searchInput = document.getElementById(`salesRepSearch-${tabId}`);
+  if (searchInput) {
+    searchInput.addEventListener('input', () => applySalesReportQuickSearch(tabId));
+  }
+
+  // Load default report
+  loadActiveSalesReport(tabId);
+};
+
+async function populateSalesBranches(tabId) {
+  const select = document.getElementById(`salesRepBranch-${tabId}`);
+  if (!select) return;
+  try {
+    const res = await fetch('/api/branches');
+    const json = await res.json();
+    if (json.success && Array.isArray(json.data)) {
+      select.innerHTML = `<option value="0">الفرع الرئيسي</option>` + json.data.map(b => `<option value="${b.fldID}">${b.fldName}</option>`).join('');
+    }
+  } catch (e) {}
+}
+
+async function populateSalesStores(tabId) {
+  const select = document.getElementById(`salesRepStore-${tabId}`);
+  if (!select) return;
+  try {
+    const res = await fetch('/api/stores');
+    const json = await res.json();
+    if (json.success && Array.isArray(json.data)) {
+      select.innerHTML = `<option value="0">كافة المستودعات</option>` + json.data.map(s => `<option value="${s.fldID}">${s.fldName}</option>`).join('');
+    }
+  } catch (e) {}
+}
+
+async function populateSalesCurrencies(tabId) {
+  const sel1 = document.getElementById(`salesRepCurrency-${tabId}`);
+  const sel2 = document.getElementById(`salesRepCurrency2-${tabId}`);
+  try {
+    const res = await fetch('/api/currencies');
+    const json = await res.json();
+    if (json.success && Array.isArray(json.data)) {
+      const opts = `<option value="0">الكل</option>` + json.data.map(c => `<option value="${c.fldID}">${c.fldName} (${c.fldsymbol || ''})</option>`).join('');
+      if (sel1) sel1.innerHTML = opts;
+      if (sel2) sel2.innerHTML = opts;
+    }
+  } catch (e) {}
+}
+
+async function populateSalesCategories(tabId) {
+  const select = document.getElementById(`salesRepCatg-${tabId}`);
+  if (!select) return;
+  try {
+    const res = await fetch('/api/categories');
+    const json = await res.json();
+    if (json.success && Array.isArray(json.data)) {
+      select.innerHTML = `<option value="0">كافة المجموعات</option>` + json.data.map(c => `<option value="${c.fldID}">${c.fldName}</option>`).join('');
+    }
+  } catch (e) {}
+}
+
+async function populateSalesAccounts(tabId) {
+  const select = document.getElementById(`salesRepAccount-${tabId}`);
+  if (!select) return;
+  try {
+    const res = await fetch('/api/accounts');
+    const json = await res.json();
+    if (json.success && Array.isArray(json.data)) {
+      select.innerHTML = `<option value="0">[ كافة الحسابات والعملاء ]</option>` + json.data.map(a => `<option value="${a.fldID}">${a.fldNumber} - ${a.fldName}</option>`).join('');
+    }
+  } catch (e) {}
+}
+
+async function populateSalespersons(tabId) {
+  const select = document.getElementById(`salesRepSalesperson-${tabId}`);
+  if (!select) return;
+  try {
+    const res = await fetch('/api/salespersons');
+    const json = await res.json();
+    if (json.success && Array.isArray(json.data)) {
+      select.innerHTML = `<option value="0">[ كافة المناديب ]</option>` + json.data.map(s => `<option value="${s.fldID}">${s.fldName}</option>`).join('');
+    }
+  } catch (e) {}
+}
+
+window.switchSalesReport = function(tabId, reportKey) {
+  state.salesReports = state.salesReports || {};
+  state.salesReports[tabId] = state.salesReports[tabId] || {};
+  state.salesReports[tabId].activeReport = reportKey;
+
+  // Update button active state
+  document.querySelectorAll(`.sales-rep-btn`).forEach(btn => {
+    btn.classList.remove('active');
+    btn.style.background = '#f8fafc';
+    btn.style.borderColor = '#cbd5e1';
+    btn.style.color = '#475569';
+  });
+
+  const activeBtn = document.getElementById(`btnSalesRep-${reportKey}-${tabId}`);
+  if (activeBtn) {
+    activeBtn.classList.add('active');
+    activeBtn.style.background = '#e0f2fe';
+    activeBtn.style.borderColor = '#0284c7';
+    activeBtn.style.color = '#0369a1';
+  }
+
+  // Update title banner
+  const titleEl = document.getElementById(`salesReportTitle-${tabId}`);
+  if (titleEl && SALES_REPORT_META[reportKey]) {
+    titleEl.innerText = SALES_REPORT_META[reportKey].title;
+  }
+
+  loadActiveSalesReport(tabId);
+};
+
+window.loadActiveSalesReport = async function(tabId) {
+  const repState = state.salesReports[tabId] || { activeReport: 'movement' };
+  const reportKey = repState.activeReport || 'movement';
+  const meta = SALES_REPORT_META[reportKey] || SALES_REPORT_META.movement;
+
+  const branchId = document.getElementById(`salesRepBranch-${tabId}`)?.value || '0';
+  const catgId = document.getElementById(`salesRepCatg-${tabId}`)?.value || '0';
+  const fromDate = document.getElementById(`salesRepFromDate-${tabId}`)?.value || '';
+  const toDate = document.getElementById(`salesRepToDate-${tabId}`)?.value || '';
+  const currencyId = document.getElementById(`salesRepCurrency-${tabId}`)?.value || '0';
+  const paymentType = document.getElementById(`salesRepPaymentType-${tabId}`)?.value || '0';
+  const storeId = document.getElementById(`salesRepStore-${tabId}`)?.value || '0';
+  const accountId = document.getElementById(`salesRepAccount-${tabId}`)?.value || '0';
+  const salespersonId = document.getElementById(`salesRepSalesperson-${tabId}`)?.value || '0';
+
+  const tbody = document.getElementById(`salesReportTbody-${tabId}`);
+  if (tbody) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="15" style="padding: 30px; text-align: center; color: #64748b;">
+          <i class="fa-solid fa-spinner fa-spin" style="font-size: 1.5rem; color: #0284c7; margin-bottom: 8px;"></i>
+          <div style="font-weight: bold;">جاري تحميل ${meta.title}...</div>
+        </td>
+      </tr>
+    `;
+  }
+
+  try {
+    const params = new URLSearchParams({
+      branchId, catgId, fromDate, toDate, currencyId, paymentType, storeId, accountId, salespersonId
+    });
+
+    const res = await fetch(`${meta.endpoint}?${params.toString()}`);
+    const json = await res.json();
+
+    if (!json.success) {
+      if (tbody) {
+        tbody.innerHTML = `<tr><td colspan="15" style="padding: 20px; text-align: center; color: #ef4444; font-weight: bold;">خطأ: ${json.error || 'فشل تحميل البيانات'}</td></tr>`;
+      }
+      return;
+    }
+
+    repState.data = json.data || [];
+    repState.filtered = [...repState.data];
+
+    applySalesReportQuickSearch(tabId);
+  } catch (err) {
+    console.error("Error loading sales report:", err);
+    if (tbody) {
+      tbody.innerHTML = `<tr><td colspan="15" style="padding: 20px; text-align: center; color: #ef4444; font-weight: bold;">فشل الاتصال بالخادم: ${err.message}</td></tr>`;
+    }
+  }
+};
+
+window.applySalesReportQuickSearch = function(tabId) {
+  const repState = state.salesReports[tabId];
+  if (!repState || !repState.data) return;
+
+  const search = (document.getElementById(`salesRepSearch-${tabId}`)?.value || '').trim().toLowerCase();
+  if (!search) {
+    repState.filtered = [...repState.data];
+  } else {
+    repState.filtered = repState.data.filter(item => {
+      return Object.values(item).some(val => val && String(val).toLowerCase().includes(search));
+    });
+  }
+
+  renderCurrentSalesReport(tabId);
+};
+
+function renderCurrentSalesReport(tabId) {
+  const repState = state.salesReports[tabId];
+  if (!repState) return;
+
+  const reportKey = repState.activeReport || 'movement';
+  const list = repState.filtered || [];
+
+  switch (reportKey) {
+    case 'movement':
+      renderSalesMovementReport(tabId, list);
+      break;
+    case 'sales_returns':
+      renderSalesReturnsSummaryReport(tabId, list);
+      break;
+    case 'daily_sales':
+      renderDailySalesReport(tabId, list);
+      break;
+    case 'returns':
+      renderReturnsOnlyReport(tabId, list);
+      break;
+    case 'below_cost':
+      renderBelowCostReport(tabId, list);
+      break;
+    case 'free_sales':
+      renderFreeSalesReport(tabId, list);
+      break;
+    case 'detailed_movement':
+      renderDetailedMovementReport(tabId, list);
+      break;
+    case 'movement_summary':
+      renderMovementSummaryReport(tabId, list);
+      break;
+    case 'by_account':
+      renderByAccountReport(tabId, list);
+      break;
+    case 'credit_sales':
+      renderCreditSalesReport(tabId, list);
+      break;
+    case 'profit_by_invoice':
+      renderProfitByInvoiceReport(tabId, list);
+      break;
+    case 'profit_by_item':
+      renderProfitByItemReport(tabId, list);
+      break;
+    case 'daily_summary':
+      renderDailySummaryReport(tabId, list);
+      break;
+    case 'inventory_selling_value':
+      renderInventorySellingValueReport(tabId, list);
+      break;
+    default:
+      renderSalesMovementReport(tabId, list);
+  }
+}
+
+function updateSalesReportSummary(tabId, count, totalsHtml) {
+  const countEl = document.getElementById(`salesReportCount-${tabId}`);
+  const totalsEl = document.getElementById(`salesReportTotals-${tabId}`);
+  if (countEl) countEl.innerHTML = `عدد السجلات: <span style="color: #0284c7; font-size: 0.9rem;">${count}</span>`;
+  if (totalsEl) totalsEl.innerHTML = totalsHtml || '';
+}
+
+// 1. RENDER SALES MOVEMENT (حركة المبيعات - Matching media_1787896292492.png)
+function renderSalesMovementReport(tabId, list) {
+  const thead = document.getElementById(`salesReportThead-${tabId}`);
+  const tbody = document.getElementById(`salesReportTbody-${tabId}`);
+  if (!thead || !tbody) return;
+
+  thead.innerHTML = `
+    <tr style="position: sticky; top: 0; z-index: 10; background: #f8fafc; border-bottom: 2px solid #cbd5e1; color: #334155; font-weight: 800;">
+      <th style="padding: 7px 6px; width: 100px; white-space: nowrap;">الفرع</th>
+      <th style="padding: 7px 6px; width: 90px; white-space: nowrap;">العملة</th>
+      <th style="padding: 7px 6px; width: 95px; white-space: nowrap;">التاريخ</th>
+      <th style="padding: 7px 6px; width: 65px; white-space: nowrap;">الرقم</th>
+      <th style="padding: 7px 6px; width: 85px; white-space: nowrap;">الكود</th>
+      <th style="padding: 7px 12px; min-width: 170px; text-align: right; white-space: nowrap;">الاسم / البيان</th>
+      <th style="padding: 7px 6px; width: 65px; white-space: nowrap;">العبوة</th>
+      <th style="padding: 7px 6px; width: 75px; white-space: nowrap;">الكمية</th>
+      <th style="padding: 7px 8px; width: 90px; text-align: right; white-space: nowrap;">السعر</th>
+      <th style="padding: 7px 8px; width: 100px; text-align: right; white-space: nowrap;">الإجمالي</th>
+      <th style="padding: 7px 8px; width: 80px; text-align: right; white-space: nowrap;">الخصم</th>
+      <th style="padding: 7px 8px; width: 80px; text-align: right; white-space: nowrap;">الضريبة</th>
+      <th style="padding: 7px 10px; width: 110px; text-align: right; white-space: nowrap;">الصافي</th>
+      <th style="padding: 7px 8px; width: 100px; white-space: nowrap;">المستودع</th>
+      <th style="padding: 7px 10px; min-width: 130px; text-align: right; white-space: nowrap;">العميل / الحساب</th>
+    </tr>
+  `;
+
+  if (!list || list.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="15" style="padding: 25px; text-align: center; color: #94a3b8; font-weight: bold;">لا توجد حركة مبيعات تطابق الفلاتر المحددة</td></tr>`;
+    updateSalesReportSummary(tabId, 0, '');
+    return;
+  }
+
+  let totalQty = 0;
+  let totalAmount = 0;
+  let totalDiscount = 0;
+  let totalNet = 0;
+  let html = '';
+
+  list.forEach((item, idx) => {
+    const qty = parseFloat(item.fldQty || 0);
+    const price = parseFloat(item.fldPrice || 0);
+    const amount = parseFloat(item.fldTotalAmount || (qty * price));
+    const discount = parseFloat(item.fldDiscount || 0);
+    const tax = parseFloat(item.fldTax || 0);
+    const net = parseFloat(item.fldNetTotal || (amount - discount + tax));
+
+    totalQty += qty;
+    totalAmount += amount;
+    totalDiscount += discount;
+    totalNet += net;
+
+    const isReturn = item.fldTransType === 31 || qty < 0;
+
+    html += `
+      <tr style="border-bottom: 1px solid #e2e8f0; background: ${idx % 2 === 0 ? '#ffffff' : '#f8fafc'}; ${isReturn ? 'color: #dc2626;' : ''}">
+        <td style="padding: 5px 6px; font-weight: bold; color: #0284c7; white-space: nowrap;">${item.fldBranchName || 'الفرع الرئيسي'}</td>
+        <td style="padding: 5px 6px; font-family: monospace; white-space: nowrap;">${item.fldCurrency || 'ريال سعودي'}</td>
+        <td style="padding: 5px 6px; font-family: monospace; white-space: nowrap;">${item.fldDate || ''}</td>
+        <td style="padding: 5px 6px; font-weight: bold; font-family: monospace; color: #1e3a8a; white-space: nowrap;">${item.fldTransNo || item.fldTransID}</td>
+        <td style="padding: 5px 6px; font-family: monospace; font-weight: bold; color: #475569; white-space: nowrap;">${item.fldItemCode || '-'}</td>
+        <td style="padding: 5px 12px; text-align: right; font-weight: bold; color: #1e293b; white-space: nowrap;">${item.fldItemName || ''}</td>
+        <td style="padding: 5px 6px; font-family: monospace; white-space: nowrap;">${item.fldUnitName || 'حبه'}</td>
+        <td style="padding: 5px 6px; font-family: monospace; font-weight: bold; color: ${isReturn ? '#dc2626' : '#d97706'}; white-space: nowrap;">${qty.toFixed(2)}</td>
+        <td style="padding: 5px 8px; text-align: right; font-family: monospace; white-space: nowrap;">${price.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+        <td style="padding: 5px 8px; text-align: right; font-family: monospace; font-weight: bold; color: #059669; white-space: nowrap;">${amount.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+        <td style="padding: 5px 8px; text-align: right; font-family: monospace; color: #dc2626; white-space: nowrap;">${discount > 0 ? discount.toLocaleString('en-US', {minimumFractionDigits:2}) : '-'}</td>
+        <td style="padding: 5px 8px; text-align: right; font-family: monospace; color: #64748b; white-space: nowrap;">${tax > 0 ? tax.toLocaleString('en-US', {minimumFractionDigits:2}) : '-'}</td>
+        <td style="padding: 5px 10px; text-align: right; font-weight: 900; font-family: monospace; color: ${isReturn ? '#dc2626' : '#0f766e'}; font-size: 0.88rem; white-space: nowrap;">${net.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+        <td style="padding: 5px 8px; font-size: 0.78rem; color: #64748b; white-space: nowrap;">${item.fldWarehouseName || 'مخزن عام 1'}</td>
+        <td style="padding: 5px 10px; text-align: right; font-size: 0.78rem; color: #334155; white-space: nowrap;">${item.fldCustomerName || ''}</td>
+      </tr>
+    `;
+  });
+
+  tbody.innerHTML = html;
+  updateSalesReportSummary(tabId, list.length, `إجمالي الكميات: <span style="color: #d97706; margin: 0 4px;">${totalQty.toFixed(2)}</span> | إجمالي المبيعات: <span style="color: #059669; margin: 0 4px;">${totalAmount.toLocaleString('en-US', {minimumFractionDigits:2})}</span> | صافي الحركة: <span style="color: #0f766e; margin: 0 4px; font-size: 0.95rem;">${totalNet.toLocaleString('en-US', {minimumFractionDigits:2})}</span>`);
+}
+
+// 2. RENDER SALES & RETURNS (المبيعات ومرتجعاتها)
+function renderSalesReturnsSummaryReport(tabId, list) {
+  const thead = document.getElementById(`salesReportThead-${tabId}`);
+  const tbody = document.getElementById(`salesReportTbody-${tabId}`);
+  if (!thead || !tbody) return;
+
+  thead.innerHTML = `
+    <tr style="position: sticky; top: 0; z-index: 10; background: #f8fafc; border-bottom: 2px solid #cbd5e1; color: #334155; font-weight: 800;">
+      <th style="padding: 7px 6px; width: 75px; white-space: nowrap;">الرقم</th>
+      <th style="padding: 7px 6px; width: 95px; white-space: nowrap;">التاريخ</th>
+      <th style="padding: 7px 6px; width: 95px; white-space: nowrap;">نوع الحركة</th>
+      <th style="padding: 7px 6px; width: 75px; white-space: nowrap;">الدفع</th>
+      <th style="padding: 7px 12px; min-width: 180px; text-align: right; white-space: nowrap;">العميل / الحساب</th>
+      <th style="padding: 7px 8px; width: 110px; text-align: right; white-space: nowrap;">الإجمالي</th>
+      <th style="padding: 7px 8px; width: 85px; text-align: right; white-space: nowrap;">الخصم</th>
+      <th style="padding: 7px 8px; width: 85px; text-align: right; white-space: nowrap;">الضريبة</th>
+      <th style="padding: 7px 10px; width: 120px; text-align: right; white-space: nowrap;">الصافي</th>
+      <th style="padding: 7px 8px; width: 95px; white-space: nowrap;">العملة</th>
+      <th style="padding: 7px 8px; width: 100px; white-space: nowrap;">المستودع</th>
+    </tr>
+  `;
+
+  if (!list || list.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="12" style="padding: 25px; text-align: center; color: #94a3b8; font-weight: bold;">لا توجد فواتير مبيعات أو مرتجعات</td></tr>`;
+    updateSalesReportSummary(tabId, 0, '');
+    return;
+  }
+
+  let totalSales = 0;
+  let totalReturns = 0;
+  let netBalance = 0;
+  let html = '';
+
+  list.forEach((item, idx) => {
+    const isReturn = item.fldTransType === 31;
+    const net = parseFloat(item.fldNetTotal || 0);
+
+    if (isReturn) totalReturns += Math.abs(net);
+    else totalSales += net;
+    netBalance += net;
+
+    html += `
+      <tr style="border-bottom: 1px solid #e2e8f0; background: ${idx % 2 === 0 ? '#ffffff' : '#f8fafc'};">
+        <td style="padding: 5px 6px; font-weight: bold; font-family: monospace; color: #1e3a8a; white-space: nowrap;">${item.fldTransNo || item.fldTransID}</td>
+        <td style="padding: 5px 6px; font-family: monospace; white-space: nowrap;">${item.fldDate || ''}</td>
+        <td style="padding: 5px 6px; font-weight: bold; color: ${isReturn ? '#dc2626' : '#059669'}; white-space: nowrap;">${item.fldTransTypeName || (isReturn ? 'مردود مبيعات' : 'مبيعات')}</td>
+        <td style="padding: 5px 6px; font-size: 0.78rem; color: #475569; white-space: nowrap;">${item.fldPaymentTypeName || 'نقد'}</td>
+        <td style="padding: 5px 12px; text-align: right; font-weight: bold; color: #1e293b; white-space: nowrap;">${item.fldCustomerName || ''}</td>
+        <td style="padding: 5px 8px; text-align: right; font-family: monospace; white-space: nowrap;">${parseFloat(item.fldTotalAmount||0).toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+        <td style="padding: 5px 8px; text-align: right; font-family: monospace; color: #dc2626; white-space: nowrap;">${parseFloat(item.fldDiscount||0).toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+        <td style="padding: 5px 8px; text-align: right; font-family: monospace; color: #64748b; white-space: nowrap;">${parseFloat(item.fldTax||0).toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+        <td style="padding: 5px 10px; text-align: right; font-weight: 900; font-family: monospace; color: ${isReturn ? '#dc2626' : '#0f766e'}; font-size: 0.88rem; white-space: nowrap;">${net.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+        <td style="padding: 5px 8px; font-family: monospace; white-space: nowrap;">${item.fldCurrency || 'ريال'}</td>
+        <td style="padding: 5px 8px; font-size: 0.78rem; color: #64748b; white-space: nowrap;">${item.fldWarehouseName || ''}</td>
+      </tr>
+    `;
+  });
+
+  tbody.innerHTML = html;
+  updateSalesReportSummary(tabId, list.length, `إجمالي المبيعات: <span style="color: #059669; margin: 0 4px;">${totalSales.toLocaleString('en-US', {minimumFractionDigits:2})}</span> | إجمالي المردودات: <span style="color: #dc2626; margin: 0 4px;">${totalReturns.toLocaleString('en-US', {minimumFractionDigits:2})}</span> | صافي المبيعات: <span style="color: #0f766e; margin: 0 4px; font-size: 0.95rem;">${netBalance.toLocaleString('en-US', {minimumFractionDigits:2})}</span>`);
+}
+
+// 3. RENDER DAILY SALES (تقرير مبيعات اليومية)
+function renderDailySalesReport(tabId, list) {
+  const thead = document.getElementById(`salesReportThead-${tabId}`);
+  const tbody = document.getElementById(`salesReportTbody-${tabId}`);
+  if (!thead || !tbody) return;
+
+  thead.innerHTML = `
+    <tr style="position: sticky; top: 0; z-index: 10; background: #f8fafc; border-bottom: 2px solid #cbd5e1; color: #334155; font-weight: 800;">
+      <th style="padding: 7px 8px; width: 110px; white-space: nowrap;">التاريخ</th>
+      <th style="padding: 7px 6px; width: 85px; white-space: nowrap;">عدد الفواتير</th>
+      <th style="padding: 7px 10px; width: 130px; text-align: right; white-space: nowrap;">مبيعات نقدية</th>
+      <th style="padding: 7px 10px; width: 130px; text-align: right; white-space: nowrap;">مبيعات آجلة</th>
+      <th style="padding: 7px 8px; width: 100px; text-align: right; white-space: nowrap;">إجمالي الخصم</th>
+      <th style="padding: 7px 8px; width: 100px; text-align: right; white-space: nowrap;">إجمالي الضريبة</th>
+      <th style="padding: 7px 12px; width: 140px; text-align: right; white-space: nowrap;">صافي المبيعات</th>
+      <th style="padding: 7px 8px; width: 90px; white-space: nowrap;">العملة</th>
+    </tr>
+  `;
+
+  if (!list || list.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="8" style="padding: 25px; text-align: center; color: #94a3b8; font-weight: bold;">لا توجد مبيعات في الفترة المحددة</td></tr>`;
+    updateSalesReportSummary(tabId, 0, '');
+    return;
+  }
+
+  let totalCount = 0;
+  let totalCash = 0;
+  let totalCredit = 0;
+  let grandTotal = 0;
+  let html = '';
+
+  list.forEach((item, idx) => {
+    const count = parseInt(item.fldInvoicesCount || 0);
+    const cash = parseFloat(item.fldCashSales || 0);
+    const credit = parseFloat(item.fldCreditSales || 0);
+    const sales = parseFloat(item.fldTotalSales || 0);
+
+    totalCount += count;
+    totalCash += cash;
+    totalCredit += credit;
+    grandTotal += sales;
+
+    html += `
+      <tr style="border-bottom: 1px solid #e2e8f0; background: ${idx % 2 === 0 ? '#ffffff' : '#f8fafc'};">
+        <td style="padding: 6px 8px; font-weight: bold; font-family: monospace; color: #1e3a8a; white-space: nowrap;">${item.fldDate}</td>
+        <td style="padding: 6px 6px; font-weight: bold; font-family: monospace; color: #0284c7; white-space: nowrap;">${count}</td>
+        <td style="padding: 6px 10px; text-align: right; font-family: monospace; font-weight: bold; color: #059669; white-space: nowrap;">${cash.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+        <td style="padding: 6px 10px; text-align: right; font-family: monospace; font-weight: bold; color: #d97706; white-space: nowrap;">${credit.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+        <td style="padding: 6px 8px; text-align: right; font-family: monospace; color: #dc2626; white-space: nowrap;">${parseFloat(item.fldTotalDiscount||0).toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+        <td style="padding: 6px 8px; text-align: right; font-family: monospace; color: #64748b; white-space: nowrap;">${parseFloat(item.fldTotalTax||0).toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+        <td style="padding: 6px 12px; text-align: right; font-weight: 900; font-family: monospace; color: #0f766e; font-size: 0.9rem; white-space: nowrap;">${sales.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+        <td style="padding: 6px 8px; font-family: monospace; white-space: nowrap;">${item.fldCurrency || 'ريال'}</td>
+      </tr>
+    `;
+  });
+
+  tbody.innerHTML = html;
+  updateSalesReportSummary(tabId, list.length, `إجمالي الفواتير: <span style="color: #0284c7; margin: 0 4px;">${totalCount}</span> | نقد: <span style="color: #059669; margin: 0 4px;">${totalCash.toLocaleString('en-US', {minimumFractionDigits:2})}</span> | آجل: <span style="color: #d97706; margin: 0 4px;">${totalCredit.toLocaleString('en-US', {minimumFractionDigits:2})}</span> | الإجمالي العام: <span style="color: #0f766e; margin: 0 4px; font-size: 0.95rem;">${grandTotal.toLocaleString('en-US', {minimumFractionDigits:2})}</span>`);
+}
+
+// 4. RENDER RETURNS ONLY (تقرير مردودات مبيعات)
+function renderReturnsOnlyReport(tabId, list) {
+  renderSalesMovementReport(tabId, list);
+}
+
+// 5. RENDER BELOW COST (مبيعات بأقل من سعر الكلفة)
+function renderBelowCostReport(tabId, list) {
+  const thead = document.getElementById(`salesReportThead-${tabId}`);
+  const tbody = document.getElementById(`salesReportTbody-${tabId}`);
+  if (!thead || !tbody) return;
+
+  thead.innerHTML = `
+    <tr style="position: sticky; top: 0; z-index: 10; background: #f8fafc; border-bottom: 2px solid #cbd5e1; color: #334155; font-weight: 800;">
+      <th style="padding: 7px 6px; width: 75px; white-space: nowrap;">الفاتورة</th>
+      <th style="padding: 7px 6px; width: 95px; white-space: nowrap;">التاريخ</th>
+      <th style="padding: 7px 6px; width: 85px; white-space: nowrap;">كود الصنف</th>
+      <th style="padding: 7px 12px; min-width: 180px; text-align: right; white-space: nowrap;">اسم الصنف</th>
+      <th style="padding: 7px 6px; width: 70px; white-space: nowrap;">الكمية</th>
+      <th style="padding: 7px 8px; width: 95px; text-align: right; white-space: nowrap;">سعر البيع</th>
+      <th style="padding: 7px 8px; width: 95px; text-align: right; white-space: nowrap;">سعر الكلفة</th>
+      <th style="padding: 7px 8px; width: 95px; text-align: right; white-space: nowrap;">الخسارة/الوحدة</th>
+      <th style="padding: 7px 10px; width: 110px; text-align: right; white-space: nowrap;">إجمالي الخسارة</th>
+      <th style="padding: 7px 12px; min-width: 160px; text-align: right; white-space: nowrap;">العميل</th>
+    </tr>
+  `;
+
+  if (!list || list.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="10" style="padding: 25px; text-align: center; color: #059669; font-weight: bold;">ممتاز! لا توجد أي مبيعات بأقل من سعر الكلفة في الفترة المحددة</td></tr>`;
+    updateSalesReportSummary(tabId, 0, '<span style="color: #059669;">لا توجد خسائر</span>');
+    return;
+  }
+
+  let totalLoss = 0;
+  let html = '';
+
+  list.forEach((item, idx) => {
+    const loss = parseFloat(item.fldTotalLoss || 0);
+    totalLoss += loss;
+
+    html += `
+      <tr style="border-bottom: 1px solid #e2e8f0; background: ${idx % 2 === 0 ? '#fff1f2' : '#ffffff'}; color: #991b1b;">
+        <td style="padding: 6px 6px; font-weight: bold; font-family: monospace;">${item.fldTransNo}</td>
+        <td style="padding: 6px 6px; font-family: monospace;">${item.fldDate}</td>
+        <td style="padding: 6px 6px; font-family: monospace; font-weight: bold;">${item.fldItemCode}</td>
+        <td style="padding: 6px 12px; text-align: right; font-weight: bold;">${item.fldItemName}</td>
+        <td style="padding: 6px 6px; font-family: monospace; font-weight: bold;">${parseFloat(item.fldQty||0).toFixed(2)}</td>
+        <td style="padding: 6px 8px; text-align: right; font-family: monospace; color: #0284c7;">${parseFloat(item.fldPrice||0).toFixed(2)}</td>
+        <td style="padding: 6px 8px; text-align: right; font-family: monospace; font-weight: bold; color: #dc2626;">${parseFloat(item.fldCost||0).toFixed(2)}</td>
+        <td style="padding: 6px 8px; text-align: right; font-family: monospace; font-weight: bold; color: #dc2626;">${parseFloat(item.fldLossPerUnit||0).toFixed(2)}</td>
+        <td style="padding: 6px 10px; text-align: right; font-weight: 900; font-family: monospace; color: #991b1b; font-size: 0.9rem;">${loss.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+        <td style="padding: 6px 12px; text-align: right;">${item.fldCustomerName || ''}</td>
+      </tr>
+    `;
+  });
+
+  tbody.innerHTML = html;
+  updateSalesReportSummary(tabId, list.length, `إجمالي الخسارة المحققة: <span style="color: #dc2626; font-weight: 900; font-size: 1rem; margin: 0 6px;">${totalLoss.toLocaleString('en-US', {minimumFractionDigits:2})}</span>`);
+}
+
+// 6. RENDER FREE SALES (المبيعات المجانية)
+function renderFreeSalesReport(tabId, list) {
+  const thead = document.getElementById(`salesReportThead-${tabId}`);
+  const tbody = document.getElementById(`salesReportTbody-${tabId}`);
+  if (!thead || !tbody) return;
+
+  thead.innerHTML = `
+    <tr style="position: sticky; top: 0; z-index: 10; background: #f8fafc; border-bottom: 2px solid #cbd5e1; color: #334155; font-weight: 800;">
+      <th style="padding: 7px 6px; width: 75px; white-space: nowrap;">الفاتورة</th>
+      <th style="padding: 7px 6px; width: 95px; white-space: nowrap;">التاريخ</th>
+      <th style="padding: 7px 6px; width: 85px; white-space: nowrap;">كود الصنف</th>
+      <th style="padding: 7px 12px; min-width: 180px; text-align: right; white-space: nowrap;">اسم الصنف</th>
+      <th style="padding: 7px 6px; width: 85px; white-space: nowrap;">الكمية المجانية</th>
+      <th style="padding: 7px 8px; width: 95px; text-align: right; white-space: nowrap;">سعر الكلفة</th>
+      <th style="padding: 7px 10px; width: 120px; text-align: right; white-space: nowrap;">قيمة الكلفة الإجمالية</th>
+      <th style="padding: 7px 12px; min-width: 160px; text-align: right; white-space: nowrap;">العميل المستلم</th>
+    </tr>
+  `;
+
+  if (!list || list.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="8" style="padding: 25px; text-align: center; color: #94a3b8; font-weight: bold;">لا توجد مبيعات مجانية أو هدايا في الفترة المحددة</td></tr>`;
+    updateSalesReportSummary(tabId, 0, '');
+    return;
+  }
+
+  let totalFreeQty = 0;
+  let totalCostVal = 0;
+  let html = '';
+
+  list.forEach((item, idx) => {
+    const qty = parseFloat(item.fldFreeQty || 0);
+    const costVal = parseFloat(item.fldTotalCostValue || 0);
+
+    totalFreeQty += qty;
+    totalCostVal += costVal;
+
+    html += `
+      <tr style="border-bottom: 1px solid #e2e8f0; background: ${idx % 2 === 0 ? '#ffffff' : '#f8fafc'};">
+        <td style="padding: 6px 6px; font-weight: bold; font-family: monospace; color: #1e3a8a;">${item.fldTransNo}</td>
+        <td style="padding: 6px 6px; font-family: monospace;">${item.fldDate}</td>
+        <td style="padding: 6px 6px; font-family: monospace; font-weight: bold; color: #475569;">${item.fldItemCode}</td>
+        <td style="padding: 6px 12px; text-align: right; font-weight: bold; color: #1e293b;">${item.fldItemName}</td>
+        <td style="padding: 6px 6px; font-family: monospace; font-weight: bold; color: #ec4899;">${qty.toFixed(2)}</td>
+        <td style="padding: 6px 8px; text-align: right; font-family: monospace; color: #64748b;">${parseFloat(item.fldCost||0).toFixed(2)}</td>
+        <td style="padding: 6px 10px; text-align: right; font-weight: 900; font-family: monospace; color: #be185d;">${costVal.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+        <td style="padding: 6px 12px; text-align: right; color: #334155;">${item.fldCustomerName || ''}</td>
+      </tr>
+    `;
+  });
+
+  tbody.innerHTML = html;
+  updateSalesReportSummary(tabId, list.length, `إجمالي الكميات المجانية: <span style="color: #ec4899; margin: 0 4px;">${totalFreeQty.toFixed(2)}</span> | إجمالي كلفة الهدايا: <span style="color: #be185d; margin: 0 4px; font-size: 0.95rem;">${totalCostVal.toLocaleString('en-US', {minimumFractionDigits:2})}</span>`);
+}
+
+// 7. RENDER DETAILED MOVEMENT WITH PROFIT (حركة المبيعات تفصيلي)
+function renderDetailedMovementReport(tabId, list) {
+  renderSalesMovementReport(tabId, list);
+}
+
+// 8. RENDER MOVEMENT SUMMARY (تقرير حركة المبيعات)
+function renderMovementSummaryReport(tabId, list) {
+  const thead = document.getElementById(`salesReportThead-${tabId}`);
+  const tbody = document.getElementById(`salesReportTbody-${tabId}`);
+  if (!thead || !tbody) return;
+
+  thead.innerHTML = `
+    <tr style="position: sticky; top: 0; z-index: 10; background: #f8fafc; border-bottom: 2px solid #cbd5e1; color: #334155; font-weight: 800;">
+      <th style="padding: 7px 6px; width: 95px; white-space: nowrap;">كود الصنف</th>
+      <th style="padding: 7px 14px; min-width: 200px; text-align: right; white-space: nowrap;">اسم الصنف</th>
+      <th style="padding: 7px 6px; width: 75px; white-space: nowrap;">العبوة</th>
+      <th style="padding: 7px 8px; width: 85px; white-space: nowrap;">إجمالي الكمية</th>
+      <th style="padding: 7px 8px; width: 95px; text-align: right; white-space: nowrap;">متوسط السعر</th>
+      <th style="padding: 7px 10px; width: 120px; text-align: right; white-space: nowrap;">إجمالي المبيعات</th>
+      <th style="padding: 7px 10px; width: 120px; text-align: right; white-space: nowrap;">إجمالي الكلفة</th>
+      <th style="padding: 7px 12px; width: 130px; text-align: right; white-space: nowrap;">مجمل الربح</th>
+    </tr>
+  `;
+
+  if (!list || list.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="8" style="padding: 25px; text-align: center; color: #94a3b8; font-weight: bold;">لا توجد بيانات حركة</td></tr>`;
+    updateSalesReportSummary(tabId, 0, '');
+    return;
+  }
+
+  let totalQty = 0;
+  let totalSales = 0;
+  let totalCost = 0;
+  let totalProfit = 0;
+  let html = '';
+
+  list.forEach((item, idx) => {
+    const qty = parseFloat(item.fldTotalQty || 0);
+    const sales = parseFloat(item.fldTotalSales || 0);
+    const cost = parseFloat(item.fldTotalCost || 0);
+    const profit = parseFloat(item.fldGrossProfit || (sales - cost));
+
+    totalQty += qty;
+    totalSales += sales;
+    totalCost += cost;
+    totalProfit += profit;
+
+    html += `
+      <tr style="border-bottom: 1px solid #e2e8f0; background: ${idx % 2 === 0 ? '#ffffff' : '#f8fafc'};">
+        <td style="padding: 6px 6px; font-weight: bold; font-family: monospace; color: #475569;">${item.fldItemCode || '-'}</td>
+        <td style="padding: 6px 14px; text-align: right; font-weight: bold; color: #1e293b;">${item.fldItemName}</td>
+        <td style="padding: 6px 6px; font-family: monospace;">${item.fldUnitName || 'حبه'}</td>
+        <td style="padding: 6px 8px; font-family: monospace; font-weight: bold; color: #d97706;">${qty.toFixed(2)}</td>
+        <td style="padding: 6px 8px; text-align: right; font-family: monospace;">${parseFloat(item.fldAvgPrice||0).toFixed(2)}</td>
+        <td style="padding: 6px 10px; text-align: right; font-weight: bold; font-family: monospace; color: #059669;">${sales.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+        <td style="padding: 6px 10px; text-align: right; font-family: monospace; color: #64748b;">${cost.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+        <td style="padding: 6px 12px; text-align: right; font-weight: 900; font-family: monospace; color: ${profit >= 0 ? '#0f766e' : '#dc2626'}; font-size: 0.9rem;">${profit.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+      </tr>
+    `;
+  });
+
+  tbody.innerHTML = html;
+  updateSalesReportSummary(tabId, list.length, `إجمالي المبيعات: <span style="color: #059669; margin: 0 4px;">${totalSales.toLocaleString('en-US', {minimumFractionDigits:2})}</span> | إجمالي الكلفة: <span style="color: #64748b; margin: 0 4px;">${totalCost.toLocaleString('en-US', {minimumFractionDigits:2})}</span> | مجمل الأرباح: <span style="color: #0f766e; margin: 0 4px; font-size: 0.95rem;">${totalProfit.toLocaleString('en-US', {minimumFractionDigits:2})}</span>`);
+}
+
+// 9. RENDER BY ACCOUNT (تقرير مبيعات لحساب)
+function renderByAccountReport(tabId, list) {
+  const thead = document.getElementById(`salesReportThead-${tabId}`);
+  const tbody = document.getElementById(`salesReportTbody-${tabId}`);
+  if (!thead || !tbody) return;
+
+  thead.innerHTML = `
+    <tr style="position: sticky; top: 0; z-index: 10; background: #f8fafc; border-bottom: 2px solid #cbd5e1; color: #334155; font-weight: 800;">
+      <th style="padding: 7px 6px; width: 90px; white-space: nowrap;">رقم الحساب</th>
+      <th style="padding: 7px 14px; min-width: 220px; text-align: right; white-space: nowrap;">اسم الحساب / العميل</th>
+      <th style="padding: 7px 6px; width: 85px; white-space: nowrap;">عدد الفواتير</th>
+      <th style="padding: 7px 10px; width: 130px; text-align: right; white-space: nowrap;">إجمالي المبيعات</th>
+      <th style="padding: 7px 8px; width: 95px; text-align: right; white-space: nowrap;">إجمالي الخصم</th>
+      <th style="padding: 7px 10px; width: 130px; text-align: right; white-space: nowrap;">صافي المبيعات</th>
+      <th style="padding: 7px 12px; width: 140px; text-align: right; white-space: nowrap;">الرصيد الحالي للحساب</th>
+      <th style="padding: 7px 8px; width: 90px; white-space: nowrap;">العملة</th>
+    </tr>
+  `;
+
+  if (!list || list.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="8" style="padding: 25px; text-align: center; color: #94a3b8; font-weight: bold;">لا توجد بيانات مبيعات للحسابات</td></tr>`;
+    updateSalesReportSummary(tabId, 0, '');
+    return;
+  }
+
+  let totalSales = 0;
+  let totalNet = 0;
+  let html = '';
+
+  list.forEach((item, idx) => {
+    const net = parseFloat(item.fldNetSales || 0);
+    const balance = parseFloat(item.fldCurrentBalance || 0);
+
+    totalSales += parseFloat(item.fldTotalBilled || 0);
+    totalNet += net;
+
+    html += `
+      <tr style="border-bottom: 1px solid #e2e8f0; background: ${idx % 2 === 0 ? '#ffffff' : '#f8fafc'};">
+        <td style="padding: 6px 6px; font-weight: bold; font-family: monospace; color: #0284c7;">${item.fldAccNumber}</td>
+        <td style="padding: 6px 14px; text-align: right; font-weight: bold; color: #1e293b;">${item.fldAccountName}</td>
+        <td style="padding: 6px 6px; font-weight: bold; font-family: monospace; color: #334155;">${item.fldInvoicesCount}</td>
+        <td style="padding: 6px 10px; text-align: right; font-family: monospace; font-weight: bold; color: #059669;">${parseFloat(item.fldTotalBilled||0).toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+        <td style="padding: 6px 8px; text-align: right; font-family: monospace; color: #dc2626;">${parseFloat(item.fldTotalDiscount||0).toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+        <td style="padding: 6px 10px; text-align: right; font-weight: 900; font-family: monospace; color: #0f766e;">${net.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+        <td style="padding: 6px 12px; text-align: right; font-weight: bold; font-family: monospace; color: ${balance > 0 ? '#dc2626' : '#059669'};">${balance.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+        <td style="padding: 6px 8px; font-family: monospace;">${item.fldCurrency || 'ريال'}</td>
+      </tr>
+    `;
+  });
+
+  tbody.innerHTML = html;
+  updateSalesReportSummary(tabId, list.length, `إجمالي المبيعات للعملاء: <span style="color: #0f766e; margin: 0 4px; font-size: 0.95rem;">${totalNet.toLocaleString('en-US', {minimumFractionDigits:2})}</span>`);
+}
+
+// 10. RENDER CREDIT SALES (تقرير مبيعات اجله لعميل)
+function renderCreditSalesReport(tabId, list) {
+  renderByAccountReport(tabId, list);
+}
+
+// 11. RENDER PROFIT BY INVOICE (ارباح المبيعات حسب الفاتورة)
+function renderProfitByInvoiceReport(tabId, list) {
+  const thead = document.getElementById(`salesReportThead-${tabId}`);
+  const tbody = document.getElementById(`salesReportTbody-${tabId}`);
+  if (!thead || !tbody) return;
+
+  thead.innerHTML = `
+    <tr style="position: sticky; top: 0; z-index: 10; background: #f8fafc; border-bottom: 2px solid #cbd5e1; color: #334155; font-weight: 800;">
+      <th style="padding: 7px 6px; width: 75px; white-space: nowrap;">الفاتورة</th>
+      <th style="padding: 7px 6px; width: 95px; white-space: nowrap;">التاريخ</th>
+      <th style="padding: 7px 12px; min-width: 180px; text-align: right; white-space: nowrap;">العميل</th>
+      <th style="padding: 7px 10px; width: 120px; text-align: right; white-space: nowrap;">إجمالي البيع</th>
+      <th style="padding: 7px 10px; width: 120px; text-align: right; white-space: nowrap;">إجمالي الكلفة</th>
+      <th style="padding: 7px 10px; width: 120px; text-align: right; white-space: nowrap;">مجمل الربح</th>
+      <th style="padding: 7px 8px; width: 95px; text-align: center; white-space: nowrap;">نسبة الربح %</th>
+      <th style="padding: 7px 8px; width: 90px; white-space: nowrap;">العملة</th>
+    </tr>
+  `;
+
+  if (!list || list.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="8" style="padding: 25px; text-align: center; color: #94a3b8; font-weight: bold;">لا توجد فواتير مبيعات في الفترة</td></tr>`;
+    updateSalesReportSummary(tabId, 0, '');
+    return;
+  }
+
+  let totalSales = 0;
+  let totalCost = 0;
+  let totalProfit = 0;
+  let html = '';
+
+  list.forEach((item, idx) => {
+    const sales = parseFloat(item.fldTotalSales || 0);
+    const cost = parseFloat(item.fldTotalCost || 0);
+    const profit = parseFloat(item.fldGrossProfit || (sales - cost));
+    const percent = parseFloat(item.fldProfitPercent || (sales > 0 ? (profit * 100 / sales) : 0));
+
+    totalSales += sales;
+    totalCost += cost;
+    totalProfit += profit;
+
+    html += `
+      <tr style="border-bottom: 1px solid #e2e8f0; background: ${idx % 2 === 0 ? '#ffffff' : '#f8fafc'};">
+        <td style="padding: 6px 6px; font-weight: bold; font-family: monospace; color: #1e3a8a;">${item.fldTransNo}</td>
+        <td style="padding: 6px 6px; font-family: monospace;">${item.fldDate}</td>
+        <td style="padding: 6px 12px; text-align: right; font-weight: bold; color: #1e293b;">${item.fldCustomerName}</td>
+        <td style="padding: 6px 10px; text-align: right; font-weight: bold; font-family: monospace; color: #059669;">${sales.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+        <td style="padding: 6px 10px; text-align: right; font-family: monospace; color: #64748b;">${cost.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+        <td style="padding: 6px 10px; text-align: right; font-weight: 900; font-family: monospace; color: ${profit >= 0 ? '#0f766e' : '#dc2626'};">${profit.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+        <td style="padding: 6px 8px; text-align: center; font-weight: bold; font-family: monospace; color: ${percent >= 0 ? '#0284c7' : '#dc2626'};">${percent.toFixed(1)}%</td>
+        <td style="padding: 6px 8px; font-family: monospace;">${item.fldCurrency || 'ريال'}</td>
+      </tr>
+    `;
+  });
+
+  const overallPercent = totalSales > 0 ? (totalProfit * 100 / totalSales) : 0;
+  tbody.innerHTML = html;
+  updateSalesReportSummary(tabId, list.length, `إجمالي المبيعات: <span style="color: #059669; margin: 0 4px;">${totalSales.toLocaleString('en-US', {minimumFractionDigits:2})}</span> | إجمالي الكلفة: <span style="color: #64748b; margin: 0 4px;">${totalCost.toLocaleString('en-US', {minimumFractionDigits:2})}</span> | صافي الأرباح: <span style="color: #0f766e; margin: 0 4px; font-size: 0.95rem;">${totalProfit.toLocaleString('en-US', {minimumFractionDigits:2})} (${overallPercent.toFixed(1)}%)</span>`);
+}
+
+// 12. RENDER PROFIT BY ITEM (مجمل ارباح المبيعات لكل صنف)
+function renderProfitByItemReport(tabId, list) {
+  renderMovementSummaryReport(tabId, list);
+}
+
+// 13. RENDER DAILY SUMMARY (اجمالي المبيعات اليومية)
+function renderDailySummaryReport(tabId, list) {
+  renderDailySalesReport(tabId, list);
+}
+
+// 14. RENDER INVENTORY SELLING VALUE (تقرير قيمة المخزون بسعر البيع)
+function renderInventorySellingValueReport(tabId, list) {
+  const thead = document.getElementById(`salesReportThead-${tabId}`);
+  const tbody = document.getElementById(`salesReportTbody-${tabId}`);
+  if (!thead || !tbody) return;
+
+  thead.innerHTML = `
+    <tr style="position: sticky; top: 0; z-index: 10; background: #f8fafc; border-bottom: 2px solid #cbd5e1; color: #334155; font-weight: 800;">
+      <th style="padding: 7px 6px; width: 95px; white-space: nowrap;">كود الصنف</th>
+      <th style="padding: 7px 14px; min-width: 220px; text-align: right; white-space: nowrap;">اسم الصنف</th>
+      <th style="padding: 7px 6px; width: 75px; white-space: nowrap;">العبوة</th>
+      <th style="padding: 7px 8px; width: 95px; white-space: nowrap;">الكمية الحالية</th>
+      <th style="padding: 7px 8px; width: 95px; text-align: right; white-space: nowrap;">سعر الكلفة</th>
+      <th style="padding: 7px 8px; width: 95px; text-align: right; white-space: nowrap;">سعر البيع</th>
+      <th style="padding: 7px 10px; width: 130px; text-align: right; white-space: nowrap;">قيمة المخزون بالكلفة</th>
+      <th style="padding: 7px 10px; width: 130px; text-align: right; white-space: nowrap;">قيمة المخزون بسعر البيع</th>
+      <th style="padding: 7px 12px; width: 130px; text-align: right; white-space: nowrap;">الأرباح المتوقعة</th>
+    </tr>
+  `;
+
+  if (!list || list.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="9" style="padding: 25px; text-align: center; color: #94a3b8; font-weight: bold;">لا توجد بيانات مخزون</td></tr>`;
+    updateSalesReportSummary(tabId, 0, '');
+    return;
+  }
+
+  let totalQty = 0;
+  let totalCostVal = 0;
+  let totalSellVal = 0;
+  let totalExpectedProfit = 0;
+  let html = '';
+
+  list.forEach((item, idx) => {
+    const qty = parseFloat(item.fldStockQty || 0);
+    const costVal = parseFloat(item.fldTotalCostValue || 0);
+    const sellVal = parseFloat(item.fldTotalSellingValue || 0);
+    const expProfit = parseFloat(item.fldExpectedProfit || (sellVal - costVal));
+
+    totalQty += qty;
+    totalCostVal += costVal;
+    totalSellVal += sellVal;
+    totalExpectedProfit += expProfit;
+
+    html += `
+      <tr style="border-bottom: 1px solid #e2e8f0; background: ${idx % 2 === 0 ? '#ffffff' : '#f8fafc'};">
+        <td style="padding: 6px 6px; font-weight: bold; font-family: monospace; color: #475569;">${item.fldItemCode || '-'}</td>
+        <td style="padding: 6px 14px; text-align: right; font-weight: bold; color: #1e293b;">${item.fldItemName}</td>
+        <td style="padding: 6px 6px; font-family: monospace;">${item.fldUnitName || 'حبه'}</td>
+        <td style="padding: 6px 8px; font-family: monospace; font-weight: bold; color: #0284c7;">${qty.toFixed(2)}</td>
+        <td style="padding: 6px 8px; text-align: right; font-family: monospace; color: #64748b;">${parseFloat(item.fldCostPrice||0).toFixed(2)}</td>
+        <td style="padding: 6px 8px; text-align: right; font-family: monospace; font-weight: bold; color: #059669;">${parseFloat(item.fldSellingPrice||0).toFixed(2)}</td>
+        <td style="padding: 6px 10px; text-align: right; font-family: monospace; color: #64748b;">${costVal.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+        <td style="padding: 6px 10px; text-align: right; font-weight: 900; font-family: monospace; color: #0f766e;">${sellVal.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+        <td style="padding: 6px 12px; text-align: right; font-weight: 900; font-family: monospace; color: #b45309;">${expProfit.toLocaleString('en-US', {minimumFractionDigits:2})}</td>
+      </tr>
+    `;
+  });
+
+  tbody.innerHTML = html;
+  updateSalesReportSummary(tabId, list.length, `قيمة المخزون بسعر البيع: <span style="color: #0f766e; margin: 0 4px; font-size: 0.95rem;">${totalSellVal.toLocaleString('en-US', {minimumFractionDigits:2})}</span> | قيمة المخزون بالكلفة: <span style="color: #64748b; margin: 0 4px;">${totalCostVal.toLocaleString('en-US', {minimumFractionDigits:2})}</span> | إجمالي الأرباح المتوقعة: <span style="color: #b45309; margin: 0 4px; font-size: 0.95rem;">${totalExpectedProfit.toLocaleString('en-US', {minimumFractionDigits:2})}</span>`);
+}
+
+// 15. PRINT & EXCEL EXPORT FOR SALES REPORTS
+window.generateSalesReportPrintHtml = function(tabId) {
+  const repState = state.salesReports[tabId] || { activeReport: 'movement' };
+  const reportKey = repState.activeReport || 'movement';
+  const meta = SALES_REPORT_META[reportKey] || SALES_REPORT_META.movement;
+
+  const branchEl = document.getElementById(`salesRepBranch-${tabId}`);
+  const branchName = branchEl ? branchEl.options[branchEl.selectedIndex]?.text : 'الفرع الرئيسي';
+  const fromDate = document.getElementById(`salesRepFromDate-${tabId}`)?.value || '';
+  const toDate = document.getElementById(`salesRepToDate-${tabId}`)?.value || '';
+
+  const theadHtml = document.getElementById(`salesReportThead-${tabId}`)?.innerHTML || '';
+  const tbodyHtml = document.getElementById(`salesReportTbody-${tabId}`)?.innerHTML || '';
+  const summaryHtml = document.getElementById(`salesReportFooter-${tabId}`)?.innerHTML || '';
+
+  const savedHeaderImage = localStorage.getItem('reportHeaderImage') || '/api/settings/logo';
+
+  return `
+    <!DOCTYPE html>
+    <html dir="rtl" lang="ar">
+    <head>
+      <meta charset="UTF-8">
+      <title>${meta.title} - ${branchName}</title>
+      <style>
+        @page { size: A4 landscape; margin: 8mm; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 10px; margin: 0; padding: 0; color: #1e293b; direction: rtl; }
+        .print-header-img { width: 100%; max-height: 85px; object-fit: contain; margin-bottom: 6px; display: block; }
+        .report-header-box { border-bottom: 2px solid #0284c7; padding-bottom: 6px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+        .report-title { font-size: 17px; font-weight: 900; color: #1e3a8a; }
+        .report-meta { font-size: 10.5px; color: #475569; }
+        table { width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 9.5px; }
+        th { background: #f1f5f9; color: #1e293b; border: 1px solid #94a3b8; padding: 4px; text-align: center; font-weight: bold; }
+        td { border: 1px solid #cbd5e1; padding: 4px 6px; text-align: center; }
+        tr:nth-child(even) { background-color: #f8fafc; }
+        .summary-box { margin-top: 8px; padding: 6px 10px; background: #f8fafc; border: 1px solid #cbd5e1; font-weight: bold; font-size: 11px; display: flex; justify-content: space-between; }
+        .footer-signatures { margin-top: 18px; display: flex; justify-content: space-between; font-weight: bold; font-size: 10.5px; }
+      </style>
+    </head>
+    <body>
+      <img src="${savedHeaderImage}" class="print-header-img" onerror="this.style.display='none'">
+      <div class="report-header-box">
+        <div>
+          <span class="report-title">${meta.title}</span>
+          <span style="margin-right: 12px; font-size: 12px; color: #0284c7; font-weight: bold;">[ ${branchName} ]</span>
+        </div>
+        <div class="report-meta">
+          <span>الفترة: من ${fromDate || 'البداية'} إلى ${toDate || 'اليوم'}</span> |
+          <span>تاريخ الطباعة: ${new Date().toLocaleDateString('ar-EG')}</span>
+        </div>
+      </div>
+
+      <table>
+        <thead>${theadHtml}</thead>
+        <tbody>${tbodyHtml}</tbody>
+      </table>
+
+      <div class="summary-box">${summaryHtml}</div>
+
+      <div class="footer-signatures">
+        <div>المسؤول / المحاسب: ..........................</div>
+        <div>المراجعة والتدقيق: ..........................</div>
+        <div>مدير المبيعات: ..........................</div>
+        <div>اعتماد الإدارة: ..........................</div>
+      </div>
+    </body>
+    </html>
+  `;
+};
+
+window.printCurrentSalesReport = function(tabId) {
+  const html = generateSalesReportPrintHtml(tabId);
+  const printWindow = window.open('', '_blank');
+  if (!printWindow) {
+    alert("يرجى السماح بالنوافذ المنبثقة للطباعة");
+    return;
+  }
+  printWindow.document.open();
+  printWindow.document.write(html);
+  printWindow.document.close();
+  setTimeout(() => {
+    printWindow.focus();
+    printWindow.print();
+  }, 400);
+};
+
+window.exportSalesReportExcel = function(tabId) {
+  const repState = state.salesReports[tabId] || { activeReport: 'movement' };
+  const reportKey = repState.activeReport || 'movement';
+  const meta = SALES_REPORT_META[reportKey] || SALES_REPORT_META.movement;
+  const list = repState.filtered || [];
+
+  if (!list || list.length === 0) {
+    showNotification("لا توجد بيانات لتصديرها", "warning");
+    return;
+  }
+
+  let tableHtml = document.getElementById(`salesReportTable-${tabId}`)?.outerHTML || '';
+  const uri = 'data:application/vnd.ms-excel;base64,';
+  const template = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="UTF-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>' + meta.title + '</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head><body dir="rtl">' + tableHtml + '</body></html>';
+  const base64 = function(s) { return window.btoa(unescape(encodeURIComponent(s))); };
+
+  const a = document.createElement('a');
+  a.href = uri + base64(template);
+  a.download = `${meta.title}_${new Date().toISOString().split('T')[0]}.xls`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  showNotification("تم تصدير ملف الإكسل بنجاح", "success");
+};
+
+// 16. WHATSAPP PDF FOR SALES REPORTS
+window.openSalesReportWhatsAppModal = function(tabId) {
+  const modalEl = document.getElementById(`salesReportWhatsAppModal-${tabId}`);
+  if (!modalEl) return;
+  const modal = new bootstrap.Modal(modalEl);
+  modal.show();
+};
+
+window.executeSendSalesReportWhatsApp = async function(tabId) {
+  const repState = state.salesReports[tabId] || { activeReport: 'movement' };
+  const reportKey = repState.activeReport || 'movement';
+  const meta = SALES_REPORT_META[reportKey] || SALES_REPORT_META.movement;
+
+  const phone = document.getElementById(`salesRepWaPhone-${tabId}`)?.value || '';
+  const caption = document.getElementById(`salesRepWaCaption-${tabId}`)?.value || '';
+
+  if (!phone || !phone.trim()) {
+    showNotification("يرجى إدخال رقم هاتف المستلم", "error");
+    return;
+  }
+
+  const html = generateSalesReportPrintHtml(tabId);
+  const modalEl = document.getElementById(`salesReportWhatsAppModal-${tabId}`);
+  const bsModal = bootstrap.Modal.getInstance(modalEl);
+
+  showNotification("جاري توليد ملف PDF وإرساله عبر الواتساب...", "info");
+
+  try {
+    const res = await fetch('/api/sales-reports/send-whatsapp-pdf', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        html,
+        phone: phone.trim(),
+        title: meta.title,
+        caption: caption || `مرفق لكم: ${meta.title} من نظام مستكشف الحسابات`,
+        landscape: true
+      })
+    });
+
+    const json = await res.json();
+    if (json.success) {
+      if (bsModal) bsModal.hide();
+      showNotification(json.message || "تم إرسال التقرير بنجاح عبر الواتساب", "success");
+    } else {
+      showNotification("فشل الإرسال: " + (json.error || 'خطأ غير معروف'), "error");
+    }
+  } catch (err) {
+    console.error("Error sending sales report WhatsApp:", err);
+    showNotification("فشل إرسال ملف PDF: " + err.message, "error");
+  }
+};
+

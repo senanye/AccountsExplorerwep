@@ -18677,6 +18677,709 @@ app.post('/api/service-reports/download-pdf', async (req, res) => {
   }
 });
 
+// =============================================================================
+// 44. SALES REPORTS & WHATSAPP PDF ENGINE (تقارير المبيعات)
+// Matching media_1787896292492.png
+// =============================================================================
+
+// Helper for sales reports base filter
+function buildSalesReportsWhere(req, request, prefix = 't') {
+  const { branchId, fromDate, toDate, currencyId, paymentType, storeId, catgId, accountId, salespersonId, search } = req.query;
+  let whereClauses = [];
+
+  if (branchId && parseInt(branchId) > 0) {
+    request.input('branchId', sql.Int, parseInt(branchId));
+    whereClauses.push(`${prefix}.fldBranchNo = @branchId`);
+  }
+  if (fromDate) {
+    request.input('fromDate', sql.NVarChar, fromDate);
+    whereClauses.push(`CONVERT(VARCHAR(10), ${prefix}.fldDate, 120) >= @fromDate`);
+  }
+  if (toDate) {
+    const toDateParam = (toDate.includes(' ') || toDate.includes('T')) ? toDate : `${toDate} 23:59:59`;
+    request.input('toDate', sql.NVarChar, toDateParam);
+    whereClauses.push(`CONVERT(VARCHAR(10), ${prefix}.fldDate, 120) <= @toDate`);
+  }
+  if (currencyId && parseInt(currencyId) > 0) {
+    request.input('currencyId', sql.Int, parseInt(currencyId));
+    whereClauses.push(`${prefix}.fldVoisherMoneyID = @currencyId`);
+  }
+  if (paymentType && parseInt(paymentType) > 0) {
+    request.input('paymentType', sql.Int, parseInt(paymentType));
+    whereClauses.push(`${prefix}.fldType = @paymentType`);
+  }
+  if (storeId && parseInt(storeId) > 0) {
+    request.input('storeId', sql.Int, parseInt(storeId));
+    whereClauses.push(`${prefix}.fldstoreID = @storeId`);
+  }
+  if (accountId && parseInt(accountId) > 0) {
+    request.input('accountId', sql.Int, parseInt(accountId));
+    whereClauses.push(`(${prefix}.fldAccNumberID = @accountId OR ${prefix}.fldVoisherAccID = @accountId)`);
+  }
+  if (salespersonId && parseInt(salespersonId) > 0) {
+    request.input('salespersonId', sql.Int, parseInt(salespersonId));
+    whereClauses.push(`(${prefix}.fldSalesManID = @salespersonId OR ${prefix}.fldUserID = @salespersonId)`);
+  }
+
+  return whereClauses;
+}
+
+// 1. GET /api/sales-reports/movement (حركة المبيعات - Main matching screenshot)
+app.get('/api/sales-reports/movement', async (req, res) => {
+  const isConnected = globalPool !== null && globalPool.connected;
+  if (!isConnected) return res.json({ success: true, source: "mock", data: [] });
+
+  try {
+    const request = globalPool.request();
+    let whereClauses = ["t.fldTransType IN (30, 31)"];
+    whereClauses.push(...buildSalesReportsWhere(req, request, 't'));
+
+    const { search, catgId } = req.query;
+    if (catgId && parseInt(catgId) > 0) {
+      request.input('catgId', sql.Int, parseInt(catgId));
+      whereClauses.push("i.fldCatgID = @catgId");
+    }
+    if (search && search.trim()) {
+      request.input('search', sql.NVarChar, '%' + search.trim() + '%');
+      whereClauses.push("(i.fldName LIKE @search OR i.fldCode LIKE @search OR t.fldDescription LIKE @search OR a.fldName LIKE @search)");
+    }
+
+    const query = `
+      SELECT 
+        d.fldID AS fldDetailID,
+        t.fldID AS fldTransID,
+        t.fldTransNo,
+        CONVERT(VARCHAR(10), t.fldDate, 120) AS fldDate,
+        t.fldTransType,
+        CASE WHEN t.fldTransType = 31 THEN N'مردود مبيعات' ELSE N'فاتورة مبيعات' END AS fldTransTypeName,
+        ISNULL(b.fldName, N'الفرع الرئيسي') AS fldBranchName,
+        RTRIM(LTRIM(ISNULL(m.fldsymbol, N'ريال سعودي'))) AS fldCurrency,
+        COALESCE(i.fldCode, CAST(d.flditemID AS VARCHAR)) AS fldItemCode,
+        COALESCE(i.fldName, d.fldDescription, N'صنف عام') AS fldItemName,
+        ISNULL(u.fldUnitName, N'حبه') AS fldUnitName,
+        CASE WHEN t.fldTransType = 31 THEN -ISNULL(d.fldQTY, 0) ELSE ISNULL(d.fldQTY, 0) END AS fldQty,
+        ISNULL(d.fldPrice, 0) AS fldPrice,
+        ISNULL(d.fldCost, 0) AS fldCost,
+        CASE WHEN t.fldTransType = 31 THEN -ISNULL(d.fldTotalPrice, 0) ELSE ISNULL(d.fldTotalPrice, 0) END AS fldTotalAmount,
+        ISNULL(d.fldDiscount, 0) AS fldDiscount,
+        ISNULL(d.fldlTaxTota_D, 0) AS fldTax,
+        CASE WHEN t.fldTransType = 31 THEN -(ISNULL(d.fldTotalPrice, 0) - ISNULL(d.fldDiscount, 0) + ISNULL(d.fldlTaxTota_D, 0))
+             ELSE (ISNULL(d.fldTotalPrice, 0) - ISNULL(d.fldDiscount, 0) + ISNULL(d.fldlTaxTota_D, 0)) END AS fldNetTotal,
+        ISNULL(s.fldName, N'مخزن عام 1') AS fldWarehouseName,
+        ISNULL(a.fldName, t.fldName) AS fldCustomerName,
+        CASE WHEN t.fldType = 1 THEN N'نقد' ELSE N'اجل' END AS fldPaymentTypeName
+      FROM dbo.tblItemTransD d
+      INNER JOIN dbo.tblTransAction t ON d.fldTransID = t.fldID
+      LEFT JOIN dbo.tblItem i ON d.flditemID = i.fldID
+      LEFT JOIN dbo.tblItemsUnit u ON d.fldUnityID = u.fldID
+      LEFT JOIN dbo.tblBranchList b ON t.fldBranchNo = b.fldID
+      LEFT JOIN dbo.tblMoney m ON t.fldVoisherMoneyID = m.fldID
+      LEFT JOIN dbo.tblStore s ON t.fldstoreID = s.fldID
+      LEFT JOIN dbo.tblAccount a ON ISNULL(t.fldAccNumberID, t.fldVoisherAccID) = a.fldID
+      WHERE ` + whereClauses.join(' AND ') + `
+      ORDER BY t.fldDate DESC, t.fldTransNo DESC, d.fldID ASC
+    `;
+
+    const result = await request.query(query);
+    res.json({ success: true, source: "database", data: result.recordset });
+  } catch (err) {
+    console.error("Error in GET /api/sales-reports/movement:", err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 2. GET /api/sales-reports/sales-and-returns (تقرير المبيعات و مرتجعاتها)
+app.get('/api/sales-reports/sales-and-returns', async (req, res) => {
+  const isConnected = globalPool !== null && globalPool.connected;
+  if (!isConnected) return res.json({ success: true, source: "mock", data: [] });
+
+  try {
+    const request = globalPool.request();
+    let whereClauses = ["t.fldTransType IN (30, 31)"];
+    whereClauses.push(...buildSalesReportsWhere(req, request, 't'));
+
+    const query = `
+      SELECT 
+        t.fldID AS fldTransID,
+        t.fldTransNo,
+        CONVERT(VARCHAR(10), t.fldDate, 120) AS fldDate,
+        t.fldTransType,
+        CASE WHEN t.fldTransType = 30 THEN N'مبيعات' ELSE N'مردود مبيعات' END AS fldTransTypeName,
+        CASE WHEN t.fldType = 1 THEN N'نقد' ELSE N'اجل' END AS fldPaymentTypeName,
+        ISNULL(b.fldName, N'الفرع الرئيسي') AS fldBranchName,
+        RTRIM(LTRIM(ISNULL(m.fldsymbol, N'ريال سعودي'))) AS fldCurrency,
+        ISNULL(a.fldName, t.fldName) AS fldCustomerName,
+        ISNULL(t.fldVoisherTotal, 0) AS fldTotalAmount,
+        ISNULL(t.fldDiscountTotal, 0) AS fldDiscount,
+        ISNULL(t.fldTaxTota, 0) AS fldTax,
+        CASE WHEN t.fldTransType = 31 THEN -ISNULL(t.fldAccTotal, 0) ELSE ISNULL(t.fldAccTotal, 0) END AS fldNetTotal,
+        ISNULL(s.fldName, N'مخزن عام') AS fldWarehouseName,
+        ISNULL(u.fldName, N'المسؤول') AS fldUserName
+      FROM dbo.tblTransAction t
+      LEFT JOIN dbo.tblBranchList b ON t.fldBranchNo = b.fldID
+      LEFT JOIN dbo.tblMoney m ON t.fldVoisherMoneyID = m.fldID
+      LEFT JOIN dbo.tblAccount a ON ISNULL(t.fldAccNumberID, t.fldVoisherAccID) = a.fldID
+      LEFT JOIN dbo.tblStore s ON t.fldstoreID = s.fldID
+      LEFT JOIN dbo.tblUser u ON t.fldUserID = u.fldID
+      WHERE ` + whereClauses.join(' AND ') + `
+      ORDER BY t.fldDate DESC, t.fldTransNo DESC
+    `;
+
+    const result = await request.query(query);
+    res.json({ success: true, source: "database", data: result.recordset });
+  } catch (err) {
+    console.error("Error in GET /api/sales-reports/sales-and-returns:", err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 3. GET /api/sales-reports/daily-sales (تقرير مبيعات اليومية)
+app.get('/api/sales-reports/daily-sales', async (req, res) => {
+  const isConnected = globalPool !== null && globalPool.connected;
+  if (!isConnected) return res.json({ success: true, source: "mock", data: [] });
+
+  try {
+    const request = globalPool.request();
+    let whereClauses = ["t.fldTransType = 30"];
+    whereClauses.push(...buildSalesReportsWhere(req, request, 't'));
+
+    const query = `
+      SELECT 
+        CONVERT(VARCHAR(10), t.fldDate, 120) AS fldDate,
+        COUNT(DISTINCT t.fldID) AS fldInvoicesCount,
+        SUM(CASE WHEN t.fldType = 1 THEN ISNULL(t.fldAccTotal, 0) ELSE 0 END) AS fldCashSales,
+        SUM(CASE WHEN t.fldType != 1 THEN ISNULL(t.fldAccTotal, 0) ELSE 0 END) AS fldCreditSales,
+        SUM(ISNULL(t.fldDiscountTotal, 0)) AS fldTotalDiscount,
+        SUM(ISNULL(t.fldTaxTota, 0)) AS fldTotalTax,
+        SUM(ISNULL(t.fldAccTotal, 0)) AS fldTotalSales,
+        RTRIM(LTRIM(ISNULL(m.fldsymbol, N'ريال سعودي'))) AS fldCurrency,
+        ISNULL(b.fldName, N'الفرع الرئيسي') AS fldBranchName
+      FROM dbo.tblTransAction t
+      LEFT JOIN dbo.tblBranchList b ON t.fldBranchNo = b.fldID
+      LEFT JOIN dbo.tblMoney m ON t.fldVoisherMoneyID = m.fldID
+      WHERE ` + whereClauses.join(' AND ') + `
+      GROUP BY CONVERT(VARCHAR(10), t.fldDate, 120), m.fldsymbol, b.fldName
+      ORDER BY CONVERT(VARCHAR(10), t.fldDate, 120) DESC
+    `;
+
+    const result = await request.query(query);
+    res.json({ success: true, source: "database", data: result.recordset });
+  } catch (err) {
+    console.error("Error in GET /api/sales-reports/daily-sales:", err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 4. GET /api/sales-reports/returns (تقرير مردودات مبيعات)
+app.get('/api/sales-reports/returns', async (req, res) => {
+  const isConnected = globalPool !== null && globalPool.connected;
+  if (!isConnected) return res.json({ success: true, source: "mock", data: [] });
+
+  try {
+    const request = globalPool.request();
+    let whereClauses = ["t.fldTransType = 31"];
+    whereClauses.push(...buildSalesReportsWhere(req, request, 't'));
+
+    const query = `
+      SELECT 
+        d.fldID AS fldDetailID,
+        t.fldID AS fldTransID,
+        t.fldTransNo,
+        CONVERT(VARCHAR(10), t.fldDate, 120) AS fldDate,
+        ISNULL(b.fldName, N'الفرع الرئيسي') AS fldBranchName,
+        RTRIM(LTRIM(ISNULL(m.fldsymbol, N'ريال سعودي'))) AS fldCurrency,
+        COALESCE(i.fldCode, CAST(d.flditemID AS VARCHAR)) AS fldItemCode,
+        COALESCE(i.fldName, d.fldDescription, N'صنف مردود') AS fldItemName,
+        ISNULL(u.fldUnitName, N'حبه') AS fldUnitName,
+        ISNULL(d.fldQTY, 0) AS fldQty,
+        ISNULL(d.fldPrice, 0) AS fldPrice,
+        ISNULL(d.fldTotalPrice, 0) AS fldTotalAmount,
+        ISNULL(a.fldName, t.fldName) AS fldCustomerName,
+        ISNULL(t.fldDescription, N'مردود مبيعات') AS fldNote
+      FROM dbo.tblItemTransD d
+      INNER JOIN dbo.tblTransAction t ON d.fldTransID = t.fldID
+      LEFT JOIN dbo.tblItem i ON d.flditemID = i.fldID
+      LEFT JOIN dbo.tblItemsUnit u ON d.fldUnityID = u.fldID
+      LEFT JOIN dbo.tblBranchList b ON t.fldBranchNo = b.fldID
+      LEFT JOIN dbo.tblMoney m ON t.fldVoisherMoneyID = m.fldID
+      LEFT JOIN dbo.tblAccount a ON ISNULL(t.fldAccNumberID, t.fldVoisherAccID) = a.fldID
+      WHERE ` + whereClauses.join(' AND ') + `
+      ORDER BY t.fldDate DESC, t.fldTransNo DESC
+    `;
+
+    const result = await request.query(query);
+    res.json({ success: true, source: "database", data: result.recordset });
+  } catch (err) {
+    console.error("Error in GET /api/sales-reports/returns:", err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 5. GET /api/sales-reports/below-cost (مبيعات بأقل من سعر الكلفة)
+app.get('/api/sales-reports/below-cost', async (req, res) => {
+  const isConnected = globalPool !== null && globalPool.connected;
+  if (!isConnected) return res.json({ success: true, source: "mock", data: [] });
+
+  try {
+    const request = globalPool.request();
+    let whereClauses = ["t.fldTransType = 30", "d.fldPrice < d.fldCost", "d.fldCost > 0"];
+    whereClauses.push(...buildSalesReportsWhere(req, request, 't'));
+
+    const query = `
+      SELECT 
+        d.fldID AS fldDetailID,
+        t.fldID AS fldTransID,
+        t.fldTransNo,
+        CONVERT(VARCHAR(10), t.fldDate, 120) AS fldDate,
+        COALESCE(i.fldCode, CAST(d.flditemID AS VARCHAR)) AS fldItemCode,
+        COALESCE(i.fldName, d.fldDescription) AS fldItemName,
+        ISNULL(d.fldQTY, 0) AS fldQty,
+        ISNULL(d.fldPrice, 0) AS fldPrice,
+        ISNULL(d.fldCost, 0) AS fldCost,
+        (ISNULL(d.fldCost, 0) - ISNULL(d.fldPrice, 0)) AS fldLossPerUnit,
+        (ISNULL(d.fldCost, 0) - ISNULL(d.fldPrice, 0)) * ISNULL(d.fldQTY, 0) AS fldTotalLoss,
+        ISNULL(a.fldName, t.fldName) AS fldCustomerName,
+        ISNULL(b.fldName, N'الفرع الرئيسي') AS fldBranchName
+      FROM dbo.tblItemTransD d
+      INNER JOIN dbo.tblTransAction t ON d.fldTransID = t.fldID
+      LEFT JOIN dbo.tblItem i ON d.flditemID = i.fldID
+      LEFT JOIN dbo.tblBranchList b ON t.fldBranchNo = b.fldID
+      LEFT JOIN dbo.tblAccount a ON ISNULL(t.fldAccNumberID, t.fldVoisherAccID) = a.fldID
+      WHERE ` + whereClauses.join(' AND ') + `
+      ORDER BY fldTotalLoss DESC
+    `;
+
+    const result = await request.query(query);
+    res.json({ success: true, source: "database", data: result.recordset });
+  } catch (err) {
+    console.error("Error in GET /api/sales-reports/below-cost:", err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 6. GET /api/sales-reports/free-sales (المبيعات المجانية)
+app.get('/api/sales-reports/free-sales', async (req, res) => {
+  const isConnected = globalPool !== null && globalPool.connected;
+  if (!isConnected) return res.json({ success: true, source: "mock", data: [] });
+
+  try {
+    const request = globalPool.request();
+    let whereClauses = ["(d.fldFreeQTY > 0 OR d.fldPrice = 0)", "t.fldTransType = 30"];
+    whereClauses.push(...buildSalesReportsWhere(req, request, 't'));
+
+    const query = `
+      SELECT 
+        d.fldID AS fldDetailID,
+        t.fldTransNo,
+        CONVERT(VARCHAR(10), t.fldDate, 120) AS fldDate,
+        COALESCE(i.fldCode, CAST(d.flditemID AS VARCHAR)) AS fldItemCode,
+        COALESCE(i.fldName, d.fldDescription) AS fldItemName,
+        ISNULL(d.fldFreeQTY, d.fldQTY) AS fldFreeQty,
+        ISNULL(d.fldCost, 0) AS fldCost,
+        (ISNULL(d.fldCost, 0) * ISNULL(d.fldFreeQTY, d.fldQTY)) AS fldTotalCostValue,
+        ISNULL(a.fldName, t.fldName) AS fldCustomerName,
+        ISNULL(b.fldName, N'الفرع الرئيسي') AS fldBranchName
+      FROM dbo.tblItemTransD d
+      INNER JOIN dbo.tblTransAction t ON d.fldTransID = t.fldID
+      LEFT JOIN dbo.tblItem i ON d.flditemID = i.fldID
+      LEFT JOIN dbo.tblBranchList b ON t.fldBranchNo = b.fldID
+      LEFT JOIN dbo.tblAccount a ON ISNULL(t.fldAccNumberID, t.fldVoisherAccID) = a.fldID
+      WHERE ` + whereClauses.join(' AND ') + `
+      ORDER BY t.fldDate DESC
+    `;
+
+    const result = await request.query(query);
+    res.json({ success: true, source: "database", data: result.recordset });
+  } catch (err) {
+    console.error("Error in GET /api/sales-reports/free-sales:", err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 7. GET /api/sales-reports/detailed-movement (حركة المبيعات تفصيلي)
+app.get('/api/sales-reports/detailed-movement', async (req, res) => {
+  const isConnected = globalPool !== null && globalPool.connected;
+  if (!isConnected) return res.json({ success: true, source: "mock", data: [] });
+
+  try {
+    const request = globalPool.request();
+    let whereClauses = ["t.fldTransType IN (30, 31)"];
+    whereClauses.push(...buildSalesReportsWhere(req, request, 't'));
+
+    const query = `
+      SELECT 
+        d.fldID AS fldDetailID,
+        t.fldTransNo,
+        CONVERT(VARCHAR(10), t.fldDate, 120) AS fldDate,
+        CASE WHEN t.fldTransType = 31 THEN N'مردود' ELSE N'مبيعات' END AS fldType,
+        COALESCE(i.fldCode, CAST(d.flditemID AS VARCHAR)) AS fldItemCode,
+        COALESCE(i.fldName, d.fldDescription) AS fldItemName,
+        ISNULL(u.fldUnitName, N'حبه') AS fldUnitName,
+        ISNULL(d.fldQTY, 0) AS fldQty,
+        ISNULL(d.fldPrice, 0) AS fldPrice,
+        ISNULL(d.fldCost, 0) AS fldCost,
+        ISNULL(d.fldTotalPrice, 0) AS fldTotalAmount,
+        (ISNULL(d.fldPrice, 0) - ISNULL(d.fldCost, 0)) * ISNULL(d.fldQTY, 0) AS fldGrossProfit,
+        ISNULL(a.fldName, t.fldName) AS fldCustomerName,
+        ISNULL(s.fldName, N'مخزن عام') AS fldWarehouseName,
+        ISNULL(b.fldName, N'الفرع الرئيسي') AS fldBranchName
+      FROM dbo.tblItemTransD d
+      INNER JOIN dbo.tblTransAction t ON d.fldTransID = t.fldID
+      LEFT JOIN dbo.tblItem i ON d.flditemID = i.fldID
+      LEFT JOIN dbo.tblItemsUnit u ON d.fldUnityID = u.fldID
+      LEFT JOIN dbo.tblStore s ON t.fldstoreID = s.fldID
+      LEFT JOIN dbo.tblBranchList b ON t.fldBranchNo = b.fldID
+      LEFT JOIN dbo.tblAccount a ON ISNULL(t.fldAccNumberID, t.fldVoisherAccID) = a.fldID
+      WHERE ` + whereClauses.join(' AND ') + `
+      ORDER BY t.fldDate DESC, t.fldTransNo DESC
+    `;
+
+    const result = await request.query(query);
+    res.json({ success: true, source: "database", data: result.recordset });
+  } catch (err) {
+    console.error("Error in GET /api/sales-reports/detailed-movement:", err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 8. GET /api/sales-reports/movement-summary (تقرير حركة المبيعات - Grouped)
+app.get('/api/sales-reports/movement-summary', async (req, res) => {
+  const isConnected = globalPool !== null && globalPool.connected;
+  if (!isConnected) return res.json({ success: true, source: "mock", data: [] });
+
+  try {
+    const request = globalPool.request();
+    let whereClauses = ["t.fldTransType = 30"];
+    whereClauses.push(...buildSalesReportsWhere(req, request, 't'));
+
+    const query = `
+      SELECT 
+        d.flditemID,
+        COALESCE(i.fldCode, CAST(d.flditemID AS VARCHAR)) AS fldItemCode,
+        COALESCE(i.fldName, d.fldDescription, N'صنف عام') AS fldItemName,
+        ISNULL(u.fldUnitName, N'حبه') AS fldUnitName,
+        SUM(ISNULL(d.fldQTY, 0)) AS fldTotalQty,
+        AVG(ISNULL(d.fldPrice, 0)) AS fldAvgPrice,
+        SUM(ISNULL(d.fldTotalPrice, 0)) AS fldTotalSales,
+        SUM(ISNULL(d.fldTotalCost, (ISNULL(d.fldCost, 0) * ISNULL(d.fldQTY, 0)))) AS fldTotalCost,
+        SUM(ISNULL(d.fldTotalPrice, 0)) - SUM(ISNULL(d.fldTotalCost, (ISNULL(d.fldCost, 0) * ISNULL(d.fldQTY, 0)))) AS fldGrossProfit
+      FROM dbo.tblItemTransD d
+      INNER JOIN dbo.tblTransAction t ON d.fldTransID = t.fldID
+      LEFT JOIN dbo.tblItem i ON d.flditemID = i.fldID
+      LEFT JOIN dbo.tblItemsUnit u ON d.fldUnityID = u.fldID
+      WHERE ` + whereClauses.join(' AND ') + `
+      GROUP BY d.flditemID, i.fldCode, i.fldName, d.fldDescription, u.fldUnitName
+      ORDER BY fldTotalSales DESC
+    `;
+
+    const result = await request.query(query);
+    res.json({ success: true, source: "database", data: result.recordset });
+  } catch (err) {
+    console.error("Error in GET /api/sales-reports/movement-summary:", err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 9. GET /api/sales-reports/by-account (تقرير مبيعات لحساب)
+app.get('/api/sales-reports/by-account', async (req, res) => {
+  const isConnected = globalPool !== null && globalPool.connected;
+  if (!isConnected) return res.json({ success: true, source: "mock", data: [] });
+
+  try {
+    const request = globalPool.request();
+    let whereClauses = ["t.fldTransType = 30"];
+    whereClauses.push(...buildSalesReportsWhere(req, request, 't'));
+
+    const query = `
+      SELECT 
+        ISNULL(a.fldID, 0) AS fldAccountID,
+        ISNULL(a.fldNumber, '0') AS fldAccNumber,
+        ISNULL(a.fldName, t.fldName) AS fldAccountName,
+        COUNT(DISTINCT t.fldID) AS fldInvoicesCount,
+        SUM(ISNULL(t.fldVoisherTotal, 0)) AS fldTotalBilled,
+        SUM(ISNULL(t.fldDiscountTotal, 0)) AS fldTotalDiscount,
+        SUM(ISNULL(t.fldTaxTota, 0)) AS fldTotalTax,
+        SUM(ISNULL(t.fldAccTotal, 0)) AS fldNetSales,
+        ISNULL((SELECT SUM(mm.fldDebit - mm.fldCredit) FROM dbo.tblMoneyMove mm WHERE mm.fldAccID = a.fldID), 0) AS fldCurrentBalance,
+        RTRIM(LTRIM(ISNULL(m.fldsymbol, N'ريال سعودي'))) AS fldCurrency
+      FROM dbo.tblTransAction t
+      LEFT JOIN dbo.tblAccount a ON ISNULL(t.fldAccNumberID, t.fldVoisherAccID) = a.fldID
+      LEFT JOIN dbo.tblMoney m ON t.fldVoisherMoneyID = m.fldID
+      WHERE ` + whereClauses.join(' AND ') + `
+      GROUP BY a.fldID, a.fldNumber, a.fldName, t.fldName, m.fldsymbol
+      ORDER BY fldNetSales DESC
+    `;
+
+    const result = await request.query(query);
+    res.json({ success: true, source: "database", data: result.recordset });
+  } catch (err) {
+    console.error("Error in GET /api/sales-reports/by-account:", err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 10. GET /api/sales-reports/credit-sales (تقرير مبيعات اجله لعميل)
+app.get('/api/sales-reports/credit-sales', async (req, res) => {
+  const isConnected = globalPool !== null && globalPool.connected;
+  if (!isConnected) return res.json({ success: true, source: "mock", data: [] });
+
+  try {
+    const request = globalPool.request();
+    let whereClauses = ["t.fldTransType = 30", "t.fldType != 1"];
+    whereClauses.push(...buildSalesReportsWhere(req, request, 't'));
+
+    const query = `
+      SELECT 
+        t.fldID AS fldTransID,
+        t.fldTransNo,
+        CONVERT(VARCHAR(10), t.fldDate, 120) AS fldDate,
+        ISNULL(a.fldNumber, '0') AS fldAccNumber,
+        ISNULL(a.fldName, t.fldName) AS fldCustomerName,
+        ISNULL(t.fldVoisherTotal, 0) AS fldTotalAmount,
+        ISNULL(t.fldDiscountTotal, 0) AS fldDiscount,
+        ISNULL(t.fldAccTotal, 0) AS fldNetTotal,
+        ISNULL((SELECT SUM(mm.fldDebit - mm.fldCredit) FROM dbo.tblMoneyMove mm WHERE mm.fldAccID = a.fldID), 0) AS fldCustomerBalance,
+        RTRIM(LTRIM(ISNULL(m.fldsymbol, N'ريال سعودي'))) AS fldCurrency,
+        ISNULL(b.fldName, N'الفرع الرئيسي') AS fldBranchName
+      FROM dbo.tblTransAction t
+      LEFT JOIN dbo.tblAccount a ON ISNULL(t.fldAccNumberID, t.fldVoisherAccID) = a.fldID
+      LEFT JOIN dbo.tblMoney m ON t.fldVoisherMoneyID = m.fldID
+      LEFT JOIN dbo.tblBranchList b ON t.fldBranchNo = b.fldID
+      WHERE ` + whereClauses.join(' AND ') + `
+      ORDER BY t.fldDate DESC, t.fldTransNo DESC
+    `;
+
+    const result = await request.query(query);
+    res.json({ success: true, source: "database", data: result.recordset });
+  } catch (err) {
+    console.error("Error in GET /api/sales-reports/credit-sales:", err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 11. GET /api/sales-reports/profit-by-invoice (ارباح المبيعات حسب الفاتورة)
+app.get('/api/sales-reports/profit-by-invoice', async (req, res) => {
+  const isConnected = globalPool !== null && globalPool.connected;
+  if (!isConnected) return res.json({ success: true, source: "mock", data: [] });
+
+  try {
+    const request = globalPool.request();
+    let whereClauses = ["t.fldTransType = 30"];
+    whereClauses.push(...buildSalesReportsWhere(req, request, 't'));
+
+    const query = `
+      SELECT 
+        t.fldID AS fldTransID,
+        t.fldTransNo,
+        CONVERT(VARCHAR(10), t.fldDate, 120) AS fldDate,
+        ISNULL(a.fldName, t.fldName) AS fldCustomerName,
+        ISNULL(t.fldAccTotal, 0) AS fldTotalSales,
+        ISNULL(t.fldCostTotal, (SELECT SUM(ISNULL(d.fldCost, 0) * ISNULL(d.fldQTY, 0)) FROM dbo.tblItemTransD d WHERE d.fldTransID = t.fldID)) AS fldTotalCost,
+        (ISNULL(t.fldAccTotal, 0) - ISNULL(t.fldCostTotal, (SELECT SUM(ISNULL(d.fldCost, 0) * ISNULL(d.fldQTY, 0)) FROM dbo.tblItemTransD d WHERE d.fldTransID = t.fldID))) AS fldGrossProfit,
+        CASE WHEN ISNULL(t.fldAccTotal, 0) > 0 THEN 
+          ROUND(((ISNULL(t.fldAccTotal, 0) - ISNULL(t.fldCostTotal, (SELECT SUM(ISNULL(d.fldCost, 0) * ISNULL(d.fldQTY, 0)) FROM dbo.tblItemTransD d WHERE d.fldTransID = t.fldID))) * 100.0 / t.fldAccTotal), 1)
+        ELSE 0 END AS fldProfitPercent,
+        RTRIM(LTRIM(ISNULL(m.fldsymbol, N'ريال سعودي'))) AS fldCurrency,
+        ISNULL(b.fldName, N'الفرع الرئيسي') AS fldBranchName
+      FROM dbo.tblTransAction t
+      LEFT JOIN dbo.tblAccount a ON ISNULL(t.fldAccNumberID, t.fldVoisherAccID) = a.fldID
+      LEFT JOIN dbo.tblMoney m ON t.fldVoisherMoneyID = m.fldID
+      LEFT JOIN dbo.tblBranchList b ON t.fldBranchNo = b.fldID
+      WHERE ` + whereClauses.join(' AND ') + `
+      ORDER BY t.fldDate DESC, t.fldTransNo DESC
+    `;
+
+    const result = await request.query(query);
+    res.json({ success: true, source: "database", data: result.recordset });
+  } catch (err) {
+    console.error("Error in GET /api/sales-reports/profit-by-invoice:", err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 12. GET /api/sales-reports/profit-by-item (مجمل ارباح المبيعات لكل صنف)
+app.get('/api/sales-reports/profit-by-item', async (req, res) => {
+  const isConnected = globalPool !== null && globalPool.connected;
+  if (!isConnected) return res.json({ success: true, source: "mock", data: [] });
+
+  try {
+    const request = globalPool.request();
+    let whereClauses = ["t.fldTransType = 30"];
+    whereClauses.push(...buildSalesReportsWhere(req, request, 't'));
+
+    const query = `
+      SELECT 
+        d.flditemID,
+        COALESCE(i.fldCode, CAST(d.flditemID AS VARCHAR)) AS fldItemCode,
+        COALESCE(i.fldName, d.fldDescription, N'صنف') AS fldItemName,
+        SUM(ISNULL(d.fldQTY, 0)) AS fldTotalQty,
+        SUM(ISNULL(d.fldTotalPrice, 0)) AS fldTotalSales,
+        SUM(ISNULL(d.fldTotalCost, (ISNULL(d.fldCost, 0) * ISNULL(d.fldQTY, 0)))) AS fldTotalCost,
+        (SUM(ISNULL(d.fldTotalPrice, 0)) - SUM(ISNULL(d.fldTotalCost, (ISNULL(d.fldCost, 0) * ISNULL(d.fldQTY, 0))))) AS fldGrossProfit,
+        CASE WHEN SUM(ISNULL(d.fldTotalPrice, 0)) > 0 THEN 
+          ROUND(((SUM(ISNULL(d.fldTotalPrice, 0)) - SUM(ISNULL(d.fldTotalCost, (ISNULL(d.fldCost, 0) * ISNULL(d.fldQTY, 0))))) * 100.0 / SUM(ISNULL(d.fldTotalPrice, 0))), 1)
+        ELSE 0 END AS fldProfitPercent
+      FROM dbo.tblItemTransD d
+      INNER JOIN dbo.tblTransAction t ON d.fldTransID = t.fldID
+      LEFT JOIN dbo.tblItem i ON d.flditemID = i.fldID
+      WHERE ` + whereClauses.join(' AND ') + `
+      GROUP BY d.flditemID, i.fldCode, i.fldName, d.fldDescription
+      ORDER BY fldGrossProfit DESC
+    `;
+
+    const result = await request.query(query);
+    res.json({ success: true, source: "database", data: result.recordset });
+  } catch (err) {
+    console.error("Error in GET /api/sales-reports/profit-by-item:", err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 13. GET /api/sales-reports/daily-summary (اجمالي المبيعات اليومية)
+app.get('/api/sales-reports/daily-summary', async (req, res) => {
+  const isConnected = globalPool !== null && globalPool.connected;
+  if (!isConnected) return res.json({ success: true, source: "mock", data: [] });
+
+  try {
+    const request = globalPool.request();
+    let whereClauses = ["t.fldTransType IN (30, 31)"];
+    whereClauses.push(...buildSalesReportsWhere(req, request, 't'));
+
+    const query = `
+      SELECT 
+        CONVERT(VARCHAR(10), t.fldDate, 120) AS fldDate,
+        COUNT(DISTINCT CASE WHEN t.fldTransType = 30 THEN t.fldID END) AS fldSalesCount,
+        SUM(CASE WHEN t.fldTransType = 30 THEN ISNULL(t.fldAccTotal, 0) ELSE 0 END) AS fldSalesTotal,
+        COUNT(DISTINCT CASE WHEN t.fldTransType = 31 THEN t.fldID END) AS fldReturnsCount,
+        SUM(CASE WHEN t.fldTransType = 31 THEN ISNULL(t.fldAccTotal, 0) ELSE 0 END) AS fldReturnsTotal,
+        (SUM(CASE WHEN t.fldTransType = 30 THEN ISNULL(t.fldAccTotal, 0) ELSE 0 END) - SUM(CASE WHEN t.fldTransType = 31 THEN ISNULL(t.fldAccTotal, 0) ELSE 0 END)) AS fldNetSales,
+        RTRIM(LTRIM(ISNULL(m.fldsymbol, N'ريال سعودي'))) AS fldCurrency,
+        ISNULL(b.fldName, N'الفرع الرئيسي') AS fldBranchName
+      FROM dbo.tblTransAction t
+      LEFT JOIN dbo.tblBranchList b ON t.fldBranchNo = b.fldID
+      LEFT JOIN dbo.tblMoney m ON t.fldVoisherMoneyID = m.fldID
+      WHERE ` + whereClauses.join(' AND ') + `
+      GROUP BY CONVERT(VARCHAR(10), t.fldDate, 120), m.fldsymbol, b.fldName
+      ORDER BY CONVERT(VARCHAR(10), t.fldDate, 120) DESC
+    `;
+
+    const result = await request.query(query);
+    res.json({ success: true, source: "database", data: result.recordset });
+  } catch (err) {
+    console.error("Error in GET /api/sales-reports/daily-summary:", err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 14. GET /api/sales-reports/inventory-selling-value (تقرير قيمة المخزون بسعر البيع)
+app.get('/api/sales-reports/inventory-selling-value', async (req, res) => {
+  const isConnected = globalPool !== null && globalPool.connected;
+  if (!isConnected) return res.json({ success: true, source: "mock", data: [] });
+
+  try {
+    const request = globalPool.request();
+    const { storeId, catgId, search } = req.query;
+    let whereClauses = ["1=1"];
+
+    if (catgId && parseInt(catgId) > 0) {
+      request.input('catgId', sql.Int, parseInt(catgId));
+      whereClauses.push("i.fldCatgID = @catgId");
+    }
+    if (search && search.trim()) {
+      request.input('search', sql.NVarChar, '%' + search.trim() + '%');
+      whereClauses.push("(i.fldName LIKE @search OR i.fldCode LIKE @search)");
+    }
+
+    const query = `
+      SELECT 
+        i.fldID AS fldItemID,
+        i.fldCode AS fldItemCode,
+        i.fldName AS fldItemName,
+        ISNULL(u.fldUnitName, N'حبه') AS fldUnitName,
+        ISNULL((SELECT SUM(d.fldQTY) FROM dbo.tblItemTransD d WHERE d.flditemID = i.fldID), 0) AS fldStockQty,
+        ISNULL(u.fldCost, 0) AS fldCostPrice,
+        ISNULL(u.fldSalesPrice1, 0) AS fldSellingPrice,
+        (ISNULL((SELECT SUM(d.fldQTY) FROM dbo.tblItemTransD d WHERE d.flditemID = i.fldID), 0) * ISNULL(u.fldCost, 0)) AS fldTotalCostValue,
+        (ISNULL((SELECT SUM(d.fldQTY) FROM dbo.tblItemTransD d WHERE d.flditemID = i.fldID), 0) * ISNULL(u.fldSalesPrice1, 0)) AS fldTotalSellingValue,
+        ((ISNULL((SELECT SUM(d.fldQTY) FROM dbo.tblItemTransD d WHERE d.flditemID = i.fldID), 0) * ISNULL(u.fldSalesPrice1, 0)) - (ISNULL((SELECT SUM(d.fldQTY) FROM dbo.tblItemTransD d WHERE d.flditemID = i.fldID), 0) * ISNULL(u.fldCost, 0))) AS fldExpectedProfit
+      FROM dbo.tblItem i
+      LEFT JOIN dbo.tblItemsUnit u ON (i.fldID = u.flditemID AND u.fldID = (SELECT MIN(u2.fldID) FROM dbo.tblItemsUnit u2 WHERE u2.flditemID = i.fldID))
+      WHERE ` + whereClauses.join(' AND ') + `
+      ORDER BY fldTotalSellingValue DESC
+    `;
+
+    const result = await request.query(query);
+    res.json({ success: true, source: "database", data: result.recordset });
+  } catch (err) {
+    console.error("Error in GET /api/sales-reports/inventory-selling-value:", err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 15. POST /api/sales-reports/send-whatsapp-pdf
+app.post('/api/sales-reports/send-whatsapp-pdf', async (req, res) => {
+  const { html, phone, title, caption, landscape } = req.body;
+  if (!html || !phone) {
+    return res.status(400).json({ success: false, error: "HTML content and phone number are required" });
+  }
+
+  let cleanPhone = String(phone).replace(/[^0-9]/g, '');
+  if (!cleanPhone.includes('@c.us')) {
+    if (!cleanPhone.startsWith('967') && cleanPhone.length === 9) cleanPhone = '967' + cleanPhone;
+    cleanPhone = cleanPhone + '@c.us';
+  }
+
+  if (clientStatus !== "ready" || !whatsappClient) {
+    return res.status(503).json({ success: false, error: "خادم الواتساب غير متصل حالياً. يرجى مسح رمز QR أو الاتصال أولاً." });
+  }
+
+  try {
+    const pdfBuffer = await renderPosPdfBuffer(html, landscape !== false);
+    const fileName = `SalesReport_${Date.now()}.pdf`;
+    const tempFilePath = path.join(scratchDir, fileName);
+    fs.writeFileSync(tempFilePath, pdfBuffer);
+
+    const media = MessageMedia.fromFilePath(tempFilePath);
+    let chatId = cleanPhone;
+    if (whatsappClient && typeof whatsappClient.getNumberId === 'function') {
+      try {
+        const numId = await whatsappClient.getNumberId(cleanPhone.replace('@c.us', ''));
+        if (numId && numId._serialized) chatId = numId._serialized;
+      } catch (e) {}
+    }
+
+    await whatsappClient.sendMessage(chatId, media, {
+      caption: caption || `تقرير: ${title || 'تقرير المبيعات'} من نظام مستكشف الحسابات`
+    });
+
+    try { fs.unlinkSync(tempFilePath); } catch (e) {}
+    res.json({ success: true, message: `تم إرسال تقرير PDF بنجاح إلى الرقم (${phone})` });
+  } catch (err) {
+    console.error("Error sending sales report WhatsApp PDF:", err);
+    res.status(500).json({ success: false, error: "فشل إرسال ملف PDF: " + err.message });
+  }
+});
+
+// 16. POST /api/sales-reports/download-pdf
+app.post('/api/sales-reports/download-pdf', async (req, res) => {
+  const { html, title, landscape } = req.body;
+  if (!html) {
+    return res.status(400).json({ success: false, error: "HTML content is required" });
+  }
+
+  try {
+    const pdfBuffer = await renderPosPdfBuffer(html, landscape !== false);
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(title || 'Sales_Report')}_${Date.now()}.pdf"`);
+    res.end(Buffer.from(pdfBuffer));
+  } catch (err) {
+    console.error("Error downloading sales report PDF:", err);
+    res.status(500).json({ success: false, error: "فشل توليد ملف PDF: " + err.message });
+  }
+});
+
+
+
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });

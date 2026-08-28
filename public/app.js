@@ -34424,15 +34424,30 @@ async function populateSalesStores(tabId) {
 async function populateSalesCurrencies(tabId) {
   const sel1 = document.getElementById(`salesRepCurrency-${tabId}`);
   const sel2 = document.getElementById(`salesRepCurrency2-${tabId}`);
+  
+  // 1. Try global state.currencies first if available
+  if (state.currencies && Array.isArray(state.currencies) && state.currencies.length > 0) {
+    const opts = `<option value="0">الكل</option>` + state.currencies.map(c => `<option value="${c.fldID}">${c.fldName} (${c.fldsymbol || ''})</option>`).join('');
+    if (sel1) sel1.innerHTML = opts;
+    if (sel2) sel2.innerHTML = opts;
+    return;
+  }
+
+  // 2. Fetch from /api/currencies-list or /api/currencies
   try {
-    const res = await fetch('/api/currencies');
+    let res = await fetch('/api/currencies-list');
+    if (!res.ok) res = await fetch('/api/currencies');
     const json = await res.json();
-    if (json.success && Array.isArray(json.data)) {
-      const opts = `<option value="0">الكل</option>` + json.data.map(c => `<option value="${c.fldID}">${c.fldName} (${c.fldsymbol || ''})</option>`).join('');
+    const list = json.data || (Array.isArray(json) ? json : []);
+    if (Array.isArray(list) && list.length > 0) {
+      state.currencies = list;
+      const opts = `<option value="0">الكل</option>` + list.map(c => `<option value="${c.fldID}">${c.fldName} (${c.fldsymbol || ''})</option>`).join('');
       if (sel1) sel1.innerHTML = opts;
       if (sel2) sel2.innerHTML = opts;
     }
-  } catch (e) {}
+  } catch (e) {
+    console.error("Error populating sales currencies:", e);
+  }
 }
 
 async function populateSalesCategories(tabId) {

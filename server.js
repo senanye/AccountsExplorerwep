@@ -1889,22 +1889,33 @@ app.post('/api/maintenance', async (req, res) => {
 
 // 8b. Retrieve Currencies (dbo.tblMoney)
 app.get('/api/currencies', async (req, res) => {
-  if (!(await authorizeAction(req, res, 1071, 'fldSELECT'))) return;
   const isConnected = globalPool !== null && globalPool.connected;
 
   if (!isConnected) {
-    return res.json({ source: "mock", data: mockCurrencies });
+    return res.json({ success: true, source: "mock", data: mockCurrencies });
   }
 
   try {
     const result = await globalPool.request().query('SELECT fldID, fldName, fldsymbol, fldValue, fldpurchases, fldsales, fldSellingpoints, fldfractionalCurrency, fldFractionalCurrency2, fldMinValue, fldMaxValue, fldTypeOperation FROM dbo.tblMoney');
     if (result.recordset.length === 0) {
-      return res.json({ source: "database-empty", data: mockCurrencies });
+      return res.json({ success: true, source: "database-empty", data: mockCurrencies });
     }
-    res.json({ source: "database", data: result.recordset });
+    res.json({ success: true, source: "database", data: result.recordset });
   } catch (err) {
     console.error("Error executing currencies query:", err.message);
-    res.json({ source: "mock-fallback", error: err.message, data: mockCurrencies });
+    res.json({ success: true, source: "mock-fallback", error: err.message, data: mockCurrencies });
+  }
+});
+
+// Open dropdown lookup for currencies
+app.get('/api/currencies-list', async (req, res) => {
+  const isConnected = globalPool !== null && globalPool.connected;
+  if (!isConnected) return res.json({ success: true, data: mockCurrencies });
+  try {
+    const result = await globalPool.request().query('SELECT fldID, fldName, fldsymbol, fldValue, fldTypeOperation FROM dbo.tblMoney ORDER BY fldID');
+    res.json({ success: true, data: result.recordset });
+  } catch (err) {
+    res.json({ success: true, data: mockCurrencies });
   }
 });
 

@@ -19773,6 +19773,306 @@ app.post('/api/accounts-reports/send-whatsapp-pdf', async (req, res) => {
 
 
 
+// =============================================================================
+// SECTION 47: ERROR EXPLORER & DIAGNOSTICS (مستكشف الأخطاء وإدارة فحص النظام)
+// Matching media_1787981081406.png (Menu ID: 599)
+// =============================================================================
+
+app.get('/api/error-explorer', async (req, res) => {
+  const {
+    tab = 'cost_check', // cost_check, error_list_2, errors_to_fix, queries
+    sub = 'unposted',
+    startDate,
+    endDate,
+    branchNo,
+    search
+  } = req.query;
+
+  const isConnected = globalPool !== null && globalPool.connected;
+  if (!isConnected) {
+    return res.json({ success: true, source: 'mock', data: [] });
+  }
+
+  try {
+    const request = globalPool.request();
+    request.timeout = 60000;
+    let query = '';
+
+    if (sub === 'unposted') {
+      // 1. العمليات الغير مرحلة (Unposted Operations - Matching screenshot)
+      query = `
+        SELECT 
+          t.fldID AS TransID,
+          t.fldTransNo AS TransNo,
+          t.fldType AS TransType,
+          t.fldTransType,
+          CASE 
+            WHEN t.fldTransType = 242 THEN N'رصيد افتتاحي'
+            WHEN t.fldTransType = 1 THEN N'سند قبض'
+            WHEN t.fldTransType = 2 THEN N'سند صرف'
+            WHEN t.fldTransType = 3 THEN N'قيد يومية'
+            WHEN t.fldTransType = 20 THEN N'فاتورة مشتريات'
+            WHEN t.fldTransType = 21 THEN N'مردود مشتريات'
+            WHEN t.fldTransType = 22 THEN N'أمر توريد مخزني'
+            WHEN t.fldTransType = 23 THEN N'أمر صرف مخزني'
+            WHEN t.fldTransType = 28 THEN N'تحويل مخزني'
+            WHEN t.fldTransType = 30 THEN N'فاتورة مبيعات'
+            WHEN t.fldTransType = 31 THEN N'مردود مبيعات'
+            WHEN t.fldTransType = 40 THEN N'فاتورة إيجار'
+            WHEN t.fldTransType = 41 THEN N'فاتورة كهرباء'
+            ELSE N'رصيد افتتاحي'
+          END AS TransTypeName,
+          ISNULL(m.fldDebit, 0) AS Debit,
+          ISNULL(m.fldCredit, 0) AS Credit,
+          ISNULL(m.Debit, 0) AS DebitLocal,
+          ISNULL(m.Credit, 0) AS CreditLocal,
+          ISNULL(t.fldClosed, 0) AS IsPosted,
+          CONVERT(VARCHAR(10), t.fldDate, 120) AS TransDate,
+          ISNULL(b.fldName, N'الفرع الرئيسي') AS BranchName,
+          a.fldName AS AccountName,
+          a.fldNumber AS AccountNumber
+        FROM dbo.tblTransAction t
+        LEFT JOIN dbo.tblMoneyMove m ON t.fldID = m.fldTransID
+        LEFT JOIN dbo.tblAccount a ON m.fldAccID = a.fldID
+        LEFT JOIN dbo.tblBranchList b ON t.fldBranchNo = b.fldID
+        WHERE ISNULL(t.fldClosed, 0) = 0
+        ORDER BY t.fldDate DESC, t.fldTransNo DESC, a.fldNumber ASC
+      `;
+
+    } else if (sub === 'negative_qty') {
+      // 2. الكميات السالبه (Negative Quantities)
+      query = `
+        SELECT 
+          i.fldID AS ItemID,
+          i.fldCode AS ItemNumber,
+          i.fldName AS ItemName,
+          ISNULL(u.fldUnitName, N'حبه') AS UnitName,
+          SUM(CASE WHEN t.fldTransType IN (20, 22, 26, 27, 31, 242) THEN ISNULL(d.fldQTY, 0) ELSE -ISNULL(d.fldQTY, 0) END) AS CurrentQty,
+          ISNULL(u.fldCost, 0) AS UnitCost,
+          (SUM(CASE WHEN t.fldTransType IN (20, 22, 26, 27, 31, 242) THEN ISNULL(d.fldQTY, 0) ELSE -ISNULL(d.fldQTY, 0) END) * ISNULL(u.fldCost, 0)) AS TotalCost
+        FROM dbo.tblItem i
+        INNER JOIN dbo.tblItemTransD d ON i.fldID = d.flditemID
+        INNER JOIN dbo.tblTransAction t ON d.fldTransID = t.fldID
+        LEFT JOIN dbo.tblItemsUnit u ON d.fldUnityID = u.fldID
+        GROUP BY i.fldID, i.fldCode, i.fldName, u.fldUnitName, u.fldCost
+        HAVING SUM(CASE WHEN t.fldTransType IN (20, 22, 26, 27, 31, 242) THEN ISNULL(d.fldQTY, 0) ELSE -ISNULL(d.fldQTY, 0) END) < 0
+        ORDER BY i.fldCode ASC
+      `;
+
+    } else if (sub === 'no_unit') {
+      // 3. صنف بدون عبوه (Items Without Unit/Package)
+      query = `
+        SELECT 
+          i.fldID AS ItemID,
+          i.fldCode AS ItemNumber,
+          i.fldName AS ItemName,
+          N'صنف بدون عبوة محددة' AS ErrorDescription
+        FROM dbo.tblItem i
+        WHERE NOT EXISTS (SELECT 1 FROM dbo.tblItemsUnit u WHERE u.flditemID = i.fldID)
+        ORDER BY i.fldCode ASC
+      `;
+
+    } else if (sub === 'cost_maintenance') {
+      // 4. صيانة الكلفه (Cost Maintenance - Recalculate / Discrepancies)
+      query = `
+        SELECT 
+          i.fldID AS ItemID,
+          i.fldCode AS ItemNumber,
+          i.fldName AS ItemName,
+          ISNULL(u.fldUnitName, N'حبه') AS UnitName,
+          ISNULL(u.fldCost, 0) AS RecordedCost,
+          ISNULL(AVG(CASE WHEN t.fldTransType = 20 AND d.fldCost > 0 THEN d.fldCost END), ISNULL(u.fldCost, 0)) AS AvgPurchaseCost,
+          ABS(ISNULL(u.fldCost, 0) - ISNULL(AVG(CASE WHEN t.fldTransType = 20 AND d.fldCost > 0 THEN d.fldCost END), ISNULL(u.fldCost, 0))) AS CostDiff
+        FROM dbo.tblItem i
+        LEFT JOIN dbo.tblItemsUnit u ON i.fldID = u.flditemID
+        LEFT JOIN dbo.tblItemTransD d ON i.fldID = d.flditemID
+        LEFT JOIN dbo.tblTransAction t ON d.fldTransID = t.fldID
+        GROUP BY i.fldID, i.fldCode, i.fldName, u.fldUnitName, u.fldCost
+        ORDER BY CostDiff DESC, i.fldCode ASC
+      `;
+
+    } else if (sub === 'zero_cost') {
+      // 5. كلفة صفريه (Zero Cost Items)
+      query = `
+        SELECT 
+          i.fldID AS ItemID,
+          i.fldCode AS ItemNumber,
+          i.fldName AS ItemName,
+          ISNULL(u.fldUnitName, N'حبه') AS UnitName,
+          ISNULL(u.fldCost, 0) AS UnitCost,
+          ISNULL(u.fldSalesPrice1, 0) AS UnitPrice,
+          N'صنف تكلفته صفرية' AS ErrorDescription
+        FROM dbo.tblItem i
+        LEFT JOIN dbo.tblItemsUnit u ON i.fldID = u.flditemID
+        WHERE ISNULL(u.fldCost, 0) = 0
+        ORDER BY i.fldCode ASC
+      `;
+
+    } else if (sub === 'cost_diffs' || sub === 'issued_price_cost') {
+      // 6 & 7. فوارق الكلفة للمخزون / فحص كلفة السعر المصروفه (Sold Below Cost)
+      query = `
+        SELECT 
+          t.fldID AS TransID,
+          t.fldTransNo AS TransNo,
+          CONVERT(VARCHAR(10), t.fldDate, 120) AS TransDate,
+          i.fldCode AS ItemNumber,
+          i.fldName AS ItemName,
+          ISNULL(d.fldQTY, 0) AS Qty,
+          ISNULL(d.fldPrice, 0) AS SellingPrice,
+          ISNULL(d.fldCost, 0) AS CostPrice,
+          (ISNULL(d.fldPrice, 0) - ISNULL(d.fldCost, 0)) AS DiffPerUnit,
+          ((ISNULL(d.fldPrice, 0) - ISNULL(d.fldCost, 0)) * ISNULL(d.fldQTY, 0)) AS TotalDiff
+        FROM dbo.tblItemTransD d
+        INNER JOIN dbo.tblTransAction t ON d.fldTransID = t.fldID
+        INNER JOIN dbo.tblItem i ON d.flditemID = i.fldID
+        WHERE t.fldTransType IN (30, 31) AND d.fldPrice < d.fldCost AND d.fldCost > 0
+        ORDER BY t.fldDate DESC, t.fldTransNo DESC
+      `;
+
+    } else if (sub === 'posting_flaw' || sub === 'repost_diffs') {
+      // 8 & 9. خلل في الترحيل المخزني / المالي (Imbalance in entries)
+      query = `
+        SELECT 
+          t.fldID AS TransID,
+          t.fldTransNo AS TransNo,
+          CONVERT(VARCHAR(10), t.fldDate, 120) AS TransDate,
+          CASE 
+            WHEN t.fldTransType = 3 THEN N'قيد يومية'
+            WHEN t.fldTransType = 30 THEN N'فاتورة مبيعات'
+            WHEN t.fldTransType = 20 THEN N'فاتورة مشتريات'
+            ELSE N'حركة مالية'
+          END AS TransTypeName,
+          ISNULL(SUM(m.Debit), 0) AS DebitLocal,
+          ISNULL(SUM(m.Credit), 0) AS CreditLocal,
+          (ISNULL(SUM(m.Debit), 0) - ISNULL(SUM(m.Credit), 0)) AS DiffLocal,
+          ISNULL(b.fldName, N'الفرع الرئيسي') AS BranchName
+        FROM dbo.tblTransAction t
+        INNER JOIN dbo.tblMoneyMove m ON t.fldID = m.fldTransID
+        LEFT JOIN dbo.tblBranchList b ON t.fldBranchNo = b.fldID
+        GROUP BY t.fldID, t.fldTransNo, t.fldDate, t.fldTransType, b.fldName
+        HAVING ABS(ISNULL(SUM(m.Debit), 0) - ISNULL(SUM(m.Credit), 0)) > 0.01
+        ORDER BY t.fldDate DESC
+      `;
+
+    } else if (sub === 'inventory_cost') {
+      // 10. كلفة المخزون (Inventory Cost Valuation)
+      query = `
+        SELECT 
+          i.fldID AS ItemID,
+          i.fldCode AS ItemNumber,
+          i.fldName AS ItemName,
+          ISNULL(u.fldUnitName, N'حبه') AS UnitName,
+          SUM(CASE WHEN t.fldTransType IN (20, 22, 26, 27, 31, 242) THEN ISNULL(d.fldQTY, 0) ELSE -ISNULL(d.fldQTY, 0) END) AS StockQty,
+          ISNULL(u.fldCost, 0) AS UnitCost,
+          (SUM(CASE WHEN t.fldTransType IN (20, 22, 26, 27, 31, 242) THEN ISNULL(d.fldQTY, 0) ELSE -ISNULL(d.fldQTY, 0) END) * ISNULL(u.fldCost, 0)) AS TotalStockValue
+        FROM dbo.tblItem i
+        INNER JOIN dbo.tblItemTransD d ON i.fldID = d.flditemID
+        INNER JOIN dbo.tblTransAction t ON d.fldTransID = t.fldID
+        LEFT JOIN dbo.tblItemsUnit u ON d.fldUnityID = u.fldID
+        GROUP BY i.fldID, i.fldCode, i.fldName, u.fldUnitName, u.fldCost
+        HAVING SUM(CASE WHEN t.fldTransType IN (20, 22, 26, 27, 31, 242) THEN ISNULL(d.fldQTY, 0) ELSE -ISNULL(d.fldQTY, 0) END) > 0
+        ORDER BY i.fldCode ASC
+      `;
+
+    } else if (sub === 'unposted_inventory_cost') {
+      // 11. كلفة مخزون لم ترحل (Unposted Inventory Transactions)
+      query = `
+        SELECT 
+          t.fldID AS TransID,
+          t.fldTransNo AS TransNo,
+          CONVERT(VARCHAR(10), t.fldDate, 120) AS TransDate,
+          CASE 
+            WHEN t.fldTransType = 20 THEN N'فاتورة مشتريات'
+            WHEN t.fldTransType = 21 THEN N'مردود مشتريات'
+            WHEN t.fldTransType = 22 THEN N'أمر توريد مخزني'
+            WHEN t.fldTransType = 23 THEN N'أمر صرف مخزني'
+            WHEN t.fldTransType = 28 THEN N'تحويل مخزني'
+            WHEN t.fldTransType = 30 THEN N'فاتورة مبيعات'
+            WHEN t.fldTransType = 31 THEN N'مردود مبيعات'
+            ELSE N'حركة مخزنية'
+          END AS TransTypeName,
+          ISNULL(t.fldClosed, 0) AS IsPosted,
+          ISNULL(b.fldName, N'الفرع الرئيسي') AS BranchName
+        FROM dbo.tblTransAction t
+        LEFT JOIN dbo.tblBranchList b ON t.fldBranchNo = b.fldID
+        WHERE t.fldTransType IN (20, 21, 22, 23, 28, 30, 31) AND (t.fldClosed = 0 OR t.fldClosed IS NULL)
+        ORDER BY t.fldDate DESC
+      `;
+
+    } else {
+      // Default / General Diagnostics
+      query = `
+        SELECT 
+          t.fldID AS TransID,
+          t.fldTransNo AS TransNo,
+          t.fldType AS TransType,
+          t.fldTransType,
+          CASE 
+            WHEN t.fldTransType = 242 THEN N'رصيد افتتاحي'
+            WHEN t.fldTransType = 1 THEN N'سند قبض'
+            WHEN t.fldTransType = 2 THEN N'سند صرف'
+            WHEN t.fldTransType = 3 THEN N'قيد يومية'
+            WHEN t.fldTransType = 30 THEN N'فاتورة مبيعات'
+            ELSE N'حركة مالية'
+          END AS TransTypeName,
+          ISNULL(m.Debit, 0) AS DebitLocal,
+          ISNULL(m.Credit, 0) AS CreditLocal,
+          ISNULL(t.fldClosed, 0) AS IsPosted
+        FROM dbo.tblTransAction t
+        LEFT JOIN dbo.tblMoneyMove m ON t.fldID = m.fldTransID
+        ORDER BY t.fldDate DESC
+      `;
+    }
+
+    console.log(`Executing Error Explorer (${tab}/${sub}) Query...`);
+    const result = await request.query(query);
+    res.json({ success: true, source: 'database', data: result.recordset || [] });
+  } catch (err) {
+    console.error(`Error executing error-explorer (${tab}/${sub}):`, err.message);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+// WhatsApp PDF Engine for Error Explorer
+app.post('/api/error-explorer/send-whatsapp-pdf', async (req, res) => {
+  const { html, phone, title, caption, landscape } = req.body;
+  if (!html || !phone) {
+    return res.status(400).json({ success: false, error: "المحتوى ورقم الهاتف مطلوبان للإرسال." });
+  }
+
+  try {
+    const formattedPhone = phone.replace(/[^0-9]/g, '');
+    const finalChatId = formattedPhone.includes('@c.us') ? formattedPhone : `${formattedPhone}@c.us`;
+
+    const browser = await puppeteer.launch({
+      headless: "new",
+      executablePath: chromePath,
+      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu']
+    });
+    const page = await browser.newPage();
+    await page.setContent(html, { waitUntil: 'networkidle0' });
+    const pdfBuffer = await page.pdf({
+      format: 'A4',
+      landscape: landscape !== false,
+      printBackground: true,
+      margin: { top: '10mm', right: '10mm', bottom: '10mm', left: '10mm' }
+    });
+    await browser.close();
+
+    const base64Pdf = pdfBuffer.toString('base64');
+    const media = new MessageMedia('application/pdf', base64Pdf, `${(title || 'تقرير مستكشف الاخطاء').replace(/\s+/g, '_')}.pdf`);
+
+    if (!whatsappClient || !whatsappClient.info) {
+      return res.status(503).json({ success: false, error: "خادم الواتساب غير متصل حالياً. يرجى مسح رمز QR أولاً." });
+    }
+
+    await whatsappClient.sendMessage(finalChatId, media, { caption: caption || `مرفق لكم: ${title || 'تقرير مستكشف الاخطاء'} من نظام مستكشف الحسابات` });
+    res.json({ success: true, message: `تم إرسال تقرير ${title || 'مستكشف الاخطاء'} بنجاح عبر الواتساب إلى ${phone}` });
+  } catch (err) {
+    console.error("Error sending Error Explorer WhatsApp PDF:", err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
@@ -19809,3 +20109,5 @@ function startHttpServer(portToTry) {
 startHttpServer(PORT);
 
 // =============================================================================
+
+

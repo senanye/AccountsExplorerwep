@@ -19801,7 +19801,7 @@ app.get('/api/error-explorer', async (req, res) => {
     if (sub === 'unposted') {
       // 1. العمليات الغير مرحلة (Unposted Operations - Matching screenshot)
       query = `
-        SELECT 
+        SELECT TOP 500
           t.fldID AS TransID,
           t.fldTransNo AS TransNo,
           t.fldType AS TransType,

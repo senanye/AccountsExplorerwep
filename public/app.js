@@ -37118,6 +37118,14 @@ window.executeSendInventoryReportWhatsApp = async function(tabId) {
 // Matching media_1787981081406.png (Menu ID: 599)
 // =============================================================================
 
+if (typeof window.formatNumber !== 'function') {
+  window.formatNumber = function(val, decimals = 2) {
+    const num = parseFloat(val);
+    if (isNaN(num)) return (0).toFixed(decimals);
+    return num.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+  };
+}
+
 window.errorExplorerState = window.errorExplorerState || {};
 window.activeErrorExplorerTabId = null;
 
@@ -37288,8 +37296,8 @@ window.fetchErrorExplorerData = async function(tabId) {
     }
   } catch (err) {
     console.error("fetchErrorExplorerData error:", err);
-    showToast("فشل الاتصال بالخادم لجلب بيانات مستكشف الأخطاء.", "error");
-    if (tbody) tbody.innerHTML = `<tr><td colspan="10" style="padding: 20px; text-align: center; color: #ef4444; font-weight: bold;">خطأ في الاتصال بالخادم</td></tr>`;
+    showToast("فشل معالجة البيانات: " + err.message, "error");
+    if (tbody) tbody.innerHTML = `<tr><td colspan="10" style="padding: 20px; text-align: center; color: #ef4444; font-weight: bold;">خطأ: ${err.message}</td></tr>`;
   }
 };
 
@@ -37305,6 +37313,12 @@ window.renderErrorExplorerTable = function(tabId) {
 
   const data = state.filteredData || [];
   const sub = state.activeSub;
+
+  const fmt = function(v, d = 2) {
+    const n = parseFloat(v);
+    if (isNaN(n)) return (0).toFixed(d);
+    return n.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+  };
 
   let theadHtml = '';
   if (sub === 'unposted' || sub === 'posting_flaw') {
@@ -37421,8 +37435,8 @@ window.renderErrorExplorerTable = function(tabId) {
           <td style="padding: 4px 8px; text-align: center;">
             <input type="checkbox" ${isPosted ? 'checked' : ''} style="cursor: pointer;" disabled>
           </td>
-          <td style="padding: 4px 12px; text-align: right; font-family: monospace; font-weight: 700; color: #1e293b;">${formatNumber(credit, 2)}</td>
-          <td style="padding: 4px 12px; text-align: right; font-family: monospace; font-weight: 700; color: #1e293b;">${formatNumber(debit, 2)}</td>
+          <td style="padding: 4px 12px; text-align: right; font-family: monospace; font-weight: 700; color: #1e293b;">${fmt(credit, 2)}</td>
+          <td style="padding: 4px 12px; text-align: right; font-family: monospace; font-weight: 700; color: #1e293b;">${fmt(debit, 2)}</td>
           <td style="padding: 4px 8px; text-align: center; font-family: monospace; font-weight: 800; color: #0284c7;">${row.TransNo || 1}</td>
           <td style="padding: 4px 10px; text-align: center; color: #64748b;">${row.TransType || ''}</td>
           <td style="padding: 4px 14px; text-align: right; font-weight: 700; color: #0f172a;">${row.TransTypeName || 'رصيد افتتاحي'}</td>
@@ -37438,9 +37452,9 @@ window.renderErrorExplorerTable = function(tabId) {
       rowsHtml += `
         <tr style="background: ${bg};">
           <td style="padding: 4px 8px;"><input type="checkbox"></td>
-          <td style="padding: 4px 12px; text-align: right; font-family: monospace; font-weight: 700; color: #dc2626;">${formatNumber(tot, 2)}</td>
-          <td style="padding: 4px 12px; text-align: right; font-family: monospace; font-weight: 700;">${formatNumber(c, 2)}</td>
-          <td style="padding: 4px 12px; text-align: right; font-family: monospace; font-weight: 800; color: #dc2626;">${formatNumber(q, 2)}</td>
+          <td style="padding: 4px 12px; text-align: right; font-family: monospace; font-weight: 700; color: #dc2626;">${fmt(tot, 2)}</td>
+          <td style="padding: 4px 12px; text-align: right; font-family: monospace; font-weight: 700;">${fmt(c, 2)}</td>
+          <td style="padding: 4px 12px; text-align: right; font-family: monospace; font-weight: 800; color: #dc2626;">${fmt(q, 2)}</td>
           <td style="padding: 4px 10px; text-align: center;">${row.UnitName || 'حبه'}</td>
           <td style="padding: 4px 14px; text-align: right; font-weight: 800; color: #0f172a;">${row.ItemName || ''}</td>
           <td style="padding: 4px 10px; text-align: center; font-family: monospace; font-weight: 800; color: #0284c7;">${row.ItemNumber || ''}</td>
@@ -37451,8 +37465,8 @@ window.renderErrorExplorerTable = function(tabId) {
         <tr style="background: ${bg};">
           <td style="padding: 4px 8px;"><input type="checkbox"></td>
           <td style="padding: 4px 14px; text-align: center; color: #dc2626; font-weight: 700;">${row.ErrorDescription || 'خلل في تعريف الكلفة أو العبوة'}</td>
-          <td style="padding: 4px 12px; text-align: right; font-family: monospace; font-weight: 700;">${formatNumber(row.UnitPrice || 0, 2)}</td>
-          <td style="padding: 4px 12px; text-align: right; font-family: monospace; font-weight: 700; color: #ea580c;">${formatNumber(row.UnitCost || 0, 2)}</td>
+          <td style="padding: 4px 12px; text-align: right; font-family: monospace; font-weight: 700;">${fmt(row.UnitPrice || 0, 2)}</td>
+          <td style="padding: 4px 12px; text-align: right; font-family: monospace; font-weight: 700; color: #ea580c;">${fmt(row.UnitCost || 0, 2)}</td>
           <td style="padding: 4px 10px; text-align: center;">${row.UnitName || 'حبه'}</td>
           <td style="padding: 4px 14px; text-align: right; font-weight: 800; color: #0f172a;">${row.ItemName || ''}</td>
           <td style="padding: 4px 10px; text-align: center; font-family: monospace; font-weight: 800; color: #0284c7;">${row.ItemNumber || ''}</td>
@@ -37462,10 +37476,10 @@ window.renderErrorExplorerTable = function(tabId) {
       rowsHtml += `
         <tr style="background: ${bg};">
           <td style="padding: 4px 8px;"><input type="checkbox"></td>
-          <td style="padding: 4px 12px; text-align: right; font-family: monospace; font-weight: 700; color: #dc2626;">${formatNumber(row.TotalDiff || 0, 2)}</td>
-          <td style="padding: 4px 12px; text-align: right; font-family: monospace; font-weight: 700; color: #dc2626;">${formatNumber(row.DiffPerUnit || 0, 2)}</td>
-          <td style="padding: 4px 12px; text-align: right; font-family: monospace; font-weight: 700; color: #1e293b;">${formatNumber(row.CostPrice || 0, 2)}</td>
-          <td style="padding: 4px 12px; text-align: right; font-family: monospace; font-weight: 700; color: #059669;">${formatNumber(row.SellingPrice || 0, 2)}</td>
+          <td style="padding: 4px 12px; text-align: right; font-family: monospace; font-weight: 700; color: #dc2626;">${fmt(row.TotalDiff || 0, 2)}</td>
+          <td style="padding: 4px 12px; text-align: right; font-family: monospace; font-weight: 700; color: #dc2626;">${fmt(row.DiffPerUnit || 0, 2)}</td>
+          <td style="padding: 4px 12px; text-align: right; font-family: monospace; font-weight: 700; color: #1e293b;">${fmt(row.CostPrice || 0, 2)}</td>
+          <td style="padding: 4px 12px; text-align: right; font-family: monospace; font-weight: 700; color: #059669;">${fmt(row.SellingPrice || 0, 2)}</td>
           <td style="padding: 4px 10px; text-align: center; font-family: monospace; font-weight: 700;">${row.Qty || 0}</td>
           <td style="padding: 4px 14px; text-align: right; font-weight: 800;">${row.ItemName || ''}</td>
           <td style="padding: 4px 10px; text-align: center; font-family: monospace; font-weight: 800; color: #0284c7;">${row.ItemNumber || ''}</td>
@@ -37478,9 +37492,9 @@ window.renderErrorExplorerTable = function(tabId) {
       rowsHtml += `
         <tr style="background: ${bg};">
           <td style="padding: 4px 8px;"><input type="checkbox"></td>
-          <td style="padding: 4px 12px; text-align: right; font-family: monospace; font-weight: 700; color: #0284c7;">${formatNumber(stockTot, 2)}</td>
-          <td style="padding: 4px 12px; text-align: right; font-family: monospace; font-weight: 700;">${formatNumber(row.UnitCost || 0, 2)}</td>
-          <td style="padding: 4px 10px; text-align: center; font-family: monospace; font-weight: 700;">${formatNumber(row.StockQty || 0, 2)}</td>
+          <td style="padding: 4px 12px; text-align: right; font-family: monospace; font-weight: 700; color: #0284c7;">${fmt(stockTot, 2)}</td>
+          <td style="padding: 4px 12px; text-align: right; font-family: monospace; font-weight: 700;">${fmt(row.UnitCost || 0, 2)}</td>
+          <td style="padding: 4px 10px; text-align: center; font-family: monospace; font-weight: 700;">${fmt(row.StockQty || 0, 2)}</td>
           <td style="padding: 4px 10px; text-align: center;">${row.UnitName || 'حبه'}</td>
           <td style="padding: 4px 14px; text-align: right; font-weight: 800;">${row.ItemName || ''}</td>
           <td style="padding: 4px 10px; text-align: center; font-family: monospace; font-weight: 800; color: #0284c7;">${row.ItemNumber || ''}</td>
@@ -37494,17 +37508,17 @@ window.renderErrorExplorerTable = function(tabId) {
   if (totalsEl) {
     if (sub === 'unposted' || sub === 'posting_flaw') {
       totalsEl.innerHTML = `
-        <span style="margin-left: 15px;">إجمالي المدين: <span style="color: #0284c7; font-family: monospace;">${formatNumber(sumDebit, 2)}</span></span>
-        <span>إجمالي الدائن: <span style="color: #059669; font-family: monospace;">${formatNumber(sumCredit, 2)}</span></span>
+        <span style="margin-left: 15px;">إجمالي المدين: <span style="color: #0284c7; font-family: monospace;">${fmt(sumDebit, 2)}</span></span>
+        <span>إجمالي الدائن: <span style="color: #059669; font-family: monospace;">${fmt(sumCredit, 2)}</span></span>
       `;
     } else if (sub === 'negative_qty') {
       totalsEl.innerHTML = `
-        <span style="margin-left: 15px;">إجمالي الكميات السالبة: <span style="color: #dc2626; font-family: monospace;">${formatNumber(sumQty, 2)}</span></span>
-        <span>إجمالي القيمة: <span style="color: #dc2626; font-family: monospace;">${formatNumber(sumCost, 2)}</span></span>
+        <span style="margin-left: 15px;">إجمالي الكميات السالبة: <span style="color: #dc2626; font-family: monospace;">${fmt(sumQty, 2)}</span></span>
+        <span>إجمالي القيمة: <span style="color: #dc2626; font-family: monospace;">${fmt(sumCost, 2)}</span></span>
       `;
     } else if (sub === 'inventory_cost') {
       totalsEl.innerHTML = `
-        <span>إجمالي قيمة المخزون: <span style="color: #0284c7; font-family: monospace;">${formatNumber(sumCost, 2)}</span></span>
+        <span>إجمالي قيمة المخزون: <span style="color: #0284c7; font-family: monospace;">${fmt(sumCost, 2)}</span></span>
       `;
     } else {
       totalsEl.innerHTML = '';
@@ -37541,6 +37555,12 @@ window.printErrorExplorerReport = function(tabId) {
   const title = document.getElementById(`eeActiveSubTitle-${tabId}`)?.innerText || 'تقرير مستكشف الأخطاء';
   const logo = window.logoSettings?.dataUrl || '';
 
+  const fmt = function(v, d = 2) {
+    const n = parseFloat(v);
+    if (isNaN(n)) return (0).toFixed(d);
+    return n.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+  };
+
   let tableRows = '';
   data.forEach((r, idx) => {
     tableRows += `
@@ -37548,8 +37568,8 @@ window.printErrorExplorerReport = function(tabId) {
         <td style="border: 1px solid #cbd5e1; padding: 5px; text-align: center;">${idx + 1}</td>
         <td style="border: 1px solid #cbd5e1; padding: 5px; text-align: right; font-weight: bold;">${r.TransTypeName || r.ItemName || ''}</td>
         <td style="border: 1px solid #cbd5e1; padding: 5px; text-align: center; font-family: monospace;">${r.TransNo || r.ItemNumber || ''}</td>
-        <td style="border: 1px solid #cbd5e1; padding: 5px; text-align: right; font-family: monospace;">${formatNumber(r.DebitLocal || r.UnitCost || 0, 2)}</td>
-        <td style="border: 1px solid #cbd5e1; padding: 5px; text-align: right; font-family: monospace;">${formatNumber(r.CreditLocal || r.TotalCost || 0, 2)}</td>
+        <td style="border: 1px solid #cbd5e1; padding: 5px; text-align: right; font-family: monospace;">${fmt(r.DebitLocal || r.UnitCost || 0, 2)}</td>
+        <td style="border: 1px solid #cbd5e1; padding: 5px; text-align: right; font-family: monospace;">${fmt(r.CreditLocal || r.TotalCost || 0, 2)}</td>
         <td style="border: 1px solid #cbd5e1; padding: 5px; text-align: center;">${r.IsPosted == 1 ? 'نعم' : 'لا'}</td>
       </tr>
     `;
@@ -37683,6 +37703,12 @@ window.executeSendErrorExplorerWhatsApp = async function() {
   const logo = window.logoSettings?.dataUrl || '';
   const data = state.filteredData || [];
 
+  const fmt = function(v, d = 2) {
+    const n = parseFloat(v);
+    if (isNaN(n)) return (0).toFixed(d);
+    return n.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+  };
+
   let tableRows = '';
   data.forEach((r, idx) => {
     tableRows += `
@@ -37690,8 +37716,8 @@ window.executeSendErrorExplorerWhatsApp = async function() {
         <td style="border: 1px solid #cbd5e1; padding: 5px; text-align: center;">${idx + 1}</td>
         <td style="border: 1px solid #cbd5e1; padding: 5px; text-align: right; font-weight: bold;">${r.TransTypeName || r.ItemName || ''}</td>
         <td style="border: 1px solid #cbd5e1; padding: 5px; text-align: center; font-family: monospace;">${r.TransNo || r.ItemNumber || ''}</td>
-        <td style="border: 1px solid #cbd5e1; padding: 5px; text-align: right; font-family: monospace;">${formatNumber(r.DebitLocal || r.UnitCost || 0, 2)}</td>
-        <td style="border: 1px solid #cbd5e1; padding: 5px; text-align: right; font-family: monospace;">${formatNumber(r.CreditLocal || r.TotalCost || 0, 2)}</td>
+        <td style="border: 1px solid #cbd5e1; padding: 5px; text-align: right; font-family: monospace;">${fmt(r.DebitLocal || r.UnitCost || 0, 2)}</td>
+        <td style="border: 1px solid #cbd5e1; padding: 5px; text-align: right; font-family: monospace;">${fmt(r.CreditLocal || r.TotalCost || 0, 2)}</td>
         <td style="border: 1px solid #cbd5e1; padding: 5px; text-align: center;">${r.IsPosted == 1 ? 'نعم' : 'لا'}</td>
       </tr>
     `;

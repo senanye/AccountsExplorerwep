@@ -627,29 +627,33 @@ async function initializePool() {
 // Initialize on startup
 initializePool();
 
-// Endpoint to get server's public IP address
+// Endpoint to get server's local & network IP address
 app.get('/api/server-ip', async (req, res) => {
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 3000);
-    const response = await fetch('https://api.ipify.org?format=json', { signal: controller.signal });
-    clearTimeout(timeoutId);
-    const data = await response.json();
-    res.json({ success: true, ip: data.ip });
-  } catch (err) {
-    const os = require('os');
-    const interfaces = os.networkInterfaces();
-    let localIp = '127.0.0.1';
-    for (const name of Object.keys(interfaces)) {
-      for (const iface of interfaces[name]) {
-        if (iface.family === 'IPv4' && !iface.internal) {
-          localIp = iface.address;
-          break;
-        }
+  const os = require('os');
+  const interfaces = os.networkInterfaces();
+  const localIps = [];
+  
+  for (const name of Object.keys(interfaces)) {
+    for (const iface of interfaces[name]) {
+      if (iface.family === 'IPv4' && !iface.internal) {
+        localIps.push({ name, ip: iface.address });
       }
     }
-    res.json({ success: true, ip: localIp, fallback: true });
   }
+
+  // Find Wi-Fi / Ethernet LAN IP (e.g. 192.168.x.x or 10.x.x.x or 172.x.x.x)
+  const lanIpObj = localIps.find(i => i.ip.startsWith('192.168.') || i.ip.startsWith('10.')) || localIps[0];
+  const primaryLocalIp = lanIpObj ? lanIpObj.ip : '127.0.0.1';
+
+  res.json({
+    success: true,
+    ip: primaryLocalIp,
+    localIp: primaryLocalIp,
+    port: PORT,
+    allIps: localIps,
+    lanUrl: `http://${primaryLocalIp}:${PORT}`,
+    localhostUrl: `http://localhost:${PORT}`
+  });
 });
 
 // Endpoint to fetch system installed printers
@@ -19774,8 +19778,20 @@ app.get('*', (req, res) => {
 });
 
 function startHttpServer(portToTry) {
-  const srv = app.listen(portToTry, () => {
-    console.log(`Server running on http://localhost:${portToTry}`);
+  const srv = app.listen(portToTry, '0.0.0.0', () => {
+    const os = require('os');
+    const interfaces = os.networkInterfaces();
+    console.log(`\n======================================================`);
+    console.log(` [ACCOUNTS EXPLORER SERVER RUNNING]`);
+    console.log(` - Local Access:   http://localhost:${portToTry}`);
+    for (const name of Object.keys(interfaces)) {
+      for (const iface of interfaces[name]) {
+        if (iface.family === 'IPv4' && !iface.internal) {
+          console.log(` - Network Access (${name}): http://${iface.address}:${portToTry}`);
+        }
+      }
+    }
+    console.log(`======================================================\n`);
     initWhatsAppClient();
   });
 

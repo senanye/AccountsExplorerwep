@@ -7549,11 +7549,10 @@ function populateDropdown(selectEl, data, valueKey, textKey) {
   });
 }
 
-// 3. Get server public IP address and display in modal
+// 3. Get server local LAN IP address and display in modal
 async function fetchAndDisplayIP() {
-  showToast("جاري الاستعلام عن عنوان IP العام لخادم التطبيق...", "info");
+  showToast("جاري جلب عنوان IP ورابط الوصول من أجهزة الشبكة المحلية...", "info");
   
-  // Set placeholder loading state in modal
   if (DOM.ipModalLink) {
     DOM.ipModalLink.textContent = "جاري جلب العنوان...";
     DOM.ipModalLink.href = "#";
@@ -7564,9 +7563,8 @@ async function fetchAndDisplayIP() {
     const res = await fetch('/api/server-ip');
     const data = await res.json();
     
-    if (data.success && data.ip) {
-      const publicIp = data.ip;
-      const appUrl = `http://${publicIp}:3000`;
+    if (data.success && data.lanUrl) {
+      const appUrl = data.lanUrl;
       
       if (DOM.ipModalLink) {
         DOM.ipModalLink.textContent = appUrl;
@@ -7575,33 +7573,19 @@ async function fetchAndDisplayIP() {
       
       // Auto copy to clipboard
       navigator.clipboard.writeText(appUrl).then(() => {
-        showToast(`تم نسخ رابط الوصول الخارجي: ${appUrl}`, "success");
+        showToast(`تم نسخ رابط الشبكة المحلية: ${appUrl}`, "success");
       });
     } else {
       throw new Error(data.error || "فشل الحصول على الـ IP من السيرفر.");
     }
   } catch (err) {
-    console.warn("Server IP retrieval failed, trying client fallback:", err.message);
-    try {
-      const clientRes = await fetch('https://api.ipify.org?format=json');
-      const clientData = await clientRes.json();
-      const appUrl = `http://${clientData.ip}:3000`;
-      
-      if (DOM.ipModalLink) {
-        DOM.ipModalLink.textContent = appUrl;
-        DOM.ipModalLink.href = appUrl;
-      }
-      
-      navigator.clipboard.writeText(appUrl).then(() => {
-        showToast(`تم نسخ رابط الوصول العام للشبكة: ${appUrl}`, "success");
-      });
-    } catch (e) {
-      if (DOM.ipModalLink) {
-        DOM.ipModalLink.textContent = "فشل الاتصال بالإنترنت لجلب عنوان الـ IP العام.";
-        DOM.ipModalLink.href = "#";
-      }
-      showToast("فشل جلب عنوان IP العام. يرجى التحقق من اتصال الإنترنت.", "error");
+    console.warn("Server IP retrieval failed:", err.message);
+    const fallbackUrl = `http://${window.location.hostname || '192.168.1.36'}:3000`;
+    if (DOM.ipModalLink) {
+      DOM.ipModalLink.textContent = fallbackUrl;
+      DOM.ipModalLink.href = fallbackUrl;
     }
+    showToast(`رابط الشبكة: ${fallbackUrl}`, "info");
   }
 }
 

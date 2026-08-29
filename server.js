@@ -2635,6 +2635,19 @@ app.post('/api/vouchers', async (req, res) => {
       console.log(`[POST /api/vouchers] Box row inserted successfully.`);
     }
 
+    // Auto-update fldOK based on balance and transaction integrity
+    await new sql.Request(transaction).query(`
+      UPDATE dbo.tblTransAction
+      SET fldOK = CASE 
+        WHEN ABS((SELECT ISNULL(SUM(Debit), 0) - ISNULL(SUM(Credit), 0) FROM dbo.tblMoneyMove WHERE fldTransID = ${newID})) < 0.01 
+         AND (SELECT COUNT(*) FROM dbo.tblMoneyMove WHERE fldTransID = ${newID}) > 0 
+         AND (SELECT ISNULL(SUM(Debit), 0) + ISNULL(SUM(Credit), 0) FROM dbo.tblMoneyMove WHERE fldTransID = ${newID}) > 0
+        THEN 1 
+        ELSE 0 
+      END
+      WHERE fldID = ${newID}
+    `);
+
     await transaction.commit();
     console.log(`[POST /api/vouchers] Transaction committed successfully for ID: ${newID}`);
     res.json({ success: true, message: "تم حفظ السند والتفاصيل بنجاح!", transID: newID });
@@ -3129,6 +3142,19 @@ app.post('/api/opening-entry', async (req, res) => {
       }
     }
 
+    // Auto-update fldOK based on balance and transaction integrity
+    await new sql.Request(transaction).query(`
+      UPDATE dbo.tblTransAction
+      SET fldOK = CASE 
+        WHEN ABS((SELECT ISNULL(SUM(Debit), 0) - ISNULL(SUM(Credit), 0) FROM dbo.tblMoneyMove WHERE fldTransID = 1)) < 0.01 
+         AND (SELECT COUNT(*) FROM dbo.tblMoneyMove WHERE fldTransID = 1) > 0 
+         AND (SELECT ISNULL(SUM(Debit), 0) + ISNULL(SUM(Credit), 0) FROM dbo.tblMoneyMove WHERE fldTransID = 1) > 0
+        THEN 1 
+        ELSE 0 
+      END
+      WHERE fldID = 1 AND fldTransType = 1
+    `);
+
     await transaction.commit();
     res.json({ success: true, message: "تم حفظ القيد الافتتاحي وتفاصيله بنجاح!" });
   } catch (err) {
@@ -3441,6 +3467,19 @@ app.post('/api/journal-entries', async (req, res) => {
       `;
       await detRequest.query(detQuery);
     }
+
+    // Auto-update fldOK based on balance and transaction integrity
+    await new sql.Request(transaction).query(`
+      UPDATE dbo.tblTransAction
+      SET fldOK = CASE 
+        WHEN ABS((SELECT ISNULL(SUM(Debit), 0) - ISNULL(SUM(Credit), 0) FROM dbo.tblMoneyMove WHERE fldTransID = ${newID})) < 0.01 
+         AND (SELECT COUNT(*) FROM dbo.tblMoneyMove WHERE fldTransID = ${newID}) > 0 
+         AND (SELECT ISNULL(SUM(Debit), 0) + ISNULL(SUM(Credit), 0) FROM dbo.tblMoneyMove WHERE fldTransID = ${newID}) > 0
+        THEN 1 
+        ELSE 0 
+      END
+      WHERE fldID = ${newID}
+    `);
 
     await transaction.commit();
     res.json({ success: true, message: "تم حفظ القيد المحاسبي بنجاح!", transID: newID });

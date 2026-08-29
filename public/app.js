@@ -13456,12 +13456,17 @@ window.saveOpeningEntry = async function(tabId, printAfterSave = false) {
     showToast("جاري حفظ القيد الافتتاحي...", "success");
   }
 
+  const isBalanced = Math.abs(sumLocalDebit - sumLocalCredit) < 0.01 && (sumLocalDebit > 0 || sumLocalCredit > 0);
+  if (postedEl) {
+    postedEl.checked = isBalanced;
+  }
+
   const payload = {
     header: {
       fldBranchNo: parseInt(document.getElementById(`opBranch-${tabId}`).value) || 1,
       fldDate: document.getElementById(`opDate-${tabId}`).value || new Date().toISOString(),
       fldDescription: document.getElementById(`opDescription-${tabId}`).value.trim(),
-      fldOK: document.getElementById(`opPosted-${tabId}`).checked
+      fldOK: isBalanced
     },
     details: details
   };

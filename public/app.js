@@ -5868,52 +5868,52 @@ function getScreenContent(tabId, tabTitle, iconClass, colorClass) {
     `;
   } else if (isErrorExplorer) {
     bodyHtml = `
-      <div class="error-explorer-screen" style="direction: rtl; text-align: right; font-family: var(--font-arabic); display: flex; flex-direction: column; gap: 6px; height: 100%; padding: 6px; background: #f8fafc; box-sizing: border-box;">
+      <div class="error-explorer-screen" style="direction: rtl; text-align: right; font-family: var(--font-arabic); display: flex; flex-direction: column; gap: 4px; height: 100%; padding: 4px 6px; background: #f8fafc; box-sizing: border-box;">
         
         <!-- Top Category Ribbon Bar (Matching media_1787981081406.png: فحص الكلفه | قائمة الاخطاء 2 | اخطاء يجب اصلاحها | استعلامات) -->
-        <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 6px 10px; display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+        <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 4px 8px; display: flex; justify-content: space-between; align-items: center; gap: 6px; flex-wrap: wrap; box-shadow: 0 1px 2px rgba(0,0,0,0.04);">
           
           <!-- Category Tabs (Right Side) -->
-          <div style="display: flex; align-items: center; gap: 6px;">
-            <button type="button" id="eeTabCostCheck-${tabId}" class="ee-cat-tab active" onclick="switchErrorExplorerTab('${tabId}', 'cost_check')" style="padding: 6px 16px; background: #e0f2fe; border: 1.5px solid #0284c7; border-radius: 6px; font-weight: 800; font-size: 0.86rem; color: #0369a1; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.2s;">
-              <i class="fa-solid fa-calculator" style="color: #0284c7;"></i>
+          <div style="display: flex; align-items: center; gap: 4px;">
+            <button type="button" id="eeTabCostCheck-${tabId}" class="ee-cat-tab active" onclick="switchErrorExplorerTab('${tabId}', 'cost_check')" style="padding: 4px 14px; height: 32px; background: #e0f2fe; border: 1.5px solid #0284c7; border-radius: 5px; font-weight: 800; font-size: 0.82rem; color: #0369a1; cursor: pointer; display: flex; align-items: center; gap: 5px; transition: all 0.15s;">
+              <i class="fa-solid fa-calculator" style="color: #0284c7; font-size: 0.88rem;"></i>
               <span>فحص الكلفه</span>
             </button>
 
-            <button type="button" id="eeTabErrorList2-${tabId}" class="ee-cat-tab" onclick="switchErrorExplorerTab('${tabId}', 'error_list_2')" style="padding: 6px 16px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; font-weight: 700; font-size: 0.86rem; color: #475569; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.2s;">
-              <i class="fa-solid fa-list-check" style="color: #f59e0b;"></i>
+            <button type="button" id="eeTabErrorList2-${tabId}" class="ee-cat-tab" onclick="switchErrorExplorerTab('${tabId}', 'error_list_2')" style="padding: 4px 14px; height: 32px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 5px; font-weight: 700; font-size: 0.82rem; color: #475569; cursor: pointer; display: flex; align-items: center; gap: 5px; transition: all 0.15s;">
+              <i class="fa-solid fa-list-check" style="color: #f59e0b; font-size: 0.88rem;"></i>
               <span>قائمة الاخطاء 2</span>
             </button>
 
-            <button type="button" id="eeTabErrorsToFix-${tabId}" class="ee-cat-tab" onclick="switchErrorExplorerTab('${tabId}', 'errors_to_fix')" style="padding: 6px 16px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; font-weight: 700; font-size: 0.86rem; color: #475569; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.2s;">
-              <i class="fa-solid fa-triangle-exclamation" style="color: #ef4444;"></i>
+            <button type="button" id="eeTabErrorsToFix-${tabId}" class="ee-cat-tab" onclick="switchErrorExplorerTab('${tabId}', 'errors_to_fix')" style="padding: 4px 14px; height: 32px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 5px; font-weight: 700; font-size: 0.82rem; color: #475569; cursor: pointer; display: flex; align-items: center; gap: 5px; transition: all 0.15s;">
+              <i class="fa-solid fa-triangle-exclamation" style="color: #ef4444; font-size: 0.88rem;"></i>
               <span>اخطاء يجب اصلاحها</span>
             </button>
 
-            <button type="button" id="eeTabQueries-${tabId}" class="ee-cat-tab" onclick="switchErrorExplorerTab('${tabId}', 'queries')" style="padding: 6px 16px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; font-weight: 700; font-size: 0.86rem; color: #475569; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.2s;">
-              <i class="fa-solid fa-magnifying-glass" style="color: #6366f1;"></i>
+            <button type="button" id="eeTabQueries-${tabId}" class="ee-cat-tab" onclick="switchErrorExplorerTab('${tabId}', 'queries')" style="padding: 4px 14px; height: 32px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 5px; font-weight: 700; font-size: 0.82rem; color: #475569; cursor: pointer; display: flex; align-items: center; gap: 5px; transition: all 0.15s;">
+              <i class="fa-solid fa-magnifying-glass" style="color: #6366f1; font-size: 0.88rem;"></i>
               <span>استعلامات</span>
             </button>
           </div>
 
           <!-- Quick Action Tools (Left Side: Print, XLS, WhatsApp, Refresh) -->
-          <div style="display: flex; align-items: center; gap: 6px;">
-            <button type="button" onclick="printErrorExplorerReport('${tabId}')" class="btn btn-secondary btn-sm" style="height: 32px; padding: 0 12px; font-weight: 800; font-size: 0.8rem; display: flex; align-items: center; gap: 6px; border-radius: 6px;" title="طباعة تقرير الفحص">
+          <div style="display: flex; align-items: center; gap: 4px;">
+            <button type="button" onclick="printErrorExplorerReport('${tabId}')" class="btn btn-secondary btn-sm" style="height: 30px; padding: 0 10px; font-weight: 800; font-size: 0.78rem; display: flex; align-items: center; gap: 5px; border-radius: 4px;" title="طباعة تقرير الفحص">
               <i class="fa-solid fa-print"></i>
               <span>طباعه</span>
             </button>
 
-            <button type="button" onclick="exportErrorExplorerExcel('${tabId}')" class="btn btn-secondary btn-sm" style="height: 32px; padding: 0 12px; font-weight: 800; font-size: 0.8rem; display: flex; align-items: center; gap: 6px; color: #047857; border-radius: 6px;" title="تصدير إلى إكسل">
+            <button type="button" onclick="exportErrorExplorerExcel('${tabId}')" class="btn btn-secondary btn-sm" style="height: 30px; padding: 0 10px; font-weight: 800; font-size: 0.78rem; display: flex; align-items: center; gap: 5px; color: #047857; border-radius: 4px;" title="تصدير إلى إكسل">
               <i class="fa-solid fa-file-excel"></i>
               <span>تصدير XLS</span>
             </button>
 
-            <button type="button" onclick="openErrorExplorerWhatsAppModal('${tabId}')" class="btn btn-sm" style="height: 32px; padding: 0 12px; font-weight: 800; font-size: 0.8rem; background: linear-gradient(135deg, #25D366, #128C7E); color: #ffffff; border: none; border-radius: 6px; display: flex; align-items: center; gap: 6px; cursor: pointer; box-shadow: 0 2px 5px rgba(37,211,102,0.25);" title="إرسال التقرير عبر الواتساب">
-              <i class="fa-brands fa-whatsapp" style="font-size: 0.95rem;"></i>
+            <button type="button" onclick="openErrorExplorerWhatsAppModal('${tabId}')" class="btn btn-sm" style="height: 30px; padding: 0 10px; font-weight: 800; font-size: 0.78rem; background: linear-gradient(135deg, #25D366, #128C7E); color: #ffffff; border: none; border-radius: 4px; display: flex; align-items: center; gap: 5px; cursor: pointer;" title="إرسال التقرير عبر الواتساب">
+              <i class="fa-brands fa-whatsapp" style="font-size: 0.9rem;"></i>
               <span>إرسال PDF</span>
             </button>
 
-            <button type="button" onclick="fetchErrorExplorerData('${tabId}')" class="btn btn-primary btn-sm" style="height: 32px; padding: 0 14px; font-weight: 800; font-size: 0.8rem; border-radius: 6px; display: flex; align-items: center; gap: 6px;" title="تحديث التقرير">
+            <button type="button" onclick="fetchErrorExplorerData('${tabId}')" class="btn btn-primary btn-sm" style="height: 30px; padding: 0 12px; font-weight: 800; font-size: 0.78rem; border-radius: 4px; display: flex; align-items: center; gap: 5px;" title="تحديث التقرير">
               <i class="fa-solid fa-rotate"></i>
               <span>تحديث</span>
             </button>
@@ -5921,76 +5921,76 @@ function getScreenContent(tabId, tabTitle, iconClass, colorClass) {
 
         </div>
 
-        <!-- Sub-Operations Action Ribbon (Matching all 11 action icons in media_1787981081406.png) -->
-        <div id="eeSubRibbon-${tabId}" style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 6px 10px; display: flex; align-items: center; gap: 6px; overflow-x: auto; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+        <!-- Sub-Operations Action Ribbon (Compact, Sleek Height Matching Screenshot) -->
+        <div id="eeSubRibbon-${tabId}" style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 4px 6px; display: flex; align-items: center; gap: 4px; overflow-x: auto; box-shadow: 0 1px 2px rgba(0,0,0,0.04);">
           
-          <button type="button" id="btn-ee-unposted-${tabId}" class="ee-sub-btn active" onclick="switchErrorExplorerSub('${tabId}', 'unposted', 'العمليات الغير مرحلة')" style="height: 52px; min-width: 82px; padding: 4px 8px; background: #e0f2fe; border: 1.5px solid #0284c7; border-radius: 6px; font-weight: 800; font-size: 0.74rem; color: #0369a1; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; white-space: nowrap;">
-            <i class="fa-solid fa-chart-line" style="color: #0284c7; font-size: 1.15rem;"></i>
+          <button type="button" id="btn-ee-unposted-${tabId}" class="ee-sub-btn active" onclick="switchErrorExplorerSub('${tabId}', 'unposted', 'العمليات الغير مرحلة')" style="height: 36px; padding: 2px 10px; background: #e0f2fe; border: 1.5px solid #0284c7; border-radius: 4px; font-weight: 800; font-size: 0.75rem; color: #0369a1; cursor: pointer; display: flex; align-items: center; gap: 6px; white-space: nowrap;">
+            <i class="fa-solid fa-chart-line" style="color: #0284c7; font-size: 0.95rem;"></i>
             <span>العمليات الغير مرحلة</span>
           </button>
 
-          <button type="button" id="btn-ee-negative_qty-${tabId}" class="ee-sub-btn" onclick="switchErrorExplorerSub('${tabId}', 'negative_qty', 'الكميات السالبه')" style="height: 52px; min-width: 82px; padding: 4px 8px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; font-weight: 700; font-size: 0.74rem; color: #475569; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; white-space: nowrap;">
-            <i class="fa-solid fa-boxes-stacked" style="color: #f59e0b; font-size: 1.15rem;"></i>
+          <button type="button" id="btn-ee-negative_qty-${tabId}" class="ee-sub-btn" onclick="switchErrorExplorerSub('${tabId}', 'negative_qty', 'الكميات السالبه')" style="height: 36px; padding: 2px 10px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 4px; font-weight: 700; font-size: 0.75rem; color: #475569; cursor: pointer; display: flex; align-items: center; gap: 6px; white-space: nowrap;">
+            <i class="fa-solid fa-boxes-stacked" style="color: #f59e0b; font-size: 0.95rem;"></i>
             <span>الكميات السالبه</span>
           </button>
 
-          <button type="button" id="btn-ee-no_unit-${tabId}" class="ee-sub-btn" onclick="switchErrorExplorerSub('${tabId}', 'no_unit', 'صنف بدون عبوه')" style="height: 52px; min-width: 82px; padding: 4px 8px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; font-weight: 700; font-size: 0.74rem; color: #475569; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; white-space: nowrap;">
-            <i class="fa-solid fa-arrows-left-right" style="color: #dc2626; font-size: 1.15rem;"></i>
+          <button type="button" id="btn-ee-no_unit-${tabId}" class="ee-sub-btn" onclick="switchErrorExplorerSub('${tabId}', 'no_unit', 'صنف بدون عبوه')" style="height: 36px; padding: 2px 10px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 4px; font-weight: 700; font-size: 0.75rem; color: #475569; cursor: pointer; display: flex; align-items: center; gap: 6px; white-space: nowrap;">
+            <i class="fa-solid fa-arrows-left-right" style="color: #dc2626; font-size: 0.95rem;"></i>
             <span>صنف بدون عبوه</span>
           </button>
 
-          <button type="button" id="btn-ee-cost_maintenance-${tabId}" class="ee-sub-btn" onclick="switchErrorExplorerSub('${tabId}', 'cost_maintenance', 'صيانة الكلفه')" style="height: 52px; min-width: 82px; padding: 4px 8px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; font-weight: 700; font-size: 0.74rem; color: #475569; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; white-space: nowrap;">
-            <i class="fa-solid fa-font" style="color: #8b5cf6; font-size: 1.15rem;"></i>
+          <button type="button" id="btn-ee-cost_maintenance-${tabId}" class="ee-sub-btn" onclick="switchErrorExplorerSub('${tabId}', 'cost_maintenance', 'صيانة الكلفه')" style="height: 36px; padding: 2px 10px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 4px; font-weight: 700; font-size: 0.75rem; color: #475569; cursor: pointer; display: flex; align-items: center; gap: 6px; white-space: nowrap;">
+            <i class="fa-solid fa-font" style="color: #8b5cf6; font-size: 0.95rem;"></i>
             <span>صيانة الكلفه</span>
           </button>
 
-          <button type="button" id="btn-ee-zero_cost-${tabId}" class="ee-sub-btn" onclick="switchErrorExplorerSub('${tabId}', 'zero_cost', 'كلفة صفريه')" style="height: 52px; min-width: 82px; padding: 4px 8px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; font-weight: 700; font-size: 0.74rem; color: #475569; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; white-space: nowrap;">
-            <i class="fa-solid fa-circle-check" style="color: #10b981; font-size: 1.15rem;"></i>
+          <button type="button" id="btn-ee-zero_cost-${tabId}" class="ee-sub-btn" onclick="switchErrorExplorerSub('${tabId}', 'zero_cost', 'كلفة صفريه')" style="height: 36px; padding: 2px 10px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 4px; font-weight: 700; font-size: 0.75rem; color: #475569; cursor: pointer; display: flex; align-items: center; gap: 6px; white-space: nowrap;">
+            <i class="fa-solid fa-circle-check" style="color: #10b981; font-size: 0.95rem;"></i>
             <span>كلفة صفريه</span>
           </button>
 
-          <button type="button" id="btn-ee-cost_diffs-${tabId}" class="ee-sub-btn" onclick="switchErrorExplorerSub('${tabId}', 'cost_diffs', 'فوارق الكلفة للمخزون')" style="height: 52px; min-width: 82px; padding: 4px 8px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; font-weight: 700; font-size: 0.74rem; color: #475569; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; white-space: nowrap;">
-            <i class="fa-solid fa-coins" style="color: #eab308; font-size: 1.15rem;"></i>
+          <button type="button" id="btn-ee-cost_diffs-${tabId}" class="ee-sub-btn" onclick="switchErrorExplorerSub('${tabId}', 'cost_diffs', 'فوارق الكلفة للمخزون')" style="height: 36px; padding: 2px 10px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 4px; font-weight: 700; font-size: 0.75rem; color: #475569; cursor: pointer; display: flex; align-items: center; gap: 6px; white-space: nowrap;">
+            <i class="fa-solid fa-coins" style="color: #eab308; font-size: 0.95rem;"></i>
             <span>فوارق الكلفة للمخزون</span>
           </button>
 
-          <button type="button" id="btn-ee-issued_price_cost-${tabId}" class="ee-sub-btn" onclick="switchErrorExplorerSub('${tabId}', 'issued_price_cost', 'فحص كلفة السعر المصروفه')" style="height: 52px; min-width: 82px; padding: 4px 8px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; font-weight: 700; font-size: 0.74rem; color: #475569; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; white-space: nowrap;">
-            <i class="fa-solid fa-clipboard-check" style="color: #06b6d4; font-size: 1.15rem;"></i>
+          <button type="button" id="btn-ee-issued_price_cost-${tabId}" class="ee-sub-btn" onclick="switchErrorExplorerSub('${tabId}', 'issued_price_cost', 'فحص كلفة السعر المصروفه')" style="height: 36px; padding: 2px 10px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 4px; font-weight: 700; font-size: 0.75rem; color: #475569; cursor: pointer; display: flex; align-items: center; gap: 6px; white-space: nowrap;">
+            <i class="fa-solid fa-clipboard-check" style="color: #06b6d4; font-size: 0.95rem;"></i>
             <span>فحص كلفة السعر المصروفه</span>
           </button>
 
-          <button type="button" id="btn-ee-posting_flaw-${tabId}" class="ee-sub-btn" onclick="switchErrorExplorerSub('${tabId}', 'posting_flaw', 'خلل في الترحيل المخزني')" style="height: 52px; min-width: 82px; padding: 4px 8px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; font-weight: 700; font-size: 0.74rem; color: #475569; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; white-space: nowrap;">
-            <i class="fa-solid fa-bug" style="color: #dc2626; font-size: 1.15rem;"></i>
+          <button type="button" id="btn-ee-posting_flaw-${tabId}" class="ee-sub-btn" onclick="switchErrorExplorerSub('${tabId}', 'posting_flaw', 'خلل في الترحيل المخزني')" style="height: 36px; padding: 2px 10px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 4px; font-weight: 700; font-size: 0.75rem; color: #475569; cursor: pointer; display: flex; align-items: center; gap: 6px; white-space: nowrap;">
+            <i class="fa-solid fa-bug" style="color: #dc2626; font-size: 0.95rem;"></i>
             <span>خلل في الترحيل المخزني</span>
           </button>
 
-          <button type="button" id="btn-ee-repost_diffs-${tabId}" class="ee-sub-btn" onclick="switchErrorExplorerSub('${tabId}', 'repost_diffs', 'اعادة ترحيل الفروقات')" style="height: 52px; min-width: 82px; padding: 4px 8px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; font-weight: 700; font-size: 0.74rem; color: #475569; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; white-space: nowrap;">
-            <i class="fa-solid fa-rotate-left" style="color: #64748b; font-size: 1.15rem;"></i>
+          <button type="button" id="btn-ee-repost_diffs-${tabId}" class="ee-sub-btn" onclick="switchErrorExplorerSub('${tabId}', 'repost_diffs', 'اعادة ترحيل الفروقات')" style="height: 36px; padding: 2px 10px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 4px; font-weight: 700; font-size: 0.75rem; color: #475569; cursor: pointer; display: flex; align-items: center; gap: 6px; white-space: nowrap;">
+            <i class="fa-solid fa-rotate-left" style="color: #64748b; font-size: 0.95rem;"></i>
             <span>اعادة ترحيل الفروقات</span>
           </button>
 
-          <button type="button" id="btn-ee-inventory_cost-${tabId}" class="ee-sub-btn" onclick="switchErrorExplorerSub('${tabId}', 'inventory_cost', 'كلفة المخزون')" style="height: 52px; min-width: 82px; padding: 4px 8px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; font-weight: 700; font-size: 0.74rem; color: #475569; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; white-space: nowrap;">
-            <i class="fa-solid fa-chart-simple" style="color: #ec4899; font-size: 1.15rem;"></i>
+          <button type="button" id="btn-ee-inventory_cost-${tabId}" class="ee-sub-btn" onclick="switchErrorExplorerSub('${tabId}', 'inventory_cost', 'كلفة المخزون')" style="height: 36px; padding: 2px 10px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 4px; font-weight: 700; font-size: 0.75rem; color: #475569; cursor: pointer; display: flex; align-items: center; gap: 6px; white-space: nowrap;">
+            <i class="fa-solid fa-chart-simple" style="color: #ec4899; font-size: 0.95rem;"></i>
             <span>كلفة المخزون</span>
           </button>
 
-          <button type="button" id="btn-ee-unposted_inventory_cost-${tabId}" class="ee-sub-btn" onclick="switchErrorExplorerSub('${tabId}', 'unposted_inventory_cost', 'كلفة مخزون لم ترحل')" style="height: 52px; min-width: 82px; padding: 4px 8px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; font-weight: 700; font-size: 0.74rem; color: #475569; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; white-space: nowrap;">
-            <i class="fa-solid fa-database" style="color: #ef4444; font-size: 1.15rem;"></i>
+          <button type="button" id="btn-ee-unposted_inventory_cost-${tabId}" class="ee-sub-btn" onclick="switchErrorExplorerSub('${tabId}', 'unposted_inventory_cost', 'كلفة مخزون لم ترحل')" style="height: 36px; padding: 2px 10px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 4px; font-weight: 700; font-size: 0.75rem; color: #475569; cursor: pointer; display: flex; align-items: center; gap: 6px; white-space: nowrap;">
+            <i class="fa-solid fa-database" style="color: #ef4444; font-size: 0.95rem;"></i>
             <span>كلفة مخزون لم ترحل</span>
           </button>
 
         </div>
 
         <!-- Table Grid Container with Grouping Banner matching media_1787981081406.png -->
-        <div style="flex: 1; min-height: 400px; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 8px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+        <div style="flex: 1; min-height: 400px; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 1px 2px rgba(0,0,0,0.04);">
           
           <!-- Grouping Bar Header matching screenshot -->
-          <div style="background: #f8fafc; padding: 6px 12px; border-bottom: 1px solid #cbd5e1; font-size: 0.76rem; color: #64748b; font-style: italic; display: flex; justify-content: space-between; align-items: center;">
+          <div style="background: #f8fafc; padding: 5px 10px; border-bottom: 1px solid #cbd5e1; font-size: 0.75rem; color: #64748b; font-style: italic; display: flex; justify-content: space-between; align-items: center;">
             <div style="display: flex; align-items: center; gap: 6px;">
               <i class="fa-solid fa-table-columns" style="color: #94a3b8;"></i>
               <span>Drag a column header here to group by that column</span>
             </div>
-            <div id="eeActiveSubTitle-${tabId}" style="font-weight: 900; color: #0284c7; font-style: normal; font-size: 0.88rem;">العمليات الغير مرحلة</div>
+            <div id="eeActiveSubTitle-${tabId}" style="font-weight: 900; color: #0284c7; font-style: normal; font-size: 0.85rem;">العمليات الغير مرحلة</div>
           </div>
 
           <!-- Table Container -->
@@ -6002,7 +6002,7 @@ function getScreenContent(tabId, tabTitle, iconClass, colorClass) {
           </div>
 
           <!-- Footer Summary Bar -->
-          <div id="eeFooter-${tabId}" style="background: #f8fafc; border-top: 1.5px solid #cbd5e1; padding: 6px 12px; display: flex; justify-content: space-between; align-items: center; font-weight: 800; font-size: 0.82rem; color: #1e293b;">
+          <div id="eeFooter-${tabId}" style="background: #f8fafc; border-top: 1.5px solid #cbd5e1; padding: 4px 10px; display: flex; justify-content: space-between; align-items: center; font-weight: 800; font-size: 0.8rem; color: #1e293b;">
             <div id="eeCount-${tabId}">عدد السجلات: 0</div>
             <div id="eeTotals-${tabId}"></div>
           </div>
@@ -6890,6 +6890,10 @@ function getScreenContent(tabId, tabTitle, iconClass, colorClass) {
     }
   } catch (e) {
     console.error("Error parsing toolbar:", e);
+  }
+
+  if (isErrorExplorer || isAccountReports || isInventoryReports || isSalesReports || isServiceReports) {
+    return bodyHtml;
   }
 
   // Combine into single wrapper
@@ -37118,6 +37122,7 @@ window.errorExplorerState = window.errorExplorerState || {};
 window.activeErrorExplorerTabId = null;
 
 window.initErrorExplorerTab = function(tabId) {
+  tabId = tabId || window.activeErrorExplorerTabId || 'menu-599';
   window.activeErrorExplorerTabId = tabId;
   window.errorExplorerState[tabId] = {
     activeTab: 'cost_check',
@@ -37131,6 +37136,9 @@ window.initErrorExplorerTab = function(tabId) {
 };
 
 window.switchErrorExplorerTab = function(tabId, catTab) {
+  tabId = tabId || window.activeErrorExplorerTabId || 'menu-599';
+  window.activeErrorExplorerTabId = tabId;
+
   if (!window.errorExplorerState[tabId]) {
     window.errorExplorerState[tabId] = { activeTab: catTab, activeSub: 'unposted', data: [], filteredData: [], columnFilters: {} };
   }
@@ -37165,6 +37173,7 @@ window.switchErrorExplorerTab = function(tabId, catTab) {
 };
 
 window.renderErrorExplorerSubRibbon = function(tabId, catTab) {
+  tabId = tabId || window.activeErrorExplorerTabId || 'menu-599';
   const ribbon = document.getElementById(`eeSubRibbon-${tabId}`);
   if (!ribbon) return;
 
@@ -37209,8 +37218,8 @@ window.renderErrorExplorerSubRibbon = function(tabId, catTab) {
   subItems.forEach((sub, idx) => {
     const isAct = idx === 0;
     html += `
-      <button type="button" id="btn-ee-${sub.id}-${tabId}" class="ee-sub-btn ${isAct ? 'active' : ''}" onclick="switchErrorExplorerSub('${tabId}', '${sub.id}', '${sub.name}')" style="height: 52px; min-width: 82px; padding: 4px 8px; background: ${isAct ? '#e0f2fe' : '#f8fafc'}; border: ${isAct ? '1.5px solid #0284c7' : '1px solid #cbd5e1'}; border-radius: 6px; font-weight: ${isAct ? '800' : '700'}; font-size: 0.74rem; color: ${isAct ? '#0369a1' : '#475569'}; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; white-space: nowrap;">
-        <i class="fa-solid ${sub.icon}" style="color: ${sub.color}; font-size: 1.15rem;"></i>
+      <button type="button" id="btn-ee-${sub.id}-${tabId}" class="ee-sub-btn ${isAct ? 'active' : ''}" onclick="switchErrorExplorerSub('${tabId}', '${sub.id}', '${sub.name}')" style="height: 36px; padding: 2px 10px; background: ${isAct ? '#e0f2fe' : '#f8fafc'}; border: ${isAct ? '1.5px solid #0284c7' : '1px solid #cbd5e1'}; border-radius: 4px; font-weight: ${isAct ? '800' : '700'}; font-size: 0.75rem; color: ${isAct ? '#0369a1' : '#475569'}; cursor: pointer; display: flex; align-items: center; gap: 6px; white-space: nowrap;">
+        <i class="fa-solid ${sub.icon}" style="color: ${sub.color}; font-size: 0.95rem;"></i>
         <span>${sub.name}</span>
       </button>
     `;
@@ -37221,6 +37230,9 @@ window.renderErrorExplorerSubRibbon = function(tabId, catTab) {
 };
 
 window.switchErrorExplorerSub = function(tabId, subId, subName) {
+  tabId = tabId || window.activeErrorExplorerTabId || 'menu-599';
+  window.activeErrorExplorerTabId = tabId;
+
   if (!window.errorExplorerState[tabId]) {
     window.errorExplorerState[tabId] = { activeTab: 'cost_check', activeSub: subId, data: [], filteredData: [], columnFilters: {} };
   }
@@ -37252,14 +37264,18 @@ window.switchErrorExplorerSub = function(tabId, subId, subName) {
 };
 
 window.fetchErrorExplorerData = async function(tabId) {
+  tabId = tabId || window.activeErrorExplorerTabId || 'menu-599';
   const state = window.errorExplorerState[tabId] || { activeTab: 'cost_check', activeSub: 'unposted' };
+  
   const tbody = document.getElementById(`eeTbody-${tabId}`);
   if (tbody) {
-    tbody.innerHTML = '<tr><td colspan="10" style="padding: 30px; text-align: center; color: #64748b;"><i class="fa-solid fa-spinner fa-spin fa-2x"></i><div style="margin-top: 8px; font-weight: bold; font-size: 0.88rem;">جاري فحص واستخراج البيانات من قاعدة البيانات...</div></td></tr>';
+    tbody.innerHTML = '<tr><td colspan="10" style="padding: 25px; text-align: center; color: #64748b;"><i class="fa-solid fa-spinner fa-spin fa-2x"></i><div style="margin-top: 6px; font-weight: bold; font-size: 0.85rem;">جاري فحص واستخراج البيانات من قاعدة البيانات...</div></td></tr>';
   }
 
   try {
-    const res = await fetch(`/api/error-explorer?tab=${encodeURIComponent(state.activeTab || 'cost_check')}&sub=${encodeURIComponent(state.activeSub || 'unposted')}`);
+    const activeTab = state.activeTab || 'cost_check';
+    const activeSub = state.activeSub || 'unposted';
+    const res = await fetch(`/api/error-explorer?tab=${encodeURIComponent(activeTab)}&sub=${encodeURIComponent(activeSub)}`);
     const result = await res.json();
 
     if (result.success && Array.isArray(result.data)) {
@@ -37268,15 +37284,17 @@ window.fetchErrorExplorerData = async function(tabId) {
       renderErrorExplorerTable(tabId);
     } else {
       showToast(result.error || "تعذر جلب بيانات الفحص.", "error");
-      if (tbody) tbody.innerHTML = `<tr><td colspan="10" style="padding: 25px; text-align: center; color: #ef4444; font-weight: bold;">${result.error || 'حدث خطأ أثناء جلب البيانات'}</td></tr>`;
+      if (tbody) tbody.innerHTML = `<tr><td colspan="10" style="padding: 20px; text-align: center; color: #ef4444; font-weight: bold;">${result.error || 'حدث خطأ أثناء جلب البيانات'}</td></tr>`;
     }
   } catch (err) {
+    console.error("fetchErrorExplorerData error:", err);
     showToast("فشل الاتصال بالخادم لجلب بيانات مستكشف الأخطاء.", "error");
-    if (tbody) tbody.innerHTML = `<tr><td colspan="10" style="padding: 25px; text-align: center; color: #ef4444; font-weight: bold;">خطأ في الاتصال بالخادم</td></tr>`;
+    if (tbody) tbody.innerHTML = `<tr><td colspan="10" style="padding: 20px; text-align: center; color: #ef4444; font-weight: bold;">خطأ في الاتصال بالخادم</td></tr>`;
   }
 };
 
 window.renderErrorExplorerTable = function(tabId) {
+  tabId = tabId || window.activeErrorExplorerTabId || 'menu-599';
   const state = window.errorExplorerState[tabId];
   if (!state) return;
 
@@ -37291,83 +37309,83 @@ window.renderErrorExplorerTable = function(tabId) {
   let theadHtml = '';
   if (sub === 'unposted' || sub === 'posting_flaw') {
     theadHtml = `
-      <tr style="background: #e2e8f0; color: #1e293b; font-weight: 800; font-size: 0.82rem;">
-        <th style="padding: 6px 8px; width: 40px;"><input type="checkbox" title="تحديد الكل" style="cursor: pointer;"></th>
-        <th style="padding: 6px 8px; width: 60px;">مرحل</th>
-        <th style="padding: 6px 12px; text-align: right;">دائن محلي</th>
-        <th style="padding: 6px 12px; text-align: right;">مدين محلي</th>
-        <th style="padding: 6px 8px; width: 70px;">الرقم</th>
-        <th style="padding: 6px 10px; width: 80px;">النوع</th>
-        <th style="padding: 6px 14px; text-align: right;">نوع الحركه</th>
+      <tr style="background: #e2e8f0; color: #1e293b; font-weight: 800; font-size: 0.8rem;">
+        <th style="padding: 5px 8px; width: 40px;"><input type="checkbox" title="تحديد الكل" style="cursor: pointer;"></th>
+        <th style="padding: 5px 8px; width: 60px;">مرحل</th>
+        <th style="padding: 5px 12px; text-align: right;">دائن محلي</th>
+        <th style="padding: 5px 12px; text-align: right;">مدين محلي</th>
+        <th style="padding: 5px 8px; width: 70px;">الرقم</th>
+        <th style="padding: 5px 10px; width: 80px;">النوع</th>
+        <th style="padding: 5px 14px; text-align: right;">نوع الحركه</th>
       </tr>
       <tr style="background: #f1f5f9;">
-        <th style="padding: 3px;"><i class="fa-solid fa-filter" style="color: #94a3b8; font-size: 0.72rem;"></i></th>
-        <th style="padding: 3px;"><input type="text" placeholder="-" oninput="onEeColumnFilter('${tabId}', 'IsPosted', this.value)" style="width: 100%; font-size: 0.72rem; padding: 2px; text-align: center; border: 1px solid #cbd5e1; border-radius: 3px;"></th>
-        <th style="padding: 3px;"><input type="text" placeholder="-" oninput="onEeColumnFilter('${tabId}', 'CreditLocal', this.value)" style="width: 100%; font-size: 0.72rem; padding: 2px; text-align: right; border: 1px solid #cbd5e1; border-radius: 3px;"></th>
-        <th style="padding: 3px;"><input type="text" placeholder="-" oninput="onEeColumnFilter('${tabId}', 'DebitLocal', this.value)" style="width: 100%; font-size: 0.72rem; padding: 2px; text-align: right; border: 1px solid #cbd5e1; border-radius: 3px;"></th>
-        <th style="padding: 3px;"><input type="text" placeholder="=" oninput="onEeColumnFilter('${tabId}', 'TransNo', this.value)" style="width: 100%; font-size: 0.72rem; padding: 2px; text-align: center; border: 1px solid #cbd5e1; border-radius: 3px;"></th>
-        <th style="padding: 3px;"><input type="text" placeholder="-" oninput="onEeColumnFilter('${tabId}', 'TransType', this.value)" style="width: 100%; font-size: 0.72rem; padding: 2px; text-align: center; border: 1px solid #cbd5e1; border-radius: 3px;"></th>
-        <th style="padding: 3px;"><input type="text" placeholder="بحث نوع الحركة..." oninput="onEeColumnFilter('${tabId}', 'TransTypeName', this.value)" style="width: 100%; font-size: 0.72rem; padding: 2px 6px; border: 1px solid #cbd5e1; border-radius: 3px;"></th>
+        <th style="padding: 2px;"><i class="fa-solid fa-filter" style="color: #94a3b8; font-size: 0.7rem;"></i></th>
+        <th style="padding: 2px;"><input type="text" placeholder="-" oninput="onEeColumnFilter('${tabId}', 'IsPosted', this.value)" style="width: 100%; font-size: 0.72rem; padding: 2px; text-align: center; border: 1px solid #cbd5e1; border-radius: 3px;"></th>
+        <th style="padding: 2px;"><input type="text" placeholder="-" oninput="onEeColumnFilter('${tabId}', 'CreditLocal', this.value)" style="width: 100%; font-size: 0.72rem; padding: 2px; text-align: right; border: 1px solid #cbd5e1; border-radius: 3px;"></th>
+        <th style="padding: 2px;"><input type="text" placeholder="-" oninput="onEeColumnFilter('${tabId}', 'DebitLocal', this.value)" style="width: 100%; font-size: 0.72rem; padding: 2px; text-align: right; border: 1px solid #cbd5e1; border-radius: 3px;"></th>
+        <th style="padding: 2px;"><input type="text" placeholder="=" oninput="onEeColumnFilter('${tabId}', 'TransNo', this.value)" style="width: 100%; font-size: 0.72rem; padding: 2px; text-align: center; border: 1px solid #cbd5e1; border-radius: 3px;"></th>
+        <th style="padding: 2px;"><input type="text" placeholder="-" oninput="onEeColumnFilter('${tabId}', 'TransType', this.value)" style="width: 100%; font-size: 0.72rem; padding: 2px; text-align: center; border: 1px solid #cbd5e1; border-radius: 3px;"></th>
+        <th style="padding: 2px;"><input type="text" placeholder="بحث نوع الحركة..." oninput="onEeColumnFilter('${tabId}', 'TransTypeName', this.value)" style="width: 100%; font-size: 0.72rem; padding: 2px 6px; border: 1px solid #cbd5e1; border-radius: 3px;"></th>
       </tr>
     `;
   } else if (sub === 'negative_qty') {
     theadHtml = `
-      <tr style="background: #e2e8f0; color: #1e293b; font-weight: 800; font-size: 0.82rem;">
-        <th style="padding: 6px 8px; width: 40px;"><input type="checkbox" title="تحديد الكل"></th>
-        <th style="padding: 6px 12px; text-align: right;">إجمالي الكلفة</th>
-        <th style="padding: 6px 12px; text-align: right;">كلفة الوحدة</th>
-        <th style="padding: 6px 12px; text-align: right; color: #dc2626;">الكمية الحالية (سالبة)</th>
-        <th style="padding: 6px 10px;">الوحدة</th>
-        <th style="padding: 6px 14px; text-align: right;">اسم الصنف</th>
-        <th style="padding: 6px 10px; width: 100px;">رقم الصنف</th>
+      <tr style="background: #e2e8f0; color: #1e293b; font-weight: 800; font-size: 0.8rem;">
+        <th style="padding: 5px 8px; width: 40px;"><input type="checkbox" title="تحديد الكل"></th>
+        <th style="padding: 5px 12px; text-align: right;">إجمالي الكلفة</th>
+        <th style="padding: 5px 12px; text-align: right;">كلفة الوحدة</th>
+        <th style="padding: 5px 12px; text-align: right; color: #dc2626;">الكمية الحالية (سالبة)</th>
+        <th style="padding: 5px 10px;">الوحدة</th>
+        <th style="padding: 5px 14px; text-align: right;">اسم الصنف</th>
+        <th style="padding: 5px 10px; width: 100px;">رقم الصنف</th>
       </tr>
       <tr style="background: #f1f5f9;">
-        <th style="padding: 3px;"><i class="fa-solid fa-filter" style="color: #94a3b8; font-size: 0.72rem;"></i></th>
-        <th style="padding: 3px;"><input type="text" placeholder="-" oninput="onEeColumnFilter('${tabId}', 'TotalCost', this.value)" style="width: 100%; font-size: 0.72rem; padding: 2px; text-align: right; border: 1px solid #cbd5e1; border-radius: 3px;"></th>
-        <th style="padding: 3px;"><input type="text" placeholder="-" oninput="onEeColumnFilter('${tabId}', 'UnitCost', this.value)" style="width: 100%; font-size: 0.72rem; padding: 2px; text-align: right; border: 1px solid #cbd5e1; border-radius: 3px;"></th>
-        <th style="padding: 3px;"><input type="text" placeholder="-" oninput="onEeColumnFilter('${tabId}', 'CurrentQty', this.value)" style="width: 100%; font-size: 0.72rem; padding: 2px; text-align: right; border: 1px solid #cbd5e1; border-radius: 3px;"></th>
-        <th style="padding: 3px;"><input type="text" placeholder="-" oninput="onEeColumnFilter('${tabId}', 'UnitName', this.value)" style="width: 100%; font-size: 0.72rem; padding: 2px; text-align: center; border: 1px solid #cbd5e1; border-radius: 3px;"></th>
-        <th style="padding: 3px;"><input type="text" placeholder="بحث اسم الصنف..." oninput="onEeColumnFilter('${tabId}', 'ItemName', this.value)" style="width: 100%; font-size: 0.72rem; padding: 2px 6px; border: 1px solid #cbd5e1; border-radius: 3px;"></th>
-        <th style="padding: 3px;"><input type="text" placeholder="رقم الصنف..." oninput="onEeColumnFilter('${tabId}', 'ItemNumber', this.value)" style="width: 100%; font-size: 0.72rem; padding: 2px; text-align: center; border: 1px solid #cbd5e1; border-radius: 3px;"></th>
+        <th style="padding: 2px;"><i class="fa-solid fa-filter" style="color: #94a3b8; font-size: 0.7rem;"></i></th>
+        <th style="padding: 2px;"><input type="text" placeholder="-" oninput="onEeColumnFilter('${tabId}', 'TotalCost', this.value)" style="width: 100%; font-size: 0.72rem; padding: 2px; text-align: right; border: 1px solid #cbd5e1; border-radius: 3px;"></th>
+        <th style="padding: 2px;"><input type="text" placeholder="-" oninput="onEeColumnFilter('${tabId}', 'UnitCost', this.value)" style="width: 100%; font-size: 0.72rem; padding: 2px; text-align: right; border: 1px solid #cbd5e1; border-radius: 3px;"></th>
+        <th style="padding: 2px;"><input type="text" placeholder="-" oninput="onEeColumnFilter('${tabId}', 'CurrentQty', this.value)" style="width: 100%; font-size: 0.72rem; padding: 2px; text-align: right; border: 1px solid #cbd5e1; border-radius: 3px;"></th>
+        <th style="padding: 2px;"><input type="text" placeholder="-" oninput="onEeColumnFilter('${tabId}', 'UnitName', this.value)" style="width: 100%; font-size: 0.72rem; padding: 2px; text-align: center; border: 1px solid #cbd5e1; border-radius: 3px;"></th>
+        <th style="padding: 2px;"><input type="text" placeholder="بحث اسم الصنف..." oninput="onEeColumnFilter('${tabId}', 'ItemName', this.value)" style="width: 100%; font-size: 0.72rem; padding: 2px 6px; border: 1px solid #cbd5e1; border-radius: 3px;"></th>
+        <th style="padding: 2px;"><input type="text" placeholder="رقم الصنف..." oninput="onEeColumnFilter('${tabId}', 'ItemNumber', this.value)" style="width: 100%; font-size: 0.72rem; padding: 2px; text-align: center; border: 1px solid #cbd5e1; border-radius: 3px;"></th>
       </tr>
     `;
   } else if (sub === 'no_unit' || sub === 'zero_cost') {
     theadHtml = `
-      <tr style="background: #e2e8f0; color: #1e293b; font-weight: 800; font-size: 0.82rem;">
-        <th style="padding: 6px 8px; width: 40px;"><input type="checkbox" title="تحديد الكل"></th>
-        <th style="padding: 6px 14px;">وصف الخلل / الملاحظة</th>
-        <th style="padding: 6px 12px; text-align: right;">سعر البيع</th>
-        <th style="padding: 6px 12px; text-align: right;">الكلفة المسجلة</th>
-        <th style="padding: 6px 10px;">الوحدة</th>
-        <th style="padding: 6px 14px; text-align: right;">اسم الصنف</th>
-        <th style="padding: 6px 10px; width: 100px;">رقم الصنف</th>
+      <tr style="background: #e2e8f0; color: #1e293b; font-weight: 800; font-size: 0.8rem;">
+        <th style="padding: 5px 8px; width: 40px;"><input type="checkbox" title="تحديد الكل"></th>
+        <th style="padding: 5px 14px;">وصف الخلل / الملاحظة</th>
+        <th style="padding: 5px 12px; text-align: right;">سعر البيع</th>
+        <th style="padding: 5px 12px; text-align: right;">الكلفة المسجلة</th>
+        <th style="padding: 5px 10px;">الوحدة</th>
+        <th style="padding: 5px 14px; text-align: right;">اسم الصنف</th>
+        <th style="padding: 5px 10px; width: 100px;">رقم الصنف</th>
       </tr>
     `;
   } else if (sub === 'cost_diffs' || sub === 'issued_price_cost') {
     theadHtml = `
-      <tr style="background: #e2e8f0; color: #1e293b; font-weight: 800; font-size: 0.82rem;">
-        <th style="padding: 6px 8px; width: 40px;"><input type="checkbox" title="تحديد الكل"></th>
-        <th style="padding: 6px 12px; text-align: right; color: #dc2626;">إجمالي الفرق</th>
-        <th style="padding: 6px 12px; text-align: right;">فرق الوحدة</th>
-        <th style="padding: 6px 12px; text-align: right;">سعر الكلفة</th>
-        <th style="padding: 6px 12px; text-align: right;">سعر البيع</th>
-        <th style="padding: 6px 10px;">الكمية</th>
-        <th style="padding: 6px 14px; text-align: right;">اسم الصنف</th>
-        <th style="padding: 6px 10px;">رقم الصنف</th>
-        <th style="padding: 6px 10px;">رقم الفاتورة</th>
+      <tr style="background: #e2e8f0; color: #1e293b; font-weight: 800; font-size: 0.8rem;">
+        <th style="padding: 5px 8px; width: 40px;"><input type="checkbox" title="تحديد الكل"></th>
+        <th style="padding: 5px 12px; text-align: right; color: #dc2626;">إجمالي الفرق</th>
+        <th style="padding: 5px 12px; text-align: right;">فرق الوحدة</th>
+        <th style="padding: 5px 12px; text-align: right;">سعر الكلفة</th>
+        <th style="padding: 5px 12px; text-align: right;">سعر البيع</th>
+        <th style="padding: 5px 10px;">الكمية</th>
+        <th style="padding: 5px 14px; text-align: right;">اسم الصنف</th>
+        <th style="padding: 5px 10px;">رقم الصنف</th>
+        <th style="padding: 5px 10px;">رقم الفاتورة</th>
       </tr>
     `;
   } else {
     // Inventory cost / unposted cost
     theadHtml = `
-      <tr style="background: #e2e8f0; color: #1e293b; font-weight: 800; font-size: 0.82rem;">
-        <th style="padding: 6px 8px; width: 40px;"><input type="checkbox" title="تحديد الكل"></th>
-        <th style="padding: 6px 12px; text-align: right;">إجمالي قيمة المخزون</th>
-        <th style="padding: 6px 12px; text-align: right;">كلفة الوحدة</th>
-        <th style="padding: 6px 10px;">كمية المخزون</th>
-        <th style="padding: 6px 10px;">الوحدة</th>
-        <th style="padding: 6px 14px; text-align: right;">اسم الصنف</th>
-        <th style="padding: 6px 10px;">رقم الصنف</th>
+      <tr style="background: #e2e8f0; color: #1e293b; font-weight: 800; font-size: 0.8rem;">
+        <th style="padding: 5px 8px; width: 40px;"><input type="checkbox" title="تحديد الكل"></th>
+        <th style="padding: 5px 12px; text-align: right;">إجمالي قيمة المخزون</th>
+        <th style="padding: 5px 12px; text-align: right;">كلفة الوحدة</th>
+        <th style="padding: 5px 10px;">كمية المخزون</th>
+        <th style="padding: 5px 10px;">الوحدة</th>
+        <th style="padding: 5px 14px; text-align: right;">اسم الصنف</th>
+        <th style="padding: 5px 10px;">رقم الصنف</th>
       </tr>
     `;
   }
@@ -37375,7 +37393,7 @@ window.renderErrorExplorerTable = function(tabId) {
   if (thead) thead.innerHTML = theadHtml;
 
   if (data.length === 0) {
-    if (tbody) tbody.innerHTML = '<tr><td colspan="10" style="padding: 35px; text-align: center; color: #16a34a; font-weight: 800; font-size: 0.92rem;"><i class="fa-solid fa-circle-check fa-2x" style="color: #10b981;"></i><div style="margin-top: 8px;">سليم تماماً: لا توجد أي أخطاء أو عمليات غير مطابقة في هذا الفحص.</div></td></tr>';
+    if (tbody) tbody.innerHTML = '<tr><td colspan="10" style="padding: 30px; text-align: center; color: #16a34a; font-weight: 800; font-size: 0.9rem;"><i class="fa-solid fa-circle-check fa-2x" style="color: #10b981;"></i><div style="margin-top: 6px;">سليم تماماً: لا توجد أي أخطاء أو عمليات غير مطابقة في هذا الفحص.</div></td></tr>';
     if (countEl) countEl.innerText = 'عدد السجلات: 0';
     if (totalsEl) totalsEl.innerHTML = '';
     return;
@@ -37399,15 +37417,15 @@ window.renderErrorExplorerTable = function(tabId) {
     if (sub === 'unposted' || sub === 'posting_flaw') {
       rowsHtml += `
         <tr style="background: ${bg};">
-          <td style="padding: 5px 8px;"><input type="checkbox" style="cursor: pointer;"></td>
-          <td style="padding: 5px 8px; text-align: center;">
+          <td style="padding: 4px 8px;"><input type="checkbox" style="cursor: pointer;"></td>
+          <td style="padding: 4px 8px; text-align: center;">
             <input type="checkbox" ${isPosted ? 'checked' : ''} style="cursor: pointer;" disabled>
           </td>
-          <td style="padding: 5px 12px; text-align: right; font-family: monospace; font-weight: 700; color: #1e293b;">${formatNumber(credit, 2)}</td>
-          <td style="padding: 5px 12px; text-align: right; font-family: monospace; font-weight: 700; color: #1e293b;">${formatNumber(debit, 2)}</td>
-          <td style="padding: 5px 8px; text-align: center; font-family: monospace; font-weight: 800; color: #0284c7;">${row.TransNo || 1}</td>
-          <td style="padding: 5px 10px; text-align: center; color: #64748b;">${row.TransType || ''}</td>
-          <td style="padding: 5px 14px; text-align: right; font-weight: 700; color: #0f172a;">${row.TransTypeName || 'رصيد افتتاحي'}</td>
+          <td style="padding: 4px 12px; text-align: right; font-family: monospace; font-weight: 700; color: #1e293b;">${formatNumber(credit, 2)}</td>
+          <td style="padding: 4px 12px; text-align: right; font-family: monospace; font-weight: 700; color: #1e293b;">${formatNumber(debit, 2)}</td>
+          <td style="padding: 4px 8px; text-align: center; font-family: monospace; font-weight: 800; color: #0284c7;">${row.TransNo || 1}</td>
+          <td style="padding: 4px 10px; text-align: center; color: #64748b;">${row.TransType || ''}</td>
+          <td style="padding: 4px 14px; text-align: right; font-weight: 700; color: #0f172a;">${row.TransTypeName || 'رصيد افتتاحي'}</td>
         </tr>
       `;
     } else if (sub === 'negative_qty') {
@@ -37419,39 +37437,39 @@ window.renderErrorExplorerTable = function(tabId) {
 
       rowsHtml += `
         <tr style="background: ${bg};">
-          <td style="padding: 5px 8px;"><input type="checkbox"></td>
-          <td style="padding: 5px 12px; text-align: right; font-family: monospace; font-weight: 700; color: #dc2626;">${formatNumber(tot, 2)}</td>
-          <td style="padding: 5px 12px; text-align: right; font-family: monospace; font-weight: 700;">${formatNumber(c, 2)}</td>
-          <td style="padding: 5px 12px; text-align: right; font-family: monospace; font-weight: 800; color: #dc2626;">${formatNumber(q, 2)}</td>
-          <td style="padding: 5px 10px; text-align: center;">${row.UnitName || 'حبه'}</td>
-          <td style="padding: 5px 14px; text-align: right; font-weight: 800; color: #0f172a;">${row.ItemName || ''}</td>
-          <td style="padding: 5px 10px; text-align: center; font-family: monospace; font-weight: 800; color: #0284c7;">${row.ItemNumber || ''}</td>
+          <td style="padding: 4px 8px;"><input type="checkbox"></td>
+          <td style="padding: 4px 12px; text-align: right; font-family: monospace; font-weight: 700; color: #dc2626;">${formatNumber(tot, 2)}</td>
+          <td style="padding: 4px 12px; text-align: right; font-family: monospace; font-weight: 700;">${formatNumber(c, 2)}</td>
+          <td style="padding: 4px 12px; text-align: right; font-family: monospace; font-weight: 800; color: #dc2626;">${formatNumber(q, 2)}</td>
+          <td style="padding: 4px 10px; text-align: center;">${row.UnitName || 'حبه'}</td>
+          <td style="padding: 4px 14px; text-align: right; font-weight: 800; color: #0f172a;">${row.ItemName || ''}</td>
+          <td style="padding: 4px 10px; text-align: center; font-family: monospace; font-weight: 800; color: #0284c7;">${row.ItemNumber || ''}</td>
         </tr>
       `;
     } else if (sub === 'no_unit' || sub === 'zero_cost') {
       rowsHtml += `
         <tr style="background: ${bg};">
-          <td style="padding: 5px 8px;"><input type="checkbox"></td>
-          <td style="padding: 5px 14px; text-align: center; color: #dc2626; font-weight: 700;">${row.ErrorDescription || 'خلل في تعريف الكلفة أو العبوة'}</td>
-          <td style="padding: 5px 12px; text-align: right; font-family: monospace; font-weight: 700;">${formatNumber(row.UnitPrice || 0, 2)}</td>
-          <td style="padding: 5px 12px; text-align: right; font-family: monospace; font-weight: 700; color: #ea580c;">${formatNumber(row.UnitCost || 0, 2)}</td>
-          <td style="padding: 5px 10px; text-align: center;">${row.UnitName || 'حبه'}</td>
-          <td style="padding: 5px 14px; text-align: right; font-weight: 800; color: #0f172a;">${row.ItemName || ''}</td>
-          <td style="padding: 5px 10px; text-align: center; font-family: monospace; font-weight: 800; color: #0284c7;">${row.ItemNumber || ''}</td>
+          <td style="padding: 4px 8px;"><input type="checkbox"></td>
+          <td style="padding: 4px 14px; text-align: center; color: #dc2626; font-weight: 700;">${row.ErrorDescription || 'خلل في تعريف الكلفة أو العبوة'}</td>
+          <td style="padding: 4px 12px; text-align: right; font-family: monospace; font-weight: 700;">${formatNumber(row.UnitPrice || 0, 2)}</td>
+          <td style="padding: 4px 12px; text-align: right; font-family: monospace; font-weight: 700; color: #ea580c;">${formatNumber(row.UnitCost || 0, 2)}</td>
+          <td style="padding: 4px 10px; text-align: center;">${row.UnitName || 'حبه'}</td>
+          <td style="padding: 4px 14px; text-align: right; font-weight: 800; color: #0f172a;">${row.ItemName || ''}</td>
+          <td style="padding: 4px 10px; text-align: center; font-family: monospace; font-weight: 800; color: #0284c7;">${row.ItemNumber || ''}</td>
         </tr>
       `;
     } else if (sub === 'cost_diffs' || sub === 'issued_price_cost') {
       rowsHtml += `
         <tr style="background: ${bg};">
-          <td style="padding: 5px 8px;"><input type="checkbox"></td>
-          <td style="padding: 5px 12px; text-align: right; font-family: monospace; font-weight: 700; color: #dc2626;">${formatNumber(row.TotalDiff || 0, 2)}</td>
-          <td style="padding: 5px 12px; text-align: right; font-family: monospace; font-weight: 700; color: #dc2626;">${formatNumber(row.DiffPerUnit || 0, 2)}</td>
-          <td style="padding: 5px 12px; text-align: right; font-family: monospace; font-weight: 700; color: #1e293b;">${formatNumber(row.CostPrice || 0, 2)}</td>
-          <td style="padding: 5px 12px; text-align: right; font-family: monospace; font-weight: 700; color: #059669;">${formatNumber(row.SellingPrice || 0, 2)}</td>
-          <td style="padding: 5px 10px; text-align: center; font-family: monospace; font-weight: 700;">${row.Qty || 0}</td>
-          <td style="padding: 5px 14px; text-align: right; font-weight: 800;">${row.ItemName || ''}</td>
-          <td style="padding: 5px 10px; text-align: center; font-family: monospace; font-weight: 800; color: #0284c7;">${row.ItemNumber || ''}</td>
-          <td style="padding: 5px 10px; text-align: center; font-family: monospace; font-weight: 800;">${row.TransNo || ''}</td>
+          <td style="padding: 4px 8px;"><input type="checkbox"></td>
+          <td style="padding: 4px 12px; text-align: right; font-family: monospace; font-weight: 700; color: #dc2626;">${formatNumber(row.TotalDiff || 0, 2)}</td>
+          <td style="padding: 4px 12px; text-align: right; font-family: monospace; font-weight: 700; color: #dc2626;">${formatNumber(row.DiffPerUnit || 0, 2)}</td>
+          <td style="padding: 4px 12px; text-align: right; font-family: monospace; font-weight: 700; color: #1e293b;">${formatNumber(row.CostPrice || 0, 2)}</td>
+          <td style="padding: 4px 12px; text-align: right; font-family: monospace; font-weight: 700; color: #059669;">${formatNumber(row.SellingPrice || 0, 2)}</td>
+          <td style="padding: 4px 10px; text-align: center; font-family: monospace; font-weight: 700;">${row.Qty || 0}</td>
+          <td style="padding: 4px 14px; text-align: right; font-weight: 800;">${row.ItemName || ''}</td>
+          <td style="padding: 4px 10px; text-align: center; font-family: monospace; font-weight: 800; color: #0284c7;">${row.ItemNumber || ''}</td>
+          <td style="padding: 4px 10px; text-align: center; font-family: monospace; font-weight: 800;">${row.TransNo || ''}</td>
         </tr>
       `;
     } else {
@@ -37459,13 +37477,13 @@ window.renderErrorExplorerTable = function(tabId) {
       sumCost += stockTot;
       rowsHtml += `
         <tr style="background: ${bg};">
-          <td style="padding: 5px 8px;"><input type="checkbox"></td>
-          <td style="padding: 5px 12px; text-align: right; font-family: monospace; font-weight: 700; color: #0284c7;">${formatNumber(stockTot, 2)}</td>
-          <td style="padding: 5px 12px; text-align: right; font-family: monospace; font-weight: 700;">${formatNumber(row.UnitCost || 0, 2)}</td>
-          <td style="padding: 5px 10px; text-align: center; font-family: monospace; font-weight: 700;">${formatNumber(row.StockQty || 0, 2)}</td>
-          <td style="padding: 5px 10px; text-align: center;">${row.UnitName || 'حبه'}</td>
-          <td style="padding: 5px 14px; text-align: right; font-weight: 800;">${row.ItemName || ''}</td>
-          <td style="padding: 5px 10px; text-align: center; font-family: monospace; font-weight: 800; color: #0284c7;">${row.ItemNumber || ''}</td>
+          <td style="padding: 4px 8px;"><input type="checkbox"></td>
+          <td style="padding: 4px 12px; text-align: right; font-family: monospace; font-weight: 700; color: #0284c7;">${formatNumber(stockTot, 2)}</td>
+          <td style="padding: 4px 12px; text-align: right; font-family: monospace; font-weight: 700;">${formatNumber(row.UnitCost || 0, 2)}</td>
+          <td style="padding: 4px 10px; text-align: center; font-family: monospace; font-weight: 700;">${formatNumber(row.StockQty || 0, 2)}</td>
+          <td style="padding: 4px 10px; text-align: center;">${row.UnitName || 'حبه'}</td>
+          <td style="padding: 4px 14px; text-align: right; font-weight: 800;">${row.ItemName || ''}</td>
+          <td style="padding: 4px 10px; text-align: center; font-family: monospace; font-weight: 800; color: #0284c7;">${row.ItemNumber || ''}</td>
         </tr>
       `;
     }
@@ -37495,6 +37513,7 @@ window.renderErrorExplorerTable = function(tabId) {
 };
 
 window.onEeColumnFilter = function(tabId, field, val) {
+  tabId = tabId || window.activeErrorExplorerTabId || 'menu-599';
   const state = window.errorExplorerState[tabId];
   if (!state) return;
 
@@ -37514,6 +37533,7 @@ window.onEeColumnFilter = function(tabId, field, val) {
 };
 
 window.printErrorExplorerReport = function(tabId) {
+  tabId = tabId || window.activeErrorExplorerTabId || 'menu-599';
   const state = window.errorExplorerState[tabId];
   if (!state) return;
 
@@ -37525,12 +37545,12 @@ window.printErrorExplorerReport = function(tabId) {
   data.forEach((r, idx) => {
     tableRows += `
       <tr>
-        <td style="border: 1px solid #cbd5e1; padding: 6px; text-align: center;">${idx + 1}</td>
-        <td style="border: 1px solid #cbd5e1; padding: 6px; text-align: right; font-weight: bold;">${r.TransTypeName || r.ItemName || ''}</td>
-        <td style="border: 1px solid #cbd5e1; padding: 6px; text-align: center; font-family: monospace;">${r.TransNo || r.ItemNumber || ''}</td>
-        <td style="border: 1px solid #cbd5e1; padding: 6px; text-align: right; font-family: monospace;">${formatNumber(r.DebitLocal || r.UnitCost || 0, 2)}</td>
-        <td style="border: 1px solid #cbd5e1; padding: 6px; text-align: right; font-family: monospace;">${formatNumber(r.CreditLocal || r.TotalCost || 0, 2)}</td>
-        <td style="border: 1px solid #cbd5e1; padding: 6px; text-align: center;">${r.IsPosted == 1 ? 'نعم' : 'لا'}</td>
+        <td style="border: 1px solid #cbd5e1; padding: 5px; text-align: center;">${idx + 1}</td>
+        <td style="border: 1px solid #cbd5e1; padding: 5px; text-align: right; font-weight: bold;">${r.TransTypeName || r.ItemName || ''}</td>
+        <td style="border: 1px solid #cbd5e1; padding: 5px; text-align: center; font-family: monospace;">${r.TransNo || r.ItemNumber || ''}</td>
+        <td style="border: 1px solid #cbd5e1; padding: 5px; text-align: right; font-family: monospace;">${formatNumber(r.DebitLocal || r.UnitCost || 0, 2)}</td>
+        <td style="border: 1px solid #cbd5e1; padding: 5px; text-align: right; font-family: monospace;">${formatNumber(r.CreditLocal || r.TotalCost || 0, 2)}</td>
+        <td style="border: 1px solid #cbd5e1; padding: 5px; text-align: center;">${r.IsPosted == 1 ? 'نعم' : 'لا'}</td>
       </tr>
     `;
   });
@@ -37543,9 +37563,9 @@ window.printErrorExplorerReport = function(tabId) {
       <title>${title}</title>
       <style>
         body { font-family: 'Cairo', 'Segoe UI', Tahoma, sans-serif; padding: 15px; direction: rtl; color: #1e293b; }
-        .header-table { width: 100%; border-bottom: 2px solid #0284c7; padding-bottom: 8px; margin-bottom: 15px; }
-        table.data-table { width: 100%; border-collapse: collapse; font-size: 11pt; }
-        table.data-table th { background: #f1f5f9; border: 1px solid #cbd5e1; padding: 8px; font-weight: bold; }
+        .header-table { width: 100%; border-bottom: 2px solid #0284c7; padding-bottom: 8px; margin-bottom: 12px; }
+        table.data-table { width: 100%; border-collapse: collapse; font-size: 10pt; }
+        table.data-table th { background: #f1f5f9; border: 1px solid #cbd5e1; padding: 6px; font-weight: bold; }
         @media print { @page { size: A4 landscape; margin: 10mm; } }
       </style>
     </head>
@@ -37596,6 +37616,7 @@ window.printErrorExplorerReport = function(tabId) {
 };
 
 window.exportErrorExplorerExcel = function(tabId) {
+  tabId = tabId || window.activeErrorExplorerTabId || 'menu-599';
   const state = window.errorExplorerState[tabId];
   if (!state || !state.filteredData || state.filteredData.length === 0) {
     showToast("لا توجد بيانات متاحة للتصدير.", "warning");
@@ -37629,7 +37650,7 @@ window.exportErrorExplorerExcel = function(tabId) {
 };
 
 window.openErrorExplorerWhatsAppModal = function(tabId) {
-  window.activeErrorExplorerTabId = tabId;
+  window.activeErrorExplorerTabId = tabId || window.activeErrorExplorerTabId || 'menu-599';
   const modal = document.getElementById('errorExplorerWhatsAppModal');
   if (modal) {
     modal.style.display = 'flex';
@@ -37644,7 +37665,7 @@ window.closeErrorExplorerWhatsAppModal = function() {
 };
 
 window.executeSendErrorExplorerWhatsApp = async function() {
-  const tabId = window.activeErrorExplorerTabId;
+  const tabId = window.activeErrorExplorerTabId || 'menu-599';
   const state = window.errorExplorerState[tabId];
   if (!state) return;
 
@@ -37666,12 +37687,12 @@ window.executeSendErrorExplorerWhatsApp = async function() {
   data.forEach((r, idx) => {
     tableRows += `
       <tr>
-        <td style="border: 1px solid #cbd5e1; padding: 6px; text-align: center;">${idx + 1}</td>
-        <td style="border: 1px solid #cbd5e1; padding: 6px; text-align: right; font-weight: bold;">${r.TransTypeName || r.ItemName || ''}</td>
-        <td style="border: 1px solid #cbd5e1; padding: 6px; text-align: center; font-family: monospace;">${r.TransNo || r.ItemNumber || ''}</td>
-        <td style="border: 1px solid #cbd5e1; padding: 6px; text-align: right; font-family: monospace;">${formatNumber(r.DebitLocal || r.UnitCost || 0, 2)}</td>
-        <td style="border: 1px solid #cbd5e1; padding: 6px; text-align: right; font-family: monospace;">${formatNumber(r.CreditLocal || r.TotalCost || 0, 2)}</td>
-        <td style="border: 1px solid #cbd5e1; padding: 6px; text-align: center;">${r.IsPosted == 1 ? 'نعم' : 'لا'}</td>
+        <td style="border: 1px solid #cbd5e1; padding: 5px; text-align: center;">${idx + 1}</td>
+        <td style="border: 1px solid #cbd5e1; padding: 5px; text-align: right; font-weight: bold;">${r.TransTypeName || r.ItemName || ''}</td>
+        <td style="border: 1px solid #cbd5e1; padding: 5px; text-align: center; font-family: monospace;">${r.TransNo || r.ItemNumber || ''}</td>
+        <td style="border: 1px solid #cbd5e1; padding: 5px; text-align: right; font-family: monospace;">${formatNumber(r.DebitLocal || r.UnitCost || 0, 2)}</td>
+        <td style="border: 1px solid #cbd5e1; padding: 5px; text-align: right; font-family: monospace;">${formatNumber(r.CreditLocal || r.TotalCost || 0, 2)}</td>
+        <td style="border: 1px solid #cbd5e1; padding: 5px; text-align: center;">${r.IsPosted == 1 ? 'نعم' : 'لا'}</td>
       </tr>
     `;
   });
@@ -37684,7 +37705,7 @@ window.executeSendErrorExplorerWhatsApp = async function() {
       <title>${title}</title>
       <style>
         body { font-family: 'Cairo', 'Segoe UI', Tahoma, sans-serif; padding: 15px; direction: rtl; color: #1e293b; }
-        .header-table { width: 100%; border-bottom: 2px solid #0284c7; padding-bottom: 8px; margin-bottom: 15px; }
+        .header-table { width: 100%; border-bottom: 2px solid #0284c7; padding-bottom: 8px; margin-bottom: 12px; }
         table.data-table { width: 100%; border-collapse: collapse; font-size: 10pt; }
         table.data-table th { background: #f1f5f9; border: 1px solid #cbd5e1; padding: 6px; font-weight: bold; }
       </style>

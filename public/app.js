@@ -4702,80 +4702,91 @@ function getScreenContent(tabId, tabTitle, iconClass, colorClass) {
     `;
   } else if (isJournalEntry) {
     bodyHtml = `
-      <!-- Journal Entries Toolbar -->
-      <div class="accounts-toolbar">
-        <button class="accounts-toolbar-btn" onclick="openNewJournalEntryModal('${tabId}')">
-          <i class="fa-solid fa-plus" style="color: #38a169;"></i>جديد
-        </button>
-        <button class="accounts-toolbar-btn" onclick="openEditJournalEntryModal('${tabId}')">
-          <i class="fa-solid fa-file-pen" style="color: #dd6b20;"></i>تعديل
-        </button>
-        <button class="accounts-toolbar-btn" onclick="fetchJournalEntries('${tabId}')">
-          <i class="fa-solid fa-magnifying-glass" style="color: #3182ce;"></i>استعلام
-        </button>
-        <button class="accounts-toolbar-btn" onclick="printSelectedJournalEntry('${tabId}')">
-          <i class="fa-solid fa-print" style="color: #4a5568;"></i>طباعة
-        </button>
-        <button class="accounts-toolbar-btn" onclick="deleteJournalEntryFromToolbar('${tabId}')">
-          <i class="fa-solid fa-trash-can" style="color: #e53e3e;"></i>حذف
-        </button>
-        <button class="accounts-toolbar-btn" onclick="if (state.selectedJournalID) { showJournalEntries(state.selectedJournalID); } else { showToast('يرجى تحديد قيد أولاً من الجدول.', 'warning'); }">
-          <i class="fa-solid fa-file-invoice" style="color: #805ad5;"></i>القيد
-        </button>
-      </div>
-
-      <!-- Filters Card -->
-      <div class="voucher-filter-card" style="background-color: #fafbfc; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 15px 20px; margin-top: 15px; font-size: 0.85rem;">
-        <div style="display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 15px;">
-          <div class="form-group" style="flex: 1; min-width: 150px;">
-            <label style="font-weight: 700; color: #4a5568;">الفرع</label>
-            <select id="journalFilterBranch-${tabId}" style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-family: var(--font-arabic); font-size: 0.8rem; background-color: #fff;">
-              <option value="">-- الكل --</option>
-            </select>
-          </div>
-          <div class="form-group" style="flex: 2; min-width: 250px;">
-            <label style="font-weight: 700; color: #4a5568;">البيان</label>
-            <input type="text" id="journalFilterDescription-${tabId}" placeholder="البحث في البيان والشرح..." style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-family: var(--font-arabic); font-size: 0.8rem; background-color: #fff;">
-          </div>
+      <div class="journal-entries-screen" style="direction: rtl; text-align: right; font-family: var(--font-arabic); display: flex; flex-direction: column; gap: 6px; height: 100%; padding: 4px 6px; box-sizing: border-box;">
+        
+        <!-- Journal Entries Toolbar -->
+        <div class="accounts-toolbar" style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 4px 8px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; box-shadow: 0 1px 2px rgba(0,0,0,0.04);">
+          <button class="accounts-toolbar-btn btn btn-sm btn-secondary" onclick="openNewJournalEntryModal('${tabId}')" style="height: 30px; padding: 0 10px; font-weight: 800; font-size: 0.78rem; display: flex; align-items: center; gap: 5px;">
+            <i class="fa-solid fa-plus" style="color: #16a34a;"></i>جديد
+          </button>
+          <button class="accounts-toolbar-btn btn btn-sm btn-secondary" onclick="openEditJournalEntryModal('${tabId}')" style="height: 30px; padding: 0 10px; font-weight: 800; font-size: 0.78rem; display: flex; align-items: center; gap: 5px;">
+            <i class="fa-solid fa-file-pen" style="color: #d97706;"></i>تعديل
+          </button>
+          <button class="accounts-toolbar-btn btn btn-sm btn-secondary" onclick="fetchJournalEntries('${tabId}')" style="height: 30px; padding: 0 10px; font-weight: 800; font-size: 0.78rem; display: flex; align-items: center; gap: 5px;">
+            <i class="fa-solid fa-magnifying-glass" style="color: #0284c7;"></i>استعلام
+          </button>
+          <button class="accounts-toolbar-btn btn btn-sm btn-secondary" onclick="printSelectedJournalEntry('${tabId}')" style="height: 30px; padding: 0 10px; font-weight: 800; font-size: 0.78rem; display: flex; align-items: center; gap: 5px;">
+            <i class="fa-solid fa-print" style="color: #059669;"></i>طباعة
+          </button>
+          <button class="accounts-toolbar-btn btn btn-sm btn-secondary" onclick="deleteJournalEntryFromToolbar('${tabId}')" style="height: 30px; padding: 0 10px; font-weight: 800; font-size: 0.78rem; display: flex; align-items: center; gap: 5px;">
+            <i class="fa-solid fa-trash-can" style="color: #dc2626;"></i>حذف
+          </button>
+          <button class="accounts-toolbar-btn btn btn-sm btn-secondary" onclick="if (state.selectedJournalID) { showJournalEntries(state.selectedJournalID); } else { showToast('يرجى تحديد قيد أولاً من الجدول.', 'warning'); }" style="height: 30px; padding: 0 10px; font-weight: 800; font-size: 0.78rem; display: flex; align-items: center; gap: 5px;">
+            <i class="fa-solid fa-file-invoice" style="color: #7c3aed;"></i>القيد
+          </button>
         </div>
 
-        <div style="display: flex; flex-wrap: wrap; gap: 15px; align-items: flex-end;">
-          <div style="display: flex; gap: 10px; align-items: flex-end; flex: 1.5; min-width: 300px;">
-            <div class="form-group" style="flex: 1;">
-              <label style="font-weight: 700; color: #4a5568;">من تاريخ</label>
-              <input type="text" id="journalFilterStartDate-${tabId}" value="2025-01-01" placeholder="yyyy-mm-dd" maxlength="10" style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-family: var(--font-arabic); font-size: 0.8rem; background-color: #fff;">
+        <!-- Filters Card (Horizontal in-line label + input matching request) -->
+        <div style="background-color: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 6px 12px; display: flex; flex-direction: column; gap: 6px; font-size: 0.80rem; box-shadow: 0 1px 2px rgba(0,0,0,0.04);">
+          
+          <!-- Row 1: الفرع | البيان -->
+          <div style="display: grid; grid-template-columns: 1.2fr 2.8fr; gap: 12px; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <label style="font-weight: 700; color: #334155; white-space: nowrap; min-width: 45px;">الفرع:</label>
+              <select id="journalFilterBranch-${tabId}" class="form-select form-select-sm" style="flex: 1; height: 28px; padding: 2px 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-family: var(--font-arabic); font-size: 0.80rem;">
+                <option value="">-- الكل --</option>
+              </select>
             </div>
-            <div class="form-group" style="flex: 1;">
-              <label style="font-weight: 700; color: #4a5568;">الى تاريخ</label>
-              <input type="text" id="journalFilterEndDate-${tabId}" value="${new Date().toISOString().substring(0, 10)}" placeholder="yyyy-mm-dd" maxlength="10" style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-family: var(--font-arabic); font-size: 0.8rem; background-color: #fff;">
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <label style="font-weight: 700; color: #334155; white-space: nowrap; min-width: 45px;">البيان:</label>
+              <input type="text" id="journalFilterDescription-${tabId}" placeholder="البحث في البيان والشرح..." class="form-control form-control-sm" style="flex: 1; height: 28px; padding: 2px 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-family: var(--font-arabic); font-size: 0.80rem;">
             </div>
           </div>
-        </div>
-      </div>
 
-      <!-- Data Table -->
-      <div class="mock-table-wrapper" style="margin-top: 15px;">
-        <table class="mock-table">
-          <thead>
-            <tr>
-              <th style="width: 8%; text-align: center;">مرحل</th>
-              <th style="width: 8%; text-align: center;">مغلق</th>
-              <th style="width: 10%;">الرقم</th>
-              <th style="width: 15%;">التاريخ</th>
-              <th style="width: 15%; display: none;">الفرع</th>
-              <th style="width: 15%;">الإجمالي</th>
-              <th style="width: 29%;">البيان</th>
-            </tr>
-          </thead>
-          <tbody id="journalBody-${tabId}">
-            <tr>
-              <td colspan="7" style="text-align: center; padding: 40px; color: var(--text-muted);">
-                <i class="fa-solid fa-info-circle" style="font-size: 1.5rem; margin-bottom: 8px; display: block; color: var(--primary);"></i>
-                يرجى النقر على زر <strong>استعلام</strong> لعرض القيود الحسابية.
-              </td>
-            </tr>
-          </tbody>
-        </table>
+          <!-- Row 2: من تاريخ | إلى تاريخ -->
+          <div style="display: grid; grid-template-columns: 1.2fr 1.2fr 1.6fr; gap: 12px; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <label style="font-weight: 700; color: #334155; white-space: nowrap; min-width: 55px;">من تاريخ:</label>
+              <input type="date" id="journalFilterStartDate-${tabId}" value="2025-01-01" class="form-control form-control-sm" style="flex: 1; height: 28px; padding: 2px 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-family: monospace; font-size: 0.80rem;">
+            </div>
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <label style="font-weight: 700; color: #334155; white-space: nowrap; min-width: 55px;">إلى تاريخ:</label>
+              <input type="date" id="journalFilterEndDate-${tabId}" value="${new Date().toISOString().substring(0, 10)}" class="form-control form-control-sm" style="flex: 1; height: 28px; padding: 2px 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-family: monospace; font-size: 0.80rem;">
+            </div>
+            <div style="display: flex; justify-content: flex-end; align-items: center;">
+              <button type="button" class="btn btn-primary btn-sm" onclick="fetchJournalEntries('${tabId}')" style="height: 28px; padding: 0 14px; font-weight: 700; font-size: 0.78rem; display: flex; align-items: center; gap: 4px;">
+                <i class="fa-solid fa-magnifying-glass"></i> بحث واستعلام
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Data Table with perfectly aligned 7 columns -->
+        <div class="mock-table-wrapper" style="flex: 1; overflow: auto; border: 1px solid #cbd5e1; border-radius: 6px; background: #ffffff;">
+          <table class="mock-table table table-hover table-bordered" style="min-width: 900px; margin-bottom: 0; font-size: 0.80rem; border-collapse: collapse;">
+            <thead style="position: sticky; top: 0; z-index: 5; background: #f8fafc; border-bottom: 2px solid #cbd5e1;">
+              <tr style="background: #e2e8f0; color: #1e293b; font-weight: 800; text-align: center;">
+                <th style="width: 60px; padding: 5px 4px; text-align: center;">مرحل</th>
+                <th style="width: 60px; padding: 5px 4px; text-align: center;">مغلق</th>
+                <th style="width: 80px; padding: 5px 6px; text-align: center;">الرقم</th>
+                <th style="width: 95px; padding: 5px 6px; text-align: center;">التاريخ</th>
+                <th style="width: 140px; padding: 5px 8px; text-align: right;">الفرع</th>
+                <th style="width: 120px; padding: 5px 8px; text-align: left;">الإجمالي</th>
+                <th style="padding: 5px 10px; text-align: right;">البيان</th>
+              </tr>
+            </thead>
+            <tbody id="journalBody-${tabId}">
+              <tr>
+                <td colspan="7" style="text-align: center; padding: 30px; color: var(--text-muted);">
+                  <i class="fa-solid fa-info-circle" style="font-size: 1.3rem; margin-bottom: 6px; display: block; color: #0284c7;"></i>
+                  يرجى النقر على زر <strong>استعلام</strong> لعرض القيود الحسابية.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
       </div>
     `;
   } else if (isCurrencies) {
@@ -14703,20 +14714,29 @@ function renderJournalEntriesGrid(entriesList, tabId) {
       openEditJournalEntryModal(tabId);
     };
 
-    const okIcon = e.fldOK ? '<i class="fa-solid fa-circle-check" style="color: var(--success);"></i>' : '<i class="fa-solid fa-circle-xmark" style="color: var(--text-muted); opacity: 0.5;"></i>';
-    const closedIcon = e.fldClosed ? '<i class="fa-solid fa-lock" style="color: #e53e3e;"></i>' : '<i class="fa-solid fa-lock-open" style="color: var(--text-muted); opacity: 0.5;"></i>';
+    const isOk = !!e.fldOK;
+    const isClosed = !!e.fldClosed;
+
+    const okBadge = isOk 
+      ? '<span style="display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: #dcfce7; color: #15803d; font-size: 0.75rem;" title="مرحل (fldOK=True)"><i class="fa-solid fa-check"></i></span>'
+      : '<span style="display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: #f1f5f9; color: #94a3b8; font-size: 0.75rem;" title="غير مرحل (fldOK=False)"><i class="fa-solid fa-minus"></i></span>';
+
+    const closedBadge = isClosed
+      ? '<span style="display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: #fee2e2; color: #b91c1c; font-size: 0.75rem;" title="مغلق (fldClosed=True)"><i class="fa-solid fa-lock"></i></span>'
+      : '<span style="display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: #f1f5f9; color: #94a3b8; font-size: 0.75rem;" title="مفتوح (fldClosed=False)"><i class="fa-solid fa-lock-open"></i></span>';
+
     const totalVal = parseFloat(e.fldVoisherTotal) || 0;
-    const totalStr = formatDecimal(totalVal);
+    const totalStr = (typeof formatDecimal === 'function') ? formatDecimal(totalVal) : (typeof formatNumber === 'function' ? formatNumber(totalVal) : totalVal.toFixed(2));
     const dateStr = e.fldDate ? new Date(e.fldDate).toISOString().substring(0, 10) : '';
 
     tr.innerHTML = `
-      <td style="text-align: center; vertical-align: middle;">${okIcon}</td>
-      <td style="text-align: center; vertical-align: middle;">${closedIcon}</td>
-      <td style="font-weight: bold; text-align: center;">${e.fldTransNo || ''}</td>
-      <td style="text-align: center;">${dateStr}</td>
-      <td>${e.fldBranchName || ''}</td>
-      <td style="text-align: left; font-family: monospace; font-weight: bold; color: var(--primary);">${totalStr}</td>
-      <td style="color: #4a5568;">${e.fldDescription || ''}</td>
+      <td style="text-align: center; vertical-align: middle; padding: 4px;">${okBadge}</td>
+      <td style="text-align: center; vertical-align: middle; padding: 4px;">${closedBadge}</td>
+      <td style="font-weight: bold; text-align: center; vertical-align: middle; font-family: monospace; color: #0284c7; padding: 4px 6px;">${e.fldTransNo || ''}</td>
+      <td style="text-align: center; vertical-align: middle; font-family: monospace; padding: 4px 6px;">${dateStr}</td>
+      <td style="vertical-align: middle; padding: 4px 8px; text-align: right;">${e.fldBranchName || 'الفرع الرئيسي'}</td>
+      <td style="text-align: left; font-family: monospace; font-weight: 800; color: #0284c7; vertical-align: middle; padding: 4px 8px;">${totalStr}</td>
+      <td style="color: #334155; vertical-align: middle; padding: 4px 10px; text-align: right;">${e.fldDescription || ''}</td>
     `;
 
     tbody.appendChild(tr);
@@ -15538,22 +15558,16 @@ window.printJournalEntry = function() {
     const curName = curSelect && curSelect.selectedIndex >= 0 ? curSelect.options[curSelect.selectedIndex].textContent.trim() : 'ريال يمني';
 
     const rateInput = row.querySelector('.det-rate-input');
-    const rate = parseFloat(rateInput.value) || 1.0;
+    const rate = parseFloat(rateInput ? rateInput.value : 1) || 1.0;
 
     const debitInput = row.querySelector('.det-debit-input');
-    const debit = parseFloat(debitInput.value) || 0.0;
+    const debit = parseFloat(debitInput ? debitInput.value : 0) || 0.0;
 
     const creditInput = row.querySelector('.det-credit-input');
-    const credit = parseFloat(creditInput.value) || 0.0;
+    const credit = parseFloat(creditInput ? creditInput.value : 0) || 0.0;
 
     const noteInput = row.querySelector('.det-note-input');
     const note = noteInput ? noteInput.value.trim() : '';
-
-    const refNoInput = row.querySelector('.det-ref-no-input');
-    const refNo = refNoInput ? refNoInput.value : '0';
-
-    const refDateInput = row.querySelector('.det-ref-date-input');
-    const refDate = refDateInput ? refDateInput.value : '';
 
     let accText = accSelect.options[accSelect.selectedIndex].textContent;
     let accName = accText;
@@ -15562,10 +15576,10 @@ window.printJournalEntry = function() {
     }
 
     const localDebitInput = row.querySelector('.det-local-debit-input');
-    const localDebit = localDebitInput ? (parseFloat(localDebitInput.value) || 0.0) : 0.0;
+    const localDebit = localDebitInput ? (parseFloat(localDebitInput.value) || 0.0) : (debit * rate);
 
     const localCreditInput = row.querySelector('.det-local-credit-input');
-    const localCredit = localCreditInput ? (parseFloat(localCreditInput.value) || 0.0) : 0.0;
+    const localCredit = localCreditInput ? (parseFloat(localCreditInput.value) || 0.0) : (credit * rate);
 
     details.push({
       fldAccNo: accNo,
@@ -15576,9 +15590,7 @@ window.printJournalEntry = function() {
       fldCredit: credit,
       Debit: localDebit,
       Credit: localCredit,
-      fldNote: note,
-      fldRefNo: refNo,
-      fldRefDate: refDate
+      fldNote: note
     });
   });
 
@@ -15600,7 +15612,7 @@ window.printJournalEntry = function() {
 window.printSelectedJournalEntry = async function(tabId) {
   const transId = state.selectedJournalID;
   if (!transId) {
-    showToast("يرجى تحديد قيد محاسبي أولاً من الجدول لطباعته.", "warning");
+    printJournalEntriesList(tabId);
     return;
   }
 
@@ -15608,234 +15620,308 @@ window.printSelectedJournalEntry = async function(tabId) {
     const res = await fetch(`/api/journal-entries/${transId}`);
     const data = await res.json();
 
-    if (data.success) {
-      const h = data.header;
-      printJournalData(h, data.details);
+    if (data.success && data.header) {
+      printJournalData(data.header, data.details);
     } else {
-      showToast("فشل تحميل تفاصيل الطباعة: " + data.error, "error");
+      printJournalEntriesList(tabId);
     }
   } catch (err) {
-    showToast("فشل الاتصال: " + err.message, "error");
+    printJournalEntriesList(tabId);
   }
 };
 
-function printJournalData(h, details) {
-  const printContainer = document.getElementById('opening-entry-print-container');
-  if (!printContainer) {
-    showToast("عذراً، حاوية الطباعة غير موجودة.", "error");
+window.printJournalEntriesList = function(tabId) {
+  const tbody = document.getElementById(`journalBody-${tabId}`);
+  const rows = tbody ? tbody.querySelectorAll('tr') : [];
+  if (rows.length === 0 || tbody.innerHTML.includes('يرجى النقر على زر')) {
+    showToast("لا توجد بيانات قيود لطباعتها.", "warning");
     return;
   }
 
-  const headerImage = localStorage.getItem('reportHeaderImage');
-  let headerHtml = '';
-  if (headerImage) {
-    headerHtml = `<img src="${headerImage}" class="print-header-image" alt="Report Header">`;
-  } else {
-    headerHtml = `
-      <div class="header-table-container" style="border: 2px solid #000; border-radius: 14px; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; direction: rtl; font-family: 'Cairo', 'Tajawal', sans-serif;">
-        <div style="text-align: right; width: 35%; display: flex; flex-direction: column; gap: 4px;">
-          <div style="font-weight: 800; font-size: 1.4rem; color: #c53030; margin-bottom: 2px;">مركز الحريبي التجاري</div>
-          <div style="font-size: 0.85rem; font-weight: bold; display: flex; gap: 8px; direction: rtl;">
-            <span>رقم التلفون:</span>
-            <span style="text-decoration: underline;">02343531</span>
-            <span style="text-decoration: underline;">02343541</span>
-          </div>
-        </div>
-        <div style="text-align: center; width: 30%;">
-          <svg width="65" height="40" viewBox="0 0 100 60" style="margin: 0 auto; display: block;">
-            <path d="M20,45 C5,30 20,10 40,28 C55,42 75,42 70,18 C65,8 50,18 40,28" fill="none" stroke="#1a202c" stroke-width="7" stroke-linecap="round"/>
-            <path d="M30,40 C40,30 55,12 65,22 C75,32 60,50 50,40 C40,30 35,18 25,12" fill="none" stroke="#718096" stroke-width="5" stroke-linecap="round"/>
-          </svg>
-          <div style="font-weight: bold; font-size: 0.95rem; margin-top: 5px; color: #c53030;">مركز الحريبي التجاري</div>
-        </div>
-        <div style="text-align: left; width: 35%; direction: ltr; font-family: sans-serif; display: flex; flex-direction: column; gap: 4px;">
-          <div style="font-weight: 800; font-size: 1.35rem; color: #c53030; margin-bottom: 2px;">AL-Horaibi Commercial Center</div>
-          <div style="font-size: 0.85rem; font-weight: bold; display: flex; gap: 8px;">
-            <span>Tel No.:</span>
-            <span style="text-decoration: underline;">02343531</span>
-            <span style="text-decoration: underline;">02343541</span>
-          </div>
-        </div>
-      </div>
-    `;
-  }
+  const branchSelect = document.getElementById(`journalFilterBranch-${tabId}`);
+  const branchName = branchSelect && branchSelect.selectedIndex >= 0 ? branchSelect.options[branchSelect.selectedIndex].textContent.trim() : "كل الفروع";
+  const sDate = document.getElementById(`journalFilterStartDate-${tabId}`)?.value || '';
+  const eDate = document.getElementById(`journalFilterEndDate-${tabId}`)?.value || '';
+  const logo = (window.logoSettings && (window.logoSettings.dataUrl || window.logoSettings.logoData)) || localStorage.getItem('reportHeaderImage') || '';
 
-  let tableRowsHtml = '';
-  let sumDb = 0;
-  let sumCr = 0;
-  let sumDbLoc = 0;
-  let sumCrLoc = 0;
+  let rowsHtml = '';
+  let sumTotal = 0;
+  let count = 0;
 
-  details.forEach(d => {
-    const db = parseFloat(d.fldDebit) || 0;
-    const cr = parseFloat(d.fldCredit) || 0;
-    const dbLoc = parseFloat(d.Debit || d.fldDebitVal || 0) || 0;
-    const crLoc = parseFloat(d.Credit || d.fldCreditVal || 0) || 0;
-    const rate = parseFloat(d.fldMoneyValue || d.rate || 1.0) || 1.0;
+  rows.forEach(r => {
+    const tds = r.querySelectorAll('td');
+    if (tds.length < 7) return;
+    count++;
+    const isOk = tds[0].innerHTML.includes('fa-check');
+    const isClosed = tds[1].innerHTML.includes('fa-lock');
+    const transNo = tds[2].textContent.trim();
+    const dateStr = tds[3].textContent.trim();
+    const bName = tds[4].textContent.trim();
+    const totalNum = parseFloat(tds[5].textContent.replace(/,/g, '')) || 0;
+    sumTotal += totalNum;
+    const desc = tds[6].textContent.trim();
 
-    sumDb += db;
-    sumCr += cr;
-    sumDbLoc += dbLoc;
-    sumCrLoc += crLoc;
-
-    tableRowsHtml += `
-      <tr style="border-bottom: 1.5px solid #000;">
-        <td style="border: 1.5px solid #000; padding: 6px 4px; text-align: center; font-family: monospace; font-weight: bold; font-size: 0.8rem;">${d.fldAccNo || d.fldAccountNo || d.accountNo || ''}</td>
-        <td style="border: 1.5px solid #000; padding: 6px 4px; text-align: right; font-weight: bold; padding-right: 5px; font-size: 0.85rem;">${d.fldAccName || d.fldAccountName || d.accountName || ''}</td>
-        <td style="border: 1.5px solid #000; padding: 6px 4px; text-align: center; font-weight: bold; font-size: 0.85rem;">${d.fldMoneyName || d.currencyName || 'ريال يمني'}</td>
-        <td style="border: 1.5px solid #000; padding: 6px 4px; text-align: center; font-family: monospace; font-size: 0.8rem;">${rate.toFixed(2)}</td>
-        <td style="border: 1.5px solid #000; padding: 6px 4px; text-align: left; font-family: monospace; font-size: 0.85rem; color: ${db > 0 ? '#2f855a' : '#718096'}; font-weight: bold; padding-left: 5px;">${db > 0 ? db.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '0.00'}</td>
-        <td style="border: 1.5px solid #000; padding: 6px 4px; text-align: left; font-family: monospace; font-size: 0.85rem; color: ${cr > 0 ? '#c53030' : '#718096'}; font-weight: bold; padding-left: 5px;">${cr > 0 ? cr.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '0.00'}</td>
-        <td style="border: 1.5px solid #000; padding: 6px 4px; text-align: left; font-family: monospace; font-size: 0.85rem; color: ${dbLoc > 0 ? '#2f855a' : '#718096'}; font-weight: bold; padding-left: 5px;">${dbLoc > 0 ? dbLoc.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '0.00'}</td>
-        <td style="border: 1.5px solid #000; padding: 6px 4px; text-align: left; font-family: monospace; font-size: 0.85rem; color: ${crLoc > 0 ? '#c53030' : '#718096'}; font-weight: bold; padding-left: 5px;">${crLoc > 0 ? crLoc.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '0.00'}</td>
-        <td style="border: 1.5px solid #000; padding: 6px 4px; text-align: right; padding-right: 5px; font-size: 0.8rem;">${d.fldNote || d.note || ''}</td>
-        <td style="border: 1.5px solid #000; padding: 6px 4px; text-align: center; font-family: monospace; font-size: 0.8rem;">${d.fldRefNo || d.refNo || 0}</td>
-        <td style="border: 1.5px solid #000; padding: 6px 4px; text-align: center; font-family: monospace; font-size: 0.8rem;">${d.fldRefDate || d.refDate || ''}</td>
+    const bg = count % 2 === 0 ? '#f8fafc' : '#ffffff';
+    rowsHtml += `
+      <tr style="background: ${bg};">
+        <td style="border: 1px solid #cbd5e1; padding: 5px; text-align: center;">${count}</td>
+        <td style="border: 1px solid #cbd5e1; padding: 5px; text-align: center;">${isOk ? '✔' : '-'}</td>
+        <td style="border: 1px solid #cbd5e1; padding: 5px; text-align: center;">${isClosed ? '🔒' : '-'}</td>
+        <td style="border: 1px solid #cbd5e1; padding: 5px; text-align: center; font-family: monospace; font-weight: bold; color: #0284c7;">${transNo}</td>
+        <td style="border: 1px solid #cbd5e1; padding: 5px; text-align: center; font-family: monospace;">${dateStr}</td>
+        <td style="border: 1px solid #cbd5e1; padding: 5px; text-align: right;">${bName}</td>
+        <td style="border: 1px solid #cbd5e1; padding: 5px; text-align: left; font-family: monospace; font-weight: bold; color: #0284c7;">${totalNum.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+        <td style="border: 1px solid #cbd5e1; padding: 5px; text-align: right;">${desc}</td>
       </tr>
     `;
   });
 
-  const today = new Date();
-  const arabicMonths = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"];
-  const formattedPrintDate = `${today.getDate()} ${arabicMonths[today.getMonth()]} ${today.getFullYear()} ${String(today.getHours()).padStart(2, '0')}:${String(today.getMinutes()).padStart(2, '0')}`;
-
-  const dateStr = h.fldDate ? new Date(h.fldDate).toISOString().substring(0, 10) : '';
-
   const printHtml = `
-    <style>
-      @media print {
-        @page {
-          size: A4 landscape;
-          margin: 10mm;
+    <!DOCTYPE html>
+    <html dir="rtl" lang="ar">
+    <head>
+      <meta charset="UTF-8">
+      <title>تقرير قائمة القيود اليومية</title>
+      <style>
+        body { font-family: 'Cairo', 'Segoe UI', Tahoma, sans-serif; padding: 15px; direction: rtl; color: #1e293b; }
+        .header-table { width: 100%; border-bottom: 2px solid #0284c7; padding-bottom: 6px; margin-bottom: 10px; }
+        table.data-table { width: 100%; border-collapse: collapse; font-size: 9.5pt; }
+        table.data-table th { background: #f1f5f9; border: 1px solid #cbd5e1; padding: 6px; font-weight: bold; font-size: 9.5pt; text-align: center; }
+        table.data-table td { border: 1px solid #cbd5e1; padding: 5px; }
+        .footer-totals { background: #e2e8f0; font-weight: bold; }
+        @media print {
+          @page { size: A4 landscape; margin: 8mm; }
+          body { padding: 0; }
         }
-        body {
-          background-color: white !important;
-          color: black !important;
-        }
-        #opening-entry-print-container {
-          display: block !important;
-        }
-        .print-voucher-card {
-          border: none !important;
-          padding: 0 !important;
-          box-shadow: none !important;
-          max-width: 100% !important;
-          width: 100% !important;
-        }
-      }
-    </style>
-    
-    <div class="print-voucher-card" style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #000; direction: rtl; width: 100%; margin: 0 auto; padding: 15px; border: 1px dashed #cbd5e1; border-radius: 8px; box-sizing: border-box; background: white; max-width: 1120px;">
-      <!-- Header Section -->
-      ${headerHtml}
-      
-      <!-- Meta Row -->
-      <div class="print-meta-grid" style="display: flex; justify-content: space-between; align-items: stretch; margin-bottom: 20px; direction: rtl;">
-        <!-- Left Column -->
-        <div class="print-meta-col" style="width: 30%; display: flex; flex-direction: column; justify-content: flex-end; text-align: right;">
-          <div style="font-weight: bold; font-size: 1rem; text-align: right; padding-right: 5px;">
-            المحترم
-          </div>
+      </style>
+    </head>
+    <body>
+      ${logo ? `
+        <div style="width: 100%; display: flex; justify-content: center; align-items: center; margin-bottom: 8px;">
+          <img src="${logo}" style="width: 20cm; height: 3cm; max-width: 100%; object-fit: contain; display: block;" alt="ترويسة التقرير" />
         </div>
+      ` : ''}
 
-        <!-- Center Column (Center Box) -->
-        <div style="width: 38%; display: flex; align-items: center; justify-content: center;">
-          <div class="center-box" style="border: 2px solid #000; border-radius: 8px; padding: 6px 12px; width: 100%; text-align: center; display: flex; flex-direction: column; justify-content: space-between; min-height: 70px; box-sizing: border-box;">
-            <div class="center-box-title" style="font-size: 1.25rem; font-weight: 900; margin: 0; padding-bottom: 4px; border-bottom: 1.5px solid #000; font-family: 'Cairo', sans-serif;">
-              قيد محاسبي يومي
-            </div>
-            <div class="center-box-footer" style="display: flex; justify-content: space-between; font-size: 0.75rem; font-weight: bold; margin-top: 6px; direction: rtl;">
-              <span>الفرع: ${h.fldBranchName || h.fldBranchNo || 'الفرع الرئيسي'}</span>
-            </div>
-          </div>
-        </div>
+      <table class="header-table">
+        <tr>
+          <td style="width: 35%; text-align: right; vertical-align: middle;">
+            <div style="font-size: 0.90rem; color: #1e293b;">الفرع: <strong style="color: #0284c7;">${branchName}</strong></div>
+            <div style="font-size: 0.82rem; color: #475569; margin-top: 2px;">الفترة: من <strong>${sDate}</strong> إلى <strong>${eDate}</strong></div>
+          </td>
+          <td style="width: 30%; text-align: center; vertical-align: middle;">
+            <h2 style="margin: 0; color: #0284c7; font-size: 1.25rem; font-weight: 900;">تقرير قائمة القيود اليومية</h2>
+          </td>
+          <td style="width: 35%; text-align: left; vertical-align: middle; font-size: 0.82rem; color: #475569;">
+            <div>تاريخ الطباعة: <strong>${new Date().toLocaleDateString('ar-EG')} - ${new Date().toLocaleTimeString('ar-EG')}</strong></div>
+          </td>
+        </tr>
+      </table>
 
-        <!-- Right Column -->
-        <div class="print-meta-col" style="width: 28%; display: flex; flex-direction: column; justify-content: space-between; text-align: right;">
-          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dotted #ccc; padding-bottom: 2px;">
-            <span style="font-weight: bold; font-size: 0.85rem;">رقم القيد</span>
-            <span style="font-weight: 900; font-size: 1rem; font-family: monospace; color: #000;">${h.fldTransNo || '0'}</span>
-          </div>
-          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dotted #ccc; padding-bottom: 2px; margin-top: 5px;">
-            <span style="font-weight: bold; font-size: 0.85rem;">تاريخ القيد</span>
-            <span style="font-weight: bold; font-size: 0.95rem; font-family: monospace;">${dateStr}</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- General Description -->
-      <div style="margin-bottom: 15px; display: flex; align-items: center; font-size: 0.95rem; direction: rtl; text-align: right;">
-        <span style="font-weight: bold; min-width: 110px; color: #4a5568;">البيان العام للقيد:</span>
-        <span style="font-weight: bold; font-size: 1rem; border-bottom: 1.5px dotted #000; flex: 1; padding-bottom: 2px;">${h.fldDescription || '________________________________________'}</span>
-      </div>
-
-      <!-- Grid Table -->
-      <table class="print-table" style="width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.8rem; direction: rtl; text-align: right;">
+      <table class="data-table">
         <thead>
-          <tr style="background-color: #f8fafc; border: 1.5px solid #000;">
-            <th style="border: 1.5px solid #000; padding: 6px 4px; font-weight: bold; text-align: center; width: 6.5%;">رقم الحساب</th>
-            <th style="border: 1.5px solid #000; padding: 6px 4px; font-weight: bold; text-align: center; width: 17.5%;">الحساب</th>
-            <th style="border: 1.5px solid #000; padding: 6px 4px; font-weight: bold; text-align: center; width: 7%;">العملة</th>
-            <th style="border: 1.5px solid #000; padding: 6px 4px; font-weight: bold; text-align: center; width: 6%;">سعر الصرف</th>
-            <th style="border: 1.5px solid #000; padding: 6px 4px; font-weight: bold; text-align: center; width: 9%;">مدين</th>
-            <th style="border: 1.5px solid #000; padding: 6px 4px; font-weight: bold; text-align: center; width: 9%;">دائن</th>
-            <th style="border: 1.5px solid #000; padding: 6px 4px; font-weight: bold; text-align: center; width: 9%;">مدين محلي</th>
-            <th style="border: 1.5px solid #000; padding: 6px 4px; font-weight: bold; text-align: center; width: 9%;">دائن محلي</th>
-            <th style="border: 1.5px solid #000; padding: 6px 4px; font-weight: bold; text-align: center; width: 13%;">البيان</th>
-            <th style="border: 1.5px solid #000; padding: 6px 4px; font-weight: bold; text-align: center; width: 4%;">المرجع</th>
-            <th style="border: 1.5px solid #000; padding: 6px 4px; font-weight: bold; text-align: center; width: 10%;">ت المرجع</th>
+          <tr>
+            <th style="width: 35px;">م</th>
+            <th style="width: 50px;">مرحل</th>
+            <th style="width: 50px;">مغلق</th>
+            <th style="width: 80px;">رقم القيد</th>
+            <th style="width: 95px;">التاريخ</th>
+            <th style="width: 130px;">الفرع</th>
+            <th style="width: 120px;">الإجمالي</th>
+            <th>البيان / الشرح</th>
           </tr>
         </thead>
         <tbody>
-          ${tableRowsHtml}
-          <tr style="background-color: #f8fafc; border: 2.0px solid #000; font-weight: bold;">
-            <td colspan="4" style="border: 1.5px solid #000; padding: 6px 4px; text-align: center;">الإجمالي العام (Totals)</td>
-            <td style="border: 1.5px solid #000; padding: 6px 4px; text-align: left; font-family: monospace; font-size: 0.85rem; color: #2f855a; padding-left: 5px;">${sumDb.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-            <td style="border: 1.5px solid #000; padding: 6px 4px; text-align: left; font-family: monospace; font-size: 0.85rem; color: #c53030; padding-left: 5px;">${sumCr.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-            <td style="border: 1.5px solid #000; padding: 6px 4px; text-align: left; font-family: monospace; font-size: 0.85rem; color: #2f855a; padding-left: 5px;">${sumDbLoc.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-            <td style="border: 1.5px solid #000; padding: 6px 4px; text-align: left; font-family: monospace; font-size: 0.85rem; color: #c53030; padding-left: 5px;">${sumCrLoc.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-            <td colspan="3" style="border: 1.5px solid #000; padding: 6px 4px;"></td>
-          </tr>
+          ${rowsHtml}
         </tbody>
+        <tfoot>
+          <tr class="footer-totals">
+            <td colspan="6" style="text-align: right; padding: 6px 12px; font-weight: bold; border: 1px solid #cbd5e1; font-size: 10pt;">
+              إجمالي مبالغ القيود المعروضة (${count} قيد):
+            </td>
+            <td style="text-align: left; font-weight: 800; border: 1px solid #cbd5e1; font-size: 10.5pt; color: #0284c7; font-family: monospace;">
+              ${sumTotal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+            </td>
+            <td style="border: 1px solid #cbd5e1;"></td>
+          </tr>
+        </tfoot>
       </table>
 
-      <!-- Signatures Section -->
-      <div class="print-signatures" style="display: flex; justify-content: space-between; margin-top: 45px; padding: 0 10px; direction: rtl; text-align: center;">
-        <div class="signature-block" style="width: 28%; display: flex; flex-direction: column; align-items: center;">
-          <div class="signature-label" style="font-weight: bold; font-size: 0.95rem; color: #4a5568;">المدير العام</div>
-          <div style="margin-top: 30px; border-bottom: 1.5px dotted #000; width: 120px;"></div>
-        </div>
-        <div class="signature-block" style="width: 28%; display: flex; flex-direction: column; align-items: center;">
-          <div class="signature-label" style="font-weight: bold; font-size: 0.95rem; color: #4a5568;">المراجع المالي</div>
-          <div style="margin-top: 30px; border-bottom: 1.5px dotted #000; width: 120px;"></div>
-        </div>
-        <div class="signature-block" style="width: 28%; display: flex; flex-direction: column; align-items: center;">
-          <div class="signature-label" style="font-weight: bold; font-size: 0.95rem; color: #4a5568;">المحاسب</div>
-          <div style="margin-top: 30px; border-bottom: 1.5px dotted #000; width: 120px;"></div>
-        </div>
+      <div style="display: flex; justify-content: space-around; margin-top: 40px; font-size: 0.95rem; font-weight: bold; color: #334155;">
+        <div>المحاسب: ..............................</div>
+        <div>المراجع الداخلي: ..............................</div>
+        <div>المدير المالي: ..............................</div>
+        <div>المدير العام: ..............................</div>
       </div>
-
-      <!-- Footer Page/Time Info -->
-      <div style="display: flex; justify-content: space-between; margin-top: 40px; border-top: 1px solid #cbd5e1; padding-top: 8px; font-size: 0.75rem; color: #718096; direction: rtl;">
-        <div>ص 1 الى 1</div>
-        <div>${formattedPrintDate}</div>
-      </div>
-    </div>
+    </body>
+    </html>
   `;
 
-  printContainer.innerHTML = printHtml;
+  const pWin = window.open('', '_blank');
+  if (pWin) {
+    pWin.document.write(printHtml);
+    pWin.document.close();
+    setTimeout(() => {
+      pWin.focus();
+      pWin.print();
+    }, 400);
+  }
+};
 
-  const imgEl = printContainer.querySelector('.print-header-image');
-  if (imgEl && imgEl.src && !imgEl.complete) {
-    imgEl.onload = function() {
-      window.print();
-    };
-    imgEl.onerror = function() {
-      console.warn("Failed to load header image, printing anyway.");
-      window.print();
-    };
-  } else {
-    window.print();
+function printJournalData(h, details) {
+  if (!details || details.length === 0) {
+    showToast("لا توجد تفاصيل أسطر لطباعة هذا القيد.", "warning");
+    return;
+  }
+
+  const logo = (window.logoSettings && (window.logoSettings.dataUrl || window.logoSettings.logoData)) || localStorage.getItem('reportHeaderImage') || '';
+  const branchName = h.fldBranchName || 'الفرع الرئيسي';
+  const dateStr = h.fldDate ? new Date(h.fldDate).toISOString().substring(0, 10) : '';
+  const transNo = h.fldTransNo || '0';
+  const desc = h.fldDescription || '';
+
+  const fmt = function(v, d = 2) {
+    const n = parseFloat(v);
+    if (isNaN(n)) return (0).toFixed(d);
+    return n.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+  };
+
+  let rowsHtml = '';
+  let sumDebit = 0;
+  let sumCredit = 0;
+  let sumLocalDebit = 0;
+  let sumLocalCredit = 0;
+  let count = 0;
+
+  details.forEach((d, idx) => {
+    count++;
+    const accNo = d.fldAccNo || d.fldNumber || '';
+    const accName = d.fldAccName || d.fldAccountName || '';
+    const curName = d.fldMoneyName || 'ريال سعودي';
+    const rate = parseFloat(d.fldMoneyValue) || 1.0;
+    const debit = parseFloat(d.fldDebit) || 0.0;
+    const credit = parseFloat(d.fldCredit) || 0.0;
+    const localDebit = parseFloat(d.Debit) || (debit * rate);
+    const localCredit = parseFloat(d.Credit) || (credit * rate);
+    const note = d.fldNote || '';
+
+    sumDebit += debit;
+    sumCredit += credit;
+    sumLocalDebit += localDebit;
+    sumLocalCredit += localCredit;
+
+    const bg = count % 2 === 0 ? '#f8fafc' : '#ffffff';
+    rowsHtml += `
+      <tr style="background: ${bg};">
+        <td style="border: 1px solid #cbd5e1; padding: 5px; text-align: center;">${count}</td>
+        <td style="border: 1px solid #cbd5e1; padding: 5px; text-align: center; font-family: monospace; font-weight: bold; color: #0284c7;">${accNo}</td>
+        <td style="border: 1px solid #cbd5e1; padding: 5px; text-align: right; font-weight: bold;">${accName}</td>
+        <td style="border: 1px solid #cbd5e1; padding: 5px; text-align: center;">${curName}</td>
+        <td style="border: 1px solid #cbd5e1; padding: 5px; text-align: center; font-family: monospace;">${rate.toFixed(4)}</td>
+        <td style="border: 1px solid #cbd5e1; padding: 5px; text-align: right; font-family: monospace;">${fmt(debit, 2)}</td>
+        <td style="border: 1px solid #cbd5e1; padding: 5px; text-align: right; font-family: monospace;">${fmt(credit, 2)}</td>
+        <td style="border: 1px solid #cbd5e1; padding: 5px; text-align: right; font-family: monospace; font-weight: bold; color: #0284c7;">${fmt(localDebit, 2)}</td>
+        <td style="border: 1px solid #cbd5e1; padding: 5px; text-align: right; font-family: monospace; font-weight: bold; color: #16a34a;">${fmt(localCredit, 2)}</td>
+        <td style="border: 1px solid #cbd5e1; padding: 5px; text-align: right; color: #475569;">${note}</td>
+      </tr>
+    `;
+  });
+
+  const printHtml = `
+    <!DOCTYPE html>
+    <html dir="rtl" lang="ar">
+    <head>
+      <meta charset="UTF-8">
+      <title>سند قيد محاسبي رقم: ${transNo}</title>
+      <style>
+        body { font-family: 'Cairo', 'Segoe UI', Tahoma, sans-serif; padding: 15px; direction: rtl; color: #1e293b; }
+        .header-table { width: 100%; border-bottom: 2px solid #0284c7; padding-bottom: 6px; margin-bottom: 10px; }
+        table.data-table { width: 100%; border-collapse: collapse; font-size: 9.5pt; }
+        table.data-table th { background: #f1f5f9; border: 1px solid #cbd5e1; padding: 6px; font-weight: bold; font-size: 9.5pt; text-align: center; }
+        table.data-table td { border: 1px solid #cbd5e1; padding: 5px; }
+        .footer-totals { background: #e2e8f0; font-weight: bold; }
+        @media print {
+          @page { size: A4 landscape; margin: 8mm; }
+          body { padding: 0; }
+        }
+      </style>
+    </head>
+    <body>
+      ${logo ? `
+        <div style="width: 100%; display: flex; justify-content: center; align-items: center; margin-bottom: 8px;">
+          <img src="${logo}" style="width: 20cm; height: 3cm; max-width: 100%; object-fit: contain; display: block;" alt="ترويسة التقرير" />
+        </div>
+      ` : ''}
+
+      <table class="header-table">
+        <tr>
+          <td style="width: 35%; text-align: right; vertical-align: middle;">
+            <div style="font-size: 0.90rem; color: #1e293b;">الفرع: <strong style="color: #0284c7;">${branchName}</strong></div>
+            <div style="font-size: 0.82rem; color: #475569; margin-top: 2px;">البيان: <strong>${desc || 'قيد محاسبي عام'}</strong></div>
+          </td>
+          <td style="width: 30%; text-align: center; vertical-align: middle;">
+            <h2 style="margin: 0; color: #0284c7; font-size: 1.25rem; font-weight: 900;">سند قيد محاسبي رقم (${transNo})</h2>
+          </td>
+          <td style="width: 35%; text-align: left; vertical-align: middle; font-size: 0.82rem; color: #475569;">
+            <div>تاريخ القيد: <strong style="color: #1e293b;">${dateStr}</strong></div>
+            <div>تاريخ الطباعة: <strong>${new Date().toLocaleDateString('ar-EG')} - ${new Date().toLocaleTimeString('ar-EG')}</strong></div>
+          </td>
+        </tr>
+      </table>
+
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th style="width: 35px;">م</th>
+            <th style="width: 90px;">رقم الحساب</th>
+            <th>اسم الحساب</th>
+            <th style="width: 80px;">العملة</th>
+            <th style="width: 70px;">الصرف</th>
+            <th style="width: 90px;">مدين</th>
+            <th style="width: 90px;">دائن</th>
+            <th style="width: 100px;">مدين محلي</th>
+            <th style="width: 100px;">دائن محلي</th>
+            <th style="width: 160px;">البيان / ملاحظة</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rowsHtml}
+        </tbody>
+        <tfoot>
+          <tr class="footer-totals">
+            <td colspan="7" style="text-align: right; padding: 6px 12px; font-weight: bold; border: 1px solid #cbd5e1; font-size: 10pt;">
+              الإجمالي العام لكافة أطراف القيد:
+            </td>
+            <td style="text-align: right; font-weight: 800; border: 1px solid #cbd5e1; font-size: 10.5pt; color: #0284c7; font-family: monospace;">
+              ${fmt(sumLocalDebit, 2)}
+            </td>
+            <td style="text-align: right; font-weight: 800; border: 1px solid #cbd5e1; font-size: 10.5pt; color: #16a34a; font-family: monospace;">
+              ${fmt(sumLocalCredit, 2)}
+            </td>
+            <td style="border: 1px solid #cbd5e1; text-align: center; font-size: 8pt; color: #64748b;">
+              ${Math.abs(sumLocalDebit - sumLocalCredit) < 0.01 ? '✔ متوازن' : '❌ فارق: ' + fmt(Math.abs(sumLocalDebit - sumLocalCredit), 2)}
+            </td>
+          </tr>
+        </tfoot>
+      </table>
+
+      <div style="display: flex; justify-content: space-around; margin-top: 40px; font-size: 0.95rem; font-weight: bold; color: #334155;">
+        <div>المحاسب: ..............................</div>
+        <div>المراجع الداخلي: ..............................</div>
+        <div>المدير المالي: ..............................</div>
+        <div>المدير العام: ..............................</div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  const pWin = window.open('', '_blank');
+  if (pWin) {
+    pWin.document.write(printHtml);
+    pWin.document.close();
+    setTimeout(() => {
+      pWin.focus();
+      pWin.print();
+    }, 400);
   }
 }
 

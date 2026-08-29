@@ -6645,6 +6645,2000 @@ function getScreenContent(tabId, tabTitle, iconClass, colorClass) {
     `;
   } else if (isOpeningEntry) {
     bodyHtml = `
+      <div class="opening-entry-screen" style="direction: rtl; text-align: right; font-family: var(--font-arabic); display: flex; flex-direction: column; gap: 4px; height: 100%; padding: 4px 6px; box-sizing: border-box;">
+        <!-- datalist for searchable accounts -->
+        <datalist id="opAccountsDatalist-${tabId}"></datalist>
+
+        <!-- Opening Entry Toolbar -->
+        <div class="accounts-toolbar" style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 4px 8px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; box-shadow: 0 1px 2px rgba(0,0,0,0.04);">
+          <button class="accounts-toolbar-btn btn btn-sm btn-secondary" onclick="saveOpeningEntry('${tabId}')" style="height: 30px; padding: 0 10px; font-weight: 800; font-size: 0.78rem; display: flex; align-items: center; gap: 5px;">
+            <i class="fa-solid fa-floppy-disk" style="color: #0284c7;"></i>حفظ
+          </button>
+          <button class="accounts-toolbar-btn btn btn-sm btn-secondary" onclick="saveOpeningEntry('${tabId}', true)" style="height: 30px; padding: 0 10px; font-weight: 800; font-size: 0.78rem; display: flex; align-items: center; gap: 5px;">
+            <i class="fa-solid fa-print" style="color: #475569;"></i>حفظ طباعه
+          </button>
+          <button class="accounts-toolbar-btn btn btn-sm btn-secondary" onclick="printOpeningEntry('${tabId}')" style="height: 30px; padding: 0 10px; font-weight: 800; font-size: 0.78rem; display: flex; align-items: center; gap: 5px;">
+            <i class="fa-solid fa-print" style="color: #059669;"></i>طباعه
+          </button>
+          <button class="accounts-toolbar-btn btn btn-sm btn-secondary" onclick="showToast('نمط التعديل نشط تلقائياً للأسطر', 'info')" style="height: 30px; padding: 0 10px; font-weight: 800; font-size: 0.78rem; display: flex; align-items: center; gap: 5px;">
+            <i class="fa-solid fa-file-pen" style="color: #d97706;"></i>تعديل
+          </button>
+          <button class="accounts-toolbar-btn btn btn-sm btn-secondary" onclick="fetchOpeningEntry('${tabId}')" style="height: 30px; padding: 0 10px; font-weight: 800; font-size: 0.78rem; display: flex; align-items: center; gap: 5px;">
+            <i class="fa-solid fa-magnifying-glass" style="color: #0284c7;"></i>استعلام
+          </button>
+          <button class="accounts-toolbar-btn btn btn-sm btn-secondary" onclick="clearOpeningEntry('${tabId}')" style="height: 30px; padding: 0 10px; font-weight: 800; font-size: 0.78rem; display: flex; align-items: center; gap: 5px;">
+            <i class="fa-solid fa-trash-can" style="color: #dc2626;"></i>حذف
+          </button>
+          <button class="accounts-toolbar-btn btn btn-sm btn-secondary" onclick="showToast('تحميل دليل الحسابات...', 'info')" style="height: 30px; padding: 0 10px; font-weight: 800; font-size: 0.78rem; display: flex; align-items: center; gap: 5px;">
+            <i class="fa-solid fa-folder-tree" style="color: #7c3aed;"></i>الحساب
+          </button>
+          <button class="accounts-toolbar-btn btn btn-sm btn-secondary" onclick="exportCurrentTabTable('${tabId}', 'تقرير_البيانات')" style="height: 30px; padding: 0 10px; font-weight: 800; font-size: 0.78rem; display: flex; align-items: center; gap: 5px; color: #047857;">
+            <i class="fa-solid fa-file-excel"></i>تصدير
+          </button>
+        </div>
+
+        <!-- Opening Entry Header Panel (Horizontal in-line label + input matching request) -->
+        <div style="background-color: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 6px 12px; display: flex; flex-direction: column; gap: 6px; font-size: 0.80rem; box-shadow: 0 1px 2px rgba(0,0,0,0.04);">
+          
+          <!-- Row 1: الفرع | التاريخ | البيان -->
+          <div style="display: grid; grid-template-columns: 1.2fr 1.1fr 2fr; gap: 10px; align-items: center;">
+            
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <label style="font-weight: 700; color: #334155; white-space: nowrap; min-width: 42px;">الفرع:</label>
+              <select id="opBranch-${tabId}" class="form-select form-select-sm" style="flex: 1; height: 28px; padding: 2px 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-family: var(--font-arabic); font-size: 0.80rem;">
+                <!-- Dynamic branches -->
+              </select>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <label style="font-weight: 700; color: #334155; white-space: nowrap; min-width: 45px;">التاريخ:</label>
+              <input type="date" id="opDate-${tabId}" class="form-control form-control-sm" style="flex: 1; height: 28px; padding: 2px 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-family: monospace; font-size: 0.80rem;">
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <label style="font-weight: 700; color: #334155; white-space: nowrap; min-width: 42px;">البيان:</label>
+              <input type="text" id="opDescription-${tabId}" placeholder="مبلغ الشريك / البيان..." class="form-control form-control-sm" style="flex: 1; height: 28px; padding: 2px 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-family: var(--font-arabic); font-size: 0.80rem;">
+            </div>
+
+          </div>
+
+          <!-- Row 2: مدين محلي | دائن محلي | الفرق | مرحل -->
+          <div style="display: grid; grid-template-columns: 1.2fr 1.1fr 1.1fr 0.9fr; gap: 10px; align-items: center;">
+            
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <label style="font-weight: 700; color: #334155; white-space: nowrap; min-width: 65px;">مدين محلي:</label>
+              <input type="text" id="opDebitTotal-${tabId}" readonly style="flex: 1; height: 28px; padding: 2px 8px; border: 1px solid #cbd5e1; border-radius: 4px; background: #edf2f7; font-weight: 800; color: #0284c7; text-align: center; font-family: monospace; font-size: 0.82rem;" value="0.00">
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <label style="font-weight: 700; color: #334155; white-space: nowrap; min-width: 65px;">دائن محلي:</label>
+              <input type="text" id="opCreditTotal-${tabId}" readonly style="flex: 1; height: 28px; padding: 2px 8px; border: 1px solid #cbd5e1; border-radius: 4px; background: #edf2f7; font-weight: 800; color: #16a34a; text-align: center; font-family: monospace; font-size: 0.82rem;" value="0.00">
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <label style="font-weight: 700; color: #334155; white-space: nowrap; min-width: 45px;">الفرق:</label>
+              <input type="text" id="opDiffTotal-${tabId}" readonly style="flex: 1; height: 28px; padding: 2px 8px; border: 1px solid #cbd5e1; border-radius: 4px; background: #edf2f7; font-weight: 800; color: #e53e3e; text-align: center; font-family: monospace; font-size: 0.82rem;" value="0.00">
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <input type="checkbox" id="opPosted-${tabId}" style="width: 16px; height: 16px; cursor: pointer; accent-color: #0284c7;">
+              <label for="opPosted-${tabId}" style="font-weight: 800; color: #1e293b; cursor: pointer; white-space: nowrap; font-size: 0.80rem;">مرحل</label>
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- Live Search & Filter Bar for Opening Balances -->
+        <div style="background-color: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 6px; padding: 4px 10px; display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+          <div style="display: flex; align-items: center; gap: 8px; flex: 1;">
+            <label style="font-weight: 800; color: #1e293b; font-size: 0.78rem; white-space: nowrap;">
+              <i class="fa-solid fa-magnifying-glass" style="color: #3b82f6;"></i> تصفية / بحث سريع في تفاصيل الأرصدة:
+            </label>
+            <input type="text" id="opSearchInput-${tabId}" class="form-control form-control-sm" placeholder="🔍 ابحث برقم الحساب أو اسم الحساب لتعديل أو حذف الرصيد..." oninput="filterOpeningEntryTable('${tabId}')" style="max-width: 450px; font-size: 0.78rem; height: 28px; padding: 2px 10px; border-radius: 4px; border: 1px solid #94a3b8; background: #ffffff;">
+          </div>
+          <div style="font-size: 0.76rem; color: #475569; font-weight: bold; background: #e2e8f0; padding: 3px 10px; border-radius: 12px;" id="opSearchCount-${tabId}">
+            الأرصدة المسجلة: 0
+          </div>
+        </div>
+
+        <!-- Opening Entry Grid (الجدول) -->
+        <div class="mock-table-wrapper" style="flex: 1; overflow: auto; border: 1px solid #cbd5e1; border-radius: 6px; background: #ffffff;">
+          <table class="mock-table table table-hover table-bordered" style="min-width: 1100px; margin-bottom: 0; font-size: 0.80rem; border-collapse: collapse; text-align: center;" id="opTable-${tabId}">
+            <thead style="position: sticky; top: 0; z-index: 5; background: #f8fafc; border-bottom: 2px solid #cbd5e1;">
+              <tr style="background: #e2e8f0; color: #1e293b; font-weight: 800;">
+                <th style="width: 12%; padding: 5px 8px;">رقم الحساب</th>
+                <th style="width: 20%; padding: 5px 8px;">اسم الحساب</th>
+                <th style="width: 12%; padding: 5px 8px;">العملة</th>
+                <th style="width: 9%; text-align: center; padding: 5px 8px;">سعر التحويل</th>
+                <th style="width: 10%; text-align: center; padding: 5px 8px;">مدين</th>
+                <th style="width: 10%; text-align: center; padding: 5px 8px;">دائن</th>
+                <th style="width: 11%; text-align: center; padding: 5px 8px;">مدين محلي</th>
+                <th style="width: 11%; text-align: center; padding: 5px 8px;">دائن محلي</th>
+                <th style="width: 15%; padding: 5px 8px;">الفرع</th>
+                <th style="width: 5%; text-align: center; padding: 5px 8px;">إجراء</th>
+              </tr>
+            </thead>
+            <tbody id="opDetailsBody-${tabId}">
+              <!-- Dynamic Rows -->
+              <tr>
+                <td colspan="10" style="text-align: center; padding: 30px; color: var(--text-muted);">
+                  <i class="fa-solid fa-info-circle" style="font-size: 1.3rem; margin-bottom: 6px; display: block; color: #0284c7;"></i>
+                  يرجى النقر على زر <strong>استعلام</strong> لعرض الأرصدة الافتتاحية.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+  } else if (isCurrencies) {
+    bodyHtml = `
+      <!-- Currencies Toolbar -->
+      <div class="accounts-toolbar">
+        <button class="accounts-toolbar-btn" onclick="openNewCurrencyModal('${tabId}')">
+          <i class="fa-solid fa-plus" style="color: #38a169;"></i>جديد
+        </button>
+        <button class="accounts-toolbar-btn" onclick="openEditCurrencyModal('${tabId}')">
+          <i class="fa-solid fa-file-pen" style="color: #dd6b20;"></i>تعديل
+        </button>
+        <button class="accounts-toolbar-btn" onclick="fetchCurrencies('${tabId}')">
+          <i class="fa-solid fa-magnifying-glass" style="color: #3182ce;"></i>استعلام
+        </button>
+        <button class="accounts-toolbar-btn" onclick="deleteCurrencyFromToolbar('${tabId}')">
+          <i class="fa-solid fa-trash-can" style="color: #e53e3e;"></i>حذف
+        </button>
+        <button class="accounts-toolbar-btn" onclick="exportCurrentTabTable('${tabId}', 'تقرير_البيانات')">
+          <i class="fa-solid fa-file-excel" style="color: #2f855a;"></i>تصدير
+        </button>
+      </div>
+
+      <!-- Currencies Grid -->
+      <div class="mock-table-wrapper" style="margin-top: 15px;">
+        <table class="mock-table">
+          <thead>
+            <tr>
+              <th style="width: 20%;">رقم العملة (fldID)</th>
+              <th style="width: 50%;">اسم العملة (fldName)</th>
+              <th style="width: 30%;">الرمز (fldsymbol)</th>
+            </tr>
+          </thead>
+          <tbody id="currenciesBody-${tabId}">
+            <tr>
+              <td colspan="3" style="text-align: center; padding: 40px; color: var(--text-muted);">
+                <i class="fa-solid fa-info-circle" style="font-size: 1.5rem; margin-bottom: 8px; display: block; color: var(--primary);"></i>
+                يرجى النقر على زر <strong>استعلام</strong> لعرض العملات.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    `;
+  } else if (isAccountStatement) {
+    bodyHtml = `
+      <!-- datalist for searchable accounts -->
+      <datalist id="asAccountsDatalist-${tabId}"></datalist>
+
+      <!-- Account Statement Toolbar -->
+      <div class="accounts-toolbar">
+        <button class="accounts-toolbar-btn" onclick="fetchAccountStatement('${tabId}')">
+          <i class="fa-solid fa-magnifying-glass" style="color: #3182ce;"></i>استعلام
+        </button>
+        <button class="accounts-toolbar-btn" onclick="printAccountStatement('${tabId}')">
+          <i class="fa-solid fa-print" style="color: #4a5568;"></i>طباعة
+        </button>
+        <button class="accounts-toolbar-btn" onclick="sendAccountStatementWhatsApp('${tabId}')">
+          <i class="fa-brands fa-whatsapp" style="color: #25d366;"></i>إرسال واتساب PDF
+        </button>
+        <button class="accounts-toolbar-btn" onclick="clearAccountStatement('${tabId}')">
+          <i class="fa-solid fa-trash-can" style="color: #e53e3e;"></i>مسح الحقول
+        </button>
+      </div>
+
+      <!-- Main Layout: Sidebar options + Search filters & table results -->
+      <div class="account-statement-layout" style="display: flex; gap: 20px; direction: rtl; text-align: right; margin-top: 15px; font-family: var(--font-arabic);">
+        
+        <!-- Center/Main Column: Filters + Results -->
+        <div class="as-main-content" style="flex: 1; display: flex; flex-direction: column; gap: 15px;">
+          <!-- Filters Card -->
+          <div class="mock-form" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; background: #fff; padding: 15px; border-radius: 8px; border: 1px solid var(--border-color);">
+            
+            <div class="form-group" style="margin-bottom: 0;">
+              <label style="font-weight: bold; font-size: 0.85rem; margin-bottom: 4px;">الفرع</label>
+              <select id="asBranch-${tabId}" style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem; font-family: var(--font-arabic);"></select>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 0;">
+              <label style="font-weight: bold; font-size: 0.85rem; margin-bottom: 4px;">مجموعة الحساب</label>
+              <select id="asGroup-${tabId}" style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem; font-family: var(--font-arabic);">
+                <option value="">كل المجموعات</option>
+              </select>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 0;">
+              <label style="font-weight: bold; font-size: 0.85rem; margin-bottom: 4px;">العملة</label>
+              <select id="asCurrency-${tabId}" style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem; font-family: var(--font-arabic);">
+                <option value="">كل العملات</option>
+              </select>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 0; position: relative;">
+              <label style="font-weight: bold; font-size: 0.85rem; margin-bottom: 4px;">الحساب</label>
+              <input type="text" id="asAccountSearch-${tabId}" placeholder="ابحث باسم أو رقم الحساب..." list="asAccountsDatalist-${tabId}" style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem; font-family: var(--font-arabic);" onchange="onAccountStatementSearchChange('${tabId}', this.value)">
+              <input type="hidden" id="asAccID-${tabId}">
+            </div>
+
+            <div class="form-group" style="margin-bottom: 0;">
+              <label style="font-weight: bold; font-size: 0.85rem; margin-bottom: 4px;">مركز التكلفة</label>
+              <select id="asCostCenter-${tabId}" style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem; font-family: var(--font-arabic);">
+                <option value="">كل المراكز</option>
+              </select>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 0;">
+              <label style="font-weight: bold; font-size: 0.85rem; margin-bottom: 4px;">الحساب الختامي</label>
+              <select id="asFinalAcc-${tabId}" style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem; font-family: var(--font-arabic);">
+                <option value="">كل الحسابات</option>
+                <option value="4">ميزانية عمومية</option>
+                <option value="5">أرباح وخسائر</option>
+              </select>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 0;">
+              <label style="font-weight: bold; font-size: 0.85rem; margin-bottom: 4px;">من تاريخ</label>
+              <input type="date" id="asStartDate-${tabId}" style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem; font-family: var(--font-arabic);">
+            </div>
+
+            <div class="form-group" style="margin-bottom: 0;">
+              <label style="font-weight: bold; font-size: 0.85rem; margin-bottom: 4px;">إلى تاريخ</label>
+              <input type="date" id="asEndDate-${tabId}" style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem; font-family: var(--font-arabic);">
+            </div>
+
+          </div>
+
+          <!-- Table Results Card -->
+          <div id="asTableContainer-${tabId}" class="mock-table-wrapper" style="margin-top: 0; background: #fff; border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; display: flex; flex-direction: column;">
+
+            <div style="overflow-x: auto; flex: 1;">
+              <table class="mock-table" style="width: 100%; border-collapse: collapse; min-width: 900px; font-size: 0.85rem;">
+                <thead>
+                  <tr style="background-color: #f8fafc; border-bottom: 2px solid #e2e8f0;">
+                    <th style="width: 10%; padding: 8px; text-align: left; font-family: monospace;">الرصيد</th>
+                    <th style="width: 8%; padding: 8px; text-align: left; font-family: monospace;">مدين</th>
+                    <th style="width: 8%; padding: 8px; text-align: left; font-family: monospace;">دائن</th>
+                    <th style="width: 6%; padding: 8px; text-align: center;">الرقم</th>
+                    <th style="width: 10%; padding: 8px; text-align: center;">نوع الحركة</th>
+                    <th style="width: 8%; padding: 8px; text-align: center;">نقد/أخرى</th>
+                    <th style="width: 10%; padding: 8px; text-align: center;">التاريخ</th>
+                    <th style="width: 6%; padding: 8px; text-align: center;">رقم المرجع</th>
+                    <th style="width: 20%; padding: 8px; text-align: right;">البيان</th>
+                    <th style="width: 9%; padding: 8px; text-align: center;">رقم الحساب</th>
+                    <th style="width: 5%; padding: 8px; text-align: center; font-family: monospace;">رقم ID</th>
+                  </tr>
+                </thead>
+                <tbody id="asTableBody-${tabId}">
+                  <tr>
+                    <td colspan="11" style="text-align: center; padding: 40px; color: var(--text-muted);">
+                      <i class="fa-solid fa-info-circle" style="font-size: 1.5rem; margin-bottom: 8px; display: block; color: var(--primary);"></i>
+                      الرجاء إدخال معايير البحث والضغط على زر <strong>استعلام</strong> لعرض كشف الحساب.
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Totals Footer (Image 1 Style) -->
+            <div style="background-color: #f1f5f9; border-top: 1px solid #cbd5e1; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; gap: 20px; font-weight: bold; font-size: 0.9rem;">
+              <div>
+                <span>إجمالي المدين: </span>
+                <span id="asTotalDebit-${tabId}" style="color: #2f855a; font-family: monospace; font-size: 0.95rem;">0.00</span>
+              </div>
+              <div>
+                <span>إجمالي الدائن: </span>
+                <span id="asTotalCredit-${tabId}" style="color: #c53030; font-family: monospace; font-size: 0.95rem;">0.00</span>
+              </div>
+              <div style="background-color: #ffedd5; border: 1px solid #fed7d7; border-radius: 4px; padding: 4px 12px;">
+                <span>الرصيد الحالي: </span>
+                <span id="asCurrentBalance-${tabId}" style="font-family: monospace; font-size: 0.95rem; color: #2d3748;">0.00</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: Radio Options Panel (Image 2 style) -->
+        <div class="as-sidebar-options" style="width: 220px; background: #fff; padding: 15px; border-radius: 8px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 15px;">
+          <h3 style="font-size: 0.95rem; font-weight: 800; border-bottom: 2px solid var(--primary); padding-bottom: 6px; margin: 0; color: var(--primary);">خيارات العرض</h3>
+          
+          <div style="display: flex; flex-direction: column; gap: 10px;">
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.85rem; font-weight: bold;">
+              <input type="radio" name="asViewOption-${tabId}" value="details" checked style="cursor: pointer; width: 16px; height: 16px;">
+              <span>تفاصيل عامة</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.85rem; font-weight: bold;">
+              <input type="radio" name="asViewOption-${tabId}" value="totals" style="cursor: pointer; width: 16px; height: 16px;">
+              <span>إجماليات</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.85rem; font-weight: bold;">
+              <input type="radio" name="asViewOption-${tabId}" value="reconciliation" style="cursor: pointer; width: 16px; height: 16px;">
+              <span>مطابقة رصيد</span>
+            </label>
+          </div>
+
+          <h3 style="font-size: 0.95rem; font-weight: 800; border-bottom: 2px solid var(--primary); padding-bottom: 6px; margin: 0; color: var(--primary); margin-top: 10px;">خيارات إضافية</h3>
+          
+          <div style="display: flex; flex-direction: column; gap: 10px;">
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.85rem; font-weight: bold;">
+              <input type="checkbox" id="asLocalCurrency-${tabId}" style="cursor: pointer; width: 16px; height: 16px;" onchange="toggleAccountStatementCurrency('${tabId}')">
+              <span>العملة المحلية</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.85rem; font-weight: bold;">
+              <input type="checkbox" id="asShowAccBalance-${tabId}" checked style="cursor: pointer; width: 16px; height: 16px;">
+              <span>رصيد الحساب</span>
+            </label>
+          </div>
+        </div>
+
+      </div>
+    `;
+  } else if (isUsersManage) {
+    bodyHtml = `
+      <!-- Users Management Toolbar -->
+      <div class="accounts-toolbar">
+        <button class="accounts-toolbar-btn" onclick="clearUserForm('${tabId}')">
+          <i class="fa-solid fa-file" style="color: #3182ce;"></i>جديد
+        </button>
+        <button class="accounts-toolbar-btn" onclick="saveUser('${tabId}')">
+          <i class="fa-solid fa-floppy-disk" style="color: #38a169;"></i>حفظ/تعديل
+        </button>
+        <button class="accounts-toolbar-btn" onclick="deleteUser('${tabId}')">
+          <i class="fa-solid fa-trash-can" style="color: #e53e3e;"></i>حذف
+        </button>
+        <button class="accounts-toolbar-btn" onclick="fetchUsersManage('${tabId}')">
+          <i class="fa-solid fa-magnifying-glass" style="color: #805ad5;"></i>استعلام
+        </button>
+        <button class="accounts-toolbar-btn" onclick="exportCurrentTabTable('${tabId}', 'تقرير_البيانات')">
+          <i class="fa-solid fa-file-excel" style="color: #2f855a;"></i>تصدير
+        </button>
+      </div>
+
+      <!-- Users Management Layout -->
+      <div class="users-manage-layout" style="display: flex; gap: 20px; direction: rtl; text-align: right; margin-top: 15px; font-family: var(--font-arabic); box-sizing: border-box; width: 100%;">
+        
+        <!-- Left Sidebar: Users List -->
+        <div class="users-sidebar" style="width: 250px; min-width: 250px; background: #fff; padding: 15px; border-radius: 8px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 10px; box-sizing: border-box;">
+          <h3 style="font-size: 0.95rem; font-weight: 800; border-bottom: 2px solid var(--primary); padding-bottom: 6px; margin: 0; color: var(--primary);">قائمة المستخدمين</h3>
+          <input type="text" id="uSearch-${tabId}" placeholder="بحث بالاسم..." style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem;" oninput="filterUsersList('${tabId}', this.value)">
+          <div id="uListContainer-${tabId}" style="flex: 1; min-height: 350px; max-height: 450px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; margin-top: 5px;">
+            <div style="text-align: center; color: var(--text-muted); padding: 20px; font-size: 0.85rem;">جاري تحميل المستخدمين...</div>
+          </div>
+        </div>
+
+        <!-- Main Column: Form + Bottom Grids -->
+        <div class="users-main-content" style="flex: 1; display: flex; flex-direction: column; gap: 15px; box-sizing: border-box; min-width: 0;">
+          
+          <!-- User Details Form Card -->
+          <div class="mock-form" style="display: grid; grid-template-columns: repeat(12, 1fr); gap: 12px; background: #fff; padding: 15px; border-radius: 8px; border: 1px solid var(--border-color); box-sizing: border-box;">
+            
+            <div class="form-group" style="grid-column: span 3;">
+              <label style="font-weight: bold; font-size: 0.85rem; margin-bottom: 4px; display: block;">اسم المستخدم</label>
+              <input type="text" id="uName-${tabId}" style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem;">
+            </div>
+
+            <div class="form-group" style="grid-column: span 2; display: flex; align-items: center; gap: 8px; height: 100%; padding-top: 20px; box-sizing: border-box;">
+              <input type="checkbox" id="uAdmin-${tabId}" style="width: 16px; height: 16px; cursor: pointer;">
+              <label for="uAdmin-${tabId}" style="font-weight: bold; font-size: 0.85rem; cursor: pointer;">مدير النظام</label>
+            </div>
+
+            <div class="form-group" style="grid-column: span 3;">
+              <label style="font-weight: bold; font-size: 0.85rem; margin-bottom: 4px; display: block;">كلمة السر</label>
+              <input type="password" id="uPassword-${tabId}" style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem;">
+            </div>
+
+            <div class="form-group" style="grid-column: span 3;">
+              <label style="font-weight: bold; font-size: 0.85rem; margin-bottom: 4px; display: block;">تأكيد كلمة السر</label>
+              <input type="password" id="uConfirmPassword-${tabId}" style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem;">
+            </div>
+
+            <div class="form-group" style="grid-column: span 1;">
+              <label style="font-weight: bold; font-size: 0.85rem; margin-bottom: 4px; display: block;">ID</label>
+              <input type="text" id="uID-${tabId}" readonly style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem; background: #edf2f7; text-align: center; font-weight: bold;">
+            </div>
+
+            <!-- Row 2 -->
+            <div class="form-group" style="grid-column: span 12;">
+              <label style="font-weight: bold; font-size: 0.85rem; margin-bottom: 4px; display: block;">معلومات المستخدم</label>
+              <input type="text" id="uUserInfo-${tabId}" placeholder="مثال: موظف المبيعات، محاسب الإدارة..." style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem;">
+            </div>
+
+            <!-- Row 3 -->
+            <div class="form-group" style="grid-column: span 4;">
+              <label style="font-weight: bold; font-size: 0.85rem; margin-bottom: 4px; display: block;">رقم المركز المالي (صندوق المستخدم)</label>
+              <select id="uUserAccBoxNO-${tabId}" style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem; font-family: var(--font-arabic);">
+                <option value="0">لم يتم التحديد</option>
+              </select>
+            </div>
+
+            <div class="form-group" style="grid-column: span 4;">
+              <label style="font-weight: bold; font-size: 0.85rem; margin-bottom: 4px; display: block;">المستودع الافتراضي</label>
+              <select id="uStorNO-${tabId}" style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem; font-family: var(--font-arabic);">
+                <option value="0">لم يتم التحديد</option>
+              </select>
+            </div>
+
+            <div class="form-group" style="grid-column: span 4;">
+              <label style="font-weight: bold; font-size: 0.85rem; margin-bottom: 4px; display: block;">الحد الأقصى للخصم المسموح (%)</label>
+              <input type="number" step="0.01" id="uDiscount-${tabId}" value="0.00" style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem; text-align: left; font-family: monospace;">
+            </div>
+
+            <!-- Row 4 -->
+            <div class="form-group" style="grid-column: span 4;">
+              <label style="font-weight: bold; font-size: 0.85rem; margin-bottom: 4px; display: block;">ر.سعر البيع (مندوب المبيعات)</label>
+              <select id="uSalNO-${tabId}" style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem; font-family: var(--font-arabic);">
+                <option value="0">لم يتم التحديد</option>
+              </select>
+            </div>
+
+            <div class="form-group" style="grid-column: span 3; display: flex; align-items: center; gap: 8px; height: 100%; padding-top: 20px; box-sizing: border-box;">
+              <input type="checkbox" id="uChanging-${tabId}" style="width: 16px; height: 16px; cursor: pointer;">
+              <label for="uChanging-${tabId}" style="font-weight: bold; font-size: 0.85rem; cursor: pointer;">مصارفة المبلغ</label>
+            </div>
+
+            <div class="form-group" style="grid-column: span 2; display: flex; align-items: center; gap: 8px; height: 100%; padding-top: 20px; box-sizing: border-box;">
+              <input type="checkbox" id="uCurrentUser-${tabId}" style="width: 16px; height: 16px; cursor: pointer;">
+              <label for="uCurrentUser-${tabId}" style="font-weight: bold; font-size: 0.85rem; cursor: pointer;">المستخدم الحالي</label>
+            </div>
+
+            <div class="form-group" style="grid-column: span 3;">
+              <label style="font-weight: bold; font-size: 0.85rem; margin-bottom: 4px; display: block;">ثيم واجهة المستخدم</label>
+              <select id="uSkinName-${tabId}" style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem; font-family: var(--font-arabic);">
+                <option value="Flat">المظهر الافتراضي (Flat)</option>
+                <option value="Windows">مظهر نظام ويندوز (Windows)</option>
+                <option value="Dark">المظهر الداكن (Dark)</option>
+              </select>
+            </div>
+
+          </div>
+
+          <!-- Bottom Columns: Branch List Grid + Screen Permissions Grid -->
+          <div style="display: flex; gap: 15px; box-sizing: border-box; width: 100%;">
+            
+            <!-- Left Side: Branches List -->
+            <div style="flex: 4; background: #fff; border: 1px solid var(--border-color); border-radius: 8px; display: flex; flex-direction: column; overflow: hidden; max-height: 400px; box-sizing: border-box;">
+              <div style="background: #f8fafc; padding: 10px 15px; font-weight: bold; border-bottom: 1px solid #e2e8f0; color: var(--primary); font-size: 0.85rem;">
+                <i class="fa-solid fa-code-branch" style="margin-left: 5px;"></i>الفروع المصرحة للمستخدم
+              </div>
+              <div style="overflow-y: auto; flex: 1;">
+                <table class="mock-table" style="width: 100%; border-collapse: collapse; font-size: 0.8rem;">
+                  <thead>
+                    <tr style="background-color: #f1f5f9; border-bottom: 2px solid #e2e8f0;">
+                      <th style="width: 25%; padding: 6px; text-align: center;">موافق</th>
+                      <th style="width: 75%; padding: 6px; text-align: right;">اسم الفرع</th>
+                    </tr>
+                  </thead>
+                  <tbody id="uBranchTableBody-${tabId}">
+                    <!-- Dynamic Branches Checkbox Rows -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Right Side: Permissions Grid -->
+            <div style="flex: 8; background: #fff; border: 1px solid var(--border-color); border-radius: 8px; display: flex; flex-direction: column; overflow: hidden; max-height: 400px; box-sizing: border-box;">
+              
+              <!-- Permissions Grid Filter & Headers Bulk checkbox -->
+              <div style="background: #f8fafc; padding: 8px 12px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; box-sizing: border-box;">
+                <div style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: bold; color: var(--primary);">
+                  <i class="fa-solid fa-shield-halved" style="margin-left: 5px;"></i>صلاحيات الشاشات والقوائم
+                </div>
+                
+                <!-- Main Menu Filter -->
+                <div style="display: flex; align-items: center; gap: 6px;">
+                  <span style="font-size: 0.75rem; font-weight: bold; color: var(--text-muted);">القائمة:</span>
+                  <select id="uMenuFilter-${tabId}" style="padding: 4px 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.75rem; font-family: var(--font-arabic);" onchange="filterPermissionsGrid('${tabId}', this.value)">
+                    <option value="">كل القوائم</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Bulk Checkboxes Toolbar -->
+              <div style="background: #fafbfc; padding: 6px 12px; border-bottom: 1px solid #e2e8f0; display: flex; gap: 12px; flex-wrap: wrap; font-size: 0.75rem; font-weight: bold; align-items: center; box-sizing: border-box;">
+                <span>تحديد جماعي:</span>
+                <label style="display: flex; align-items: center; gap: 4px; cursor: pointer;">
+                  <input type="checkbox" id="permAll-${tabId}" onchange="toggleBulkPermissions('${tabId}', 'all', this.checked)" style="cursor: pointer;">
+                  <span>شامل</span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 4px; cursor: pointer;">
+                  <input type="checkbox" id="permSelect-${tabId}" onchange="toggleBulkPermissions('${tabId}', 'select', this.checked)" style="cursor: pointer;">
+                  <span>عرض</span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 4px; cursor: pointer;">
+                  <input type="checkbox" id="permInsert-${tabId}" onchange="toggleBulkPermissions('${tabId}', 'insert', this.checked)" style="cursor: pointer;">
+                  <span>اضافة</span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 4px; cursor: pointer;">
+                  <input type="checkbox" id="permUpdate-${tabId}" onchange="toggleBulkPermissions('${tabId}', 'update', this.checked)" style="cursor: pointer;">
+                  <span>تعديل</span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 4px; cursor: pointer;">
+                  <input type="checkbox" id="permDelete-${tabId}" onchange="toggleBulkPermissions('${tabId}', 'delete', this.checked)" style="cursor: pointer;">
+                  <span>حذف</span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 4px; cursor: pointer;">
+                  <input type="checkbox" id="permPrint-${tabId}" onchange="toggleBulkPermissions('${tabId}', 'print', this.checked)" style="cursor: pointer;">
+                  <span>طباعة</span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 4px; cursor: pointer;">
+                  <input type="checkbox" id="permDesign-${tabId}" onchange="toggleBulkPermissions('${tabId}', 'design', this.checked)" style="cursor: pointer;">
+                  <span>تصميم</span>
+                </label>
+                
+                <button class="btn btn-sm btn-danger" style="margin-right: auto; padding: 2px 8px; font-size: 0.7rem; font-family: var(--font-arabic);" onclick="clearAllPermissions('${tabId}')">حذف الصلاحيات</button>
+              </div>
+
+              <!-- Grid -->
+              <div style="overflow-y: auto; flex: 1;">
+                <table class="mock-table" style="width: 100%; border-collapse: collapse; font-size: 0.75rem;">
+                  <thead>
+                    <tr style="background-color: #f1f5f9; border-bottom: 2px solid #e2e8f0; position: sticky; top: 0; z-index: 10;">
+                      <th style="padding: 6px; text-align: right; width: 40%;">اسم الشاشة / نوع الحركة</th>
+                      <th style="padding: 6px; text-align: center; width: 10%;">عرض</th>
+                      <th style="padding: 6px; text-align: center; width: 10%;">اضافة</th>
+                      <th style="padding: 6px; text-align: center; width: 10%;">تحديث</th>
+                      <th style="padding: 6px; text-align: center; width: 10%;">حذف</th>
+                      <th style="padding: 6px; text-align: center; width: 10%;">طباعة</th>
+                      <th style="padding: 6px; text-align: center; width: 10%;">تصميم</th>
+                    </tr>
+                  </thead>
+                  <tbody id="uPermissionTableBody-${tabId}">
+                    <!-- Dynamic Permissions Rows -->
+                  </tbody>
+                </table>
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+    `;
+  } else if (isDailyMovement) {
+    bodyHtml = `
+      <!-- Daily Movement Toolbar -->
+      <div class="accounts-toolbar">
+        <button class="accounts-toolbar-btn" onclick="fetchDailyMovement('${tabId}')">
+          <i class="fa-solid fa-magnifying-glass" style="color: #3182ce;"></i>استعلام
+        </button>
+        <button class="accounts-toolbar-btn" onclick="printDailyMovement('${tabId}')">
+          <i class="fa-solid fa-print" style="color: #4a5568;"></i>طباعة
+        </button>
+        <button class="accounts-toolbar-btn" onclick="sendDailyMovementWhatsApp('${tabId}')">
+          <i class="fa-solid fa-share-nodes" style="color: #38a169;"></i>واتس اب
+        </button>
+        <button class="accounts-toolbar-btn" onclick="showToast('حذف (غير متوفر للحركة اليومية)', 'warning')">
+          <i class="fa-solid fa-trash-can" style="color: #e53e3e;"></i>حذف
+        </button>
+        <button class="accounts-toolbar-btn" onclick="viewSelectedAccountFromTab('${tabId}')">
+          <i class="fa-solid fa-wallet" style="color: #3182ce;"></i>الحساب
+        </button>
+        <button class="accounts-toolbar-btn" onclick="viewSelectedJournalFromTab('${tabId}')">
+          <i class="fa-solid fa-file-invoice" style="color: #805ad5;"></i>القيد
+        </button>
+        <button class="accounts-toolbar-btn" onclick="exportCurrentTabTable('${tabId}', 'تقرير_البيانات')">
+          <i class="fa-solid fa-file-excel" style="color: #2f855a;"></i>تصدير
+        </button>
+        <button class="accounts-toolbar-btn" onclick="closeTab('${tabId}')" style="margin-right: auto;">
+          <i class="fa-solid fa-right-from-bracket" style="color: #e53e3e;"></i>خروج
+        </button>
+      </div>
+
+      <!-- Daily Movement Filter Panel -->
+      <div class="mock-form" style="background: #fff; padding: 15px; border-radius: 8px; border: 1px solid var(--border-color); direction: rtl; text-align: right; margin-top: 15px; display: grid; grid-template-columns: repeat(12, 1fr); gap: 15px; box-sizing: border-box; width: 100%;">
+        
+        <!-- Row 1 -->
+        <div class="form-group" style="grid-column: span 3;">
+          <label style="font-weight: bold; font-size: 0.85rem; margin-bottom: 4px; display: block;">الفرع</label>
+          <select id="dmBranch-${tabId}" style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem; font-family: var(--font-arabic);"></select>
+        </div>
+        
+        <div class="form-group" style="grid-column: span 3;">
+          <label style="font-weight: bold; font-size: 0.85rem; margin-bottom: 4px; display: block;">من تاريخ</label>
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <input type="checkbox" id="dmStartDateCheck-${tabId}" checked style="width: 16px; height: 16px; cursor: pointer;">
+            <input type="date" id="dmStartDate-${tabId}" style="flex: 1; padding: 5px 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem; font-family: monospace;">
+          </div>
+        </div>
+
+        <div class="form-group" style="grid-column: span 2;">
+          <label style="font-weight: bold; font-size: 0.85rem; margin-bottom: 4px; display: block;">العملة</label>
+          <select id="dmCurrency-${tabId}" style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem; font-family: var(--font-arabic);">
+            <option value="">كل العملات</option>
+          </select>
+        </div>
+
+        <div class="form-group" style="grid-column: span 2;">
+          <label style="font-weight: bold; font-size: 0.85rem; margin-bottom: 4px; display: block;">مدين محلي</label>
+          <input type="text" id="dmDebitSum-${tabId}" readonly value="0.00" style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem; font-weight: bold; text-align: left; font-family: monospace; background: #edf2f7; color: var(--success);">
+        </div>
+
+        <div class="form-group" style="grid-column: span 2;">
+          <label style="font-weight: bold; font-size: 0.85rem; margin-bottom: 4px; display: block;">الفرق</label>
+          <input type="text" id="dmDiff-${tabId}" readonly value="0.00" style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem; font-weight: bold; text-align: left; font-family: monospace; background: #edf2f7; color: #2b6cb0;">
+        </div>
+
+        <!-- Row 2 -->
+        <div class="form-group" style="grid-column: span 3;">
+          <label style="font-weight: bold; font-size: 0.85rem; margin-bottom: 4px; display: block;">الصندوق</label>
+          <select id="dmBoxAccount-${tabId}" style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem; font-family: var(--font-arabic);"></select>
+        </div>
+
+        <div class="form-group" style="grid-column: span 3;">
+          <label style="font-weight: bold; font-size: 0.85rem; margin-bottom: 4px; display: block;">إلى تاريخ</label>
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <input type="checkbox" id="dmEndDateCheck-${tabId}" checked style="width: 16px; height: 16px; cursor: pointer;">
+            <input type="date" id="dmEndDate-${tabId}" style="flex: 1; padding: 5px 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem; font-family: monospace;">
+          </div>
+        </div>
+
+        <div class="form-group" style="grid-column: span 2;">
+          <label style="font-weight: bold; font-size: 0.85rem; margin-bottom: 4px; display: block;">عملة الفرز</label>
+          <select id="dmSortCurrency-${tabId}" style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem; font-family: var(--font-arabic);">
+            <option value="">كل العملات</option>
+          </select>
+        </div>
+
+        <div class="form-group" style="grid-column: span 2;">
+          <label style="font-weight: bold; font-size: 0.85rem; margin-bottom: 4px; display: block;">دائن محلي</label>
+          <input type="text" id="dmCreditSum-${tabId}" readonly value="0.00" style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem; font-weight: bold; text-align: left; font-family: monospace; background: #edf2f7; color: var(--danger);">
+        </div>
+
+        <div class="form-group" style="grid-column: span 2;">
+          <!-- Empty for grid alignment -->
+        </div>
+
+      </div>
+
+      <!-- Daily Movement Grid Wrapper -->
+      <div class="mock-table-wrapper" style="margin-top: 15px; border-radius: 8px; border: 1px solid var(--border-color); overflow: auto; max-height: 480px; box-sizing: border-box; width: 100%;">
+        <table class="mock-table" style="width: 100%; border-collapse: collapse; font-size: 0.8rem; direction: rtl; text-align: right; min-width: 1300px;">
+          <thead>
+            <tr style="background-color: #f8fafc; border-bottom: 2px solid #cbd5e1; position: sticky; top: 0; z-index: 10;">
+              <th style="padding: 10px 8px; text-align: right; width: 100px;">الفرع</th>
+              <th style="padding: 10px 8px; text-align: left; width: 90px;">الرصيد</th>
+              <th style="padding: 10px 8px; text-align: left; width: 90px; color: var(--success);">مدين</th>
+              <th style="padding: 10px 8px; text-align: left; width: 90px; color: var(--danger);">دائن</th>
+              <th style="padding: 10px 8px; text-align: left; width: 90px;">مدين1</th>
+              <th style="padding: 10px 8px; text-align: left; width: 90px;">دائن1</th>
+              <th style="padding: 10px 8px; text-align: right; width: 90px;">العملة</th>
+              <th style="padding: 10px 8px; text-align: center; width: 60px;">الرقم</th>
+              <th style="padding: 10px 8px; text-align: right; width: 100px;">نوع الحركة</th>
+              <th style="padding: 10px 8px; text-align: center; width: 60px;">النوع</th>
+              <th style="padding: 10px 8px; text-align: center; width: 80px;">التاريخ</th>
+              <th style="padding: 10px 8px; text-align: center; width: 80px;">ت. المرجع</th>
+              <th style="padding: 10px 8px; text-align: center; width: 80px;">رقم المرجع</th>
+              <th style="padding: 10px 8px; text-align: right;">البيان</th>
+            </tr>
+          </thead>
+          <tbody id="dmTableBody-${tabId}">
+            <tr>
+              <td colspan="14" style="text-align: center; padding: 30px; color: var(--text-muted);">يرجى تحديد الخيارات والضغط على "استعلام" لعرض البيانات</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    `;
+  } else if (isCostCenterStatement) {
+    bodyHtml = `
+      <!-- Cost Center Statement Toolbar -->
+      <div class="accounts-toolbar">
+        <button class="accounts-toolbar-btn" onclick="fetchCostCenterStatement('${tabId}')">
+          <i class="fa-solid fa-magnifying-glass" style="color: #3182ce;"></i>استعلام
+        </button>
+        <button class="accounts-toolbar-btn" onclick="printCostCenterStatement('${tabId}')">
+          <i class="fa-solid fa-print" style="color: #4a5568;"></i>طباعة
+        </button>
+        <button class="accounts-toolbar-btn" onclick="sendCostCenterWhatsApp('${tabId}')">
+          <i class="fa-solid fa-share-nodes" style="color: #38a169;"></i>واتس اب
+        </button>
+        <button class="accounts-toolbar-btn" onclick="showToast('حذف (غير متوفر لكشف مراكز الكلفة)', 'warning')">
+          <i class="fa-solid fa-trash-can" style="color: #e53e3e;"></i>حذف
+        </button>
+        <button class="accounts-toolbar-btn" onclick="viewSelectedAccountFromTab('${tabId}')">
+          <i class="fa-solid fa-wallet" style="color: #3182ce;"></i>الحساب
+        </button>
+        <button class="accounts-toolbar-btn" onclick="viewSelectedJournalFromTab('${tabId}')">
+          <i class="fa-solid fa-file-invoice" style="color: #805ad5;"></i>القيد
+        </button>
+        <button class="accounts-toolbar-btn" onclick="exportCurrentTabTable('${tabId}', 'تقرير_البيانات')">
+          <i class="fa-solid fa-file-excel" style="color: #2f855a;"></i>تصدير
+        </button>
+        <button class="accounts-toolbar-btn" onclick="closeTab('${tabId}')" style="margin-right: auto;">
+          <i class="fa-solid fa-right-from-bracket" style="color: #e53e3e;"></i>خروج
+        </button>
+      </div>
+
+      <!-- Cost Center Statement Filter Panel -->
+      <div class="mock-form" style="background: #fff; padding: 15px; border-radius: 8px; border: 1px solid var(--border-color); direction: rtl; text-align: right; margin-top: 15px; display: grid; grid-template-columns: repeat(12, 1fr); gap: 15px; box-sizing: border-box; width: 100%;">
+        
+        <!-- Row 1 -->
+        <div class="form-group" style="grid-column: span 3;">
+          <label style="font-weight: bold; font-size: 0.85rem; margin-bottom: 4px; display: block;">الفرع</label>
+          <select id="ccBranch-${tabId}" style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem; font-family: var(--font-arabic);"></select>
+        </div>
+        
+        <div class="form-group" style="grid-column: span 3;">
+          <label style="font-weight: bold; font-size: 0.85rem; margin-bottom: 4px; display: block;">من تاريخ</label>
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <input type="checkbox" id="ccStartDateCheck-${tabId}" checked style="width: 16px; height: 16px; cursor: pointer;">
+            <input type="date" id="ccStartDate-${tabId}" style="flex: 1; padding: 5px 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem; font-family: monospace;">
+          </div>
+        </div>
+
+        <div class="form-group" style="grid-column: span 2;">
+          <label style="font-weight: bold; font-size: 0.85rem; margin-bottom: 4px; display: block;">من مركز الكلفة</label>
+          <select id="ccCostCenter-${tabId}" style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem; font-family: var(--font-arabic);"></select>
+        </div>
+
+        <div class="form-group" style="grid-column: span 2;">
+          <label style="font-weight: bold; font-size: 0.85rem; margin-bottom: 4px; display: block;">مدين</label>
+          <input type="text" id="ccDebitSum-${tabId}" readonly value="0.00" style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem; font-weight: bold; text-align: left; font-family: monospace; background: #edf2f7; color: var(--success);">
+        </div>
+
+        <div class="form-group" style="grid-column: span 2;">
+          <label style="font-weight: bold; font-size: 0.85rem; margin-bottom: 4px; display: block;">رصيد الفترة</label>
+          <input type="text" id="ccPeriodBalance-${tabId}" readonly value="0.00" style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem; font-weight: bold; text-align: left; font-family: monospace; background: #edf2f7; color: #2b6cb0;">
+        </div>
+
+        <!-- Row 2 -->
+        <div class="form-group" style="grid-column: span 3; display: flex; align-items: center; gap: 20px; height: 100%; padding-top: 15px; box-sizing: border-box;">
+          <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 0.85rem; font-weight: bold;">
+            <input type="radio" name="ccType-${tabId}" id="ccTypeDetails-${tabId}" value="details" checked style="cursor: pointer;">
+            <span>تفاصيل عامة</span>
+          </label>
+          <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 0.85rem; font-weight: bold;">
+            <input type="radio" name="ccType-${tabId}" id="ccTypeTotals-${tabId}" value="totals" style="cursor: pointer;">
+            <span>اجماليات</span>
+          </label>
+        </div>
+
+        <div class="form-group" style="grid-column: span 3;">
+          <label style="font-weight: bold; font-size: 0.85rem; margin-bottom: 4px; display: block;">الى تاريخ</label>
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <input type="checkbox" id="ccEndDateCheck-${tabId}" checked style="width: 16px; height: 16px; cursor: pointer;">
+            <input type="date" id="ccEndDate-${tabId}" style="flex: 1; padding: 5px 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem; font-family: monospace;">
+          </div>
+        </div>
+
+        <div class="form-group" style="grid-column: span 2;">
+          <label style="font-weight: bold; font-size: 0.85rem; margin-bottom: 4px; display: block;">الى مركز الكلفة</label>
+          <select id="ccCostCenterTo-${tabId}" style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem; font-family: var(--font-arabic);"></select>
+        </div>
+
+        <div class="form-group" style="grid-column: span 2;">
+          <label style="font-weight: bold; font-size: 0.85rem; margin-bottom: 4px; display: block;">دائن</label>
+          <input type="text" id="ccCreditSum-${tabId}" readonly value="0.00" style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem; font-weight: bold; text-align: left; font-family: monospace; background: #edf2f7; color: var(--danger);">
+        </div>
+
+        <div class="form-group" style="grid-column: span 2;">
+          <label style="font-weight: bold; font-size: 0.85rem; margin-bottom: 4px; display: block;">الرصيد التراكمي</label>
+          <input type="text" id="ccCumulativeBalance-${tabId}" readonly value="0.00" style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem; font-weight: bold; text-align: left; font-family: monospace; background: #edf2f7; color: #2b6cb0;">
+        </div>
+
+      </div>
+
+      <!-- Cost Center Statement Grid Wrapper -->
+      <div class="mock-table-wrapper" style="margin-top: 15px; border-radius: 8px; border: 1px solid var(--border-color); overflow: auto; max-height: 480px; box-sizing: border-box; width: 100%;">
+        <table class="mock-table" style="width: 100%; border-collapse: collapse; font-size: 0.8rem; direction: rtl; text-align: right; min-width: 1300px;">
+          <thead>
+            <tr style="background-color: #f8fafc; border-bottom: 2px solid #cbd5e1; position: sticky; top: 0; z-index: 10;">
+              <th style="padding: 10px 8px; text-align: right; width: 140px;">CostCenter</th>
+              <th style="padding: 10px 8px; text-align: center; width: 80px;">رقم الفرع</th>
+              <th style="padding: 10px 8px; text-align: center; width: 90px;">التاريخ</th>
+              <th style="padding: 10px 8px; text-align: center; width: 80px;">رقم ID</th>
+              <th style="padding: 10px 8px; text-align: center; width: 70px;">الرقم</th>
+              <th style="padding: 10px 8px; text-align: right; width: 180px;">اسم الحساب</th>
+              <th style="padding: 10px 8px; text-align: right; width: 220px;">البيان</th>
+              <th style="padding: 10px 8px; text-align: left; width: 100px; color: var(--danger);">دائن محلي</th>
+              <th style="padding: 10px 8px; text-align: left; width: 100px; color: var(--success);">مدين محلي</th>
+              <th style="padding: 10px 8px; text-align: left; width: 110px;">الرصيد</th>
+            </tr>
+          </thead>
+          <tbody id="ccTableBody-${tabId}">
+            <tr>
+              <td colspan="10" style="text-align: center; padding: 30px; color: var(--text-muted);">يرجى تحديد الخيارات والضغط على "استعلام" لعرض البيانات</td>
+            </tr>
+      </div>
+    `;
+  } else if (isAccountGroupStatement) {
+    bodyHtml = `
+      <!-- Account Group Statement Toolbar -->
+      <div class="accounts-toolbar">
+        <button class="accounts-toolbar-btn" onclick="fetchAccountGroupStatement('${tabId}')">
+          <i class="fa-solid fa-magnifying-glass" style="color: #3182ce;"></i>استعلام
+        </button>
+        <button class="accounts-toolbar-btn" onclick="printAccountGroupStatement('${tabId}')">
+          <i class="fa-solid fa-print" style="color: #4a5568;"></i>طباعة
+        </button>
+        <button class="accounts-toolbar-btn" onclick="sendAccountGroupWhatsApp('${tabId}')">
+          <i class="fa-solid fa-share-nodes" style="color: #38a169;"></i>واتس اب
+        </button>
+        <button class="accounts-toolbar-btn" onclick="showToast('حذف (غير متوفر لكشف مجموعة حسابات)', 'warning')">
+          <i class="fa-solid fa-trash-can" style="color: #e53e3e;"></i>حذف
+        </button>
+        <button class="accounts-toolbar-btn" onclick="viewSelectedAccountFromTab('${tabId}')">
+          <i class="fa-solid fa-wallet" style="color: #3182ce;"></i>الحساب
+        </button>
+        <button class="accounts-toolbar-btn" onclick="viewSelectedJournalFromTab('${tabId}')">
+          <i class="fa-solid fa-file-invoice" style="color: #805ad5;"></i>القيد
+        </button>
+        <button class="accounts-toolbar-btn" onclick="exportCurrentTabTable('${tabId}', 'تقرير_البيانات')">
+          <i class="fa-solid fa-file-excel" style="color: #2f855a;"></i>تصدير
+        </button>
+        <button class="accounts-toolbar-btn" onclick="closeTab('${tabId}')" style="margin-right: auto;">
+          <i class="fa-solid fa-right-from-bracket" style="color: #e53e3e;"></i>خروج
+        </button>
+      </div>
+
+      <!-- Account Group Statement Filter Panel -->
+      <div class="mock-form" style="background: #fff; padding: 15px; border-radius: 8px; border: 1px solid var(--border-color); direction: rtl; text-align: right; margin-top: 15px; display: grid; grid-template-columns: repeat(12, 1fr); gap: 15px; box-sizing: border-box; width: 100%;">
+        
+        <!-- Row 1 -->
+        <div class="form-group" style="grid-column: span 3;">
+          <label style="font-weight: bold; font-size: 0.85rem; margin-bottom: 4px; display: block;">الفرع</label>
+          <select id="agBranch-${tabId}" style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem; font-family: var(--font-arabic);"></select>
+        </div>
+        
+        <div class="form-group" style="grid-column: span 3;">
+          <label style="font-weight: bold; font-size: 0.85rem; margin-bottom: 4px; display: block;">من تاريخ</label>
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <input type="checkbox" id="agStartDateCheck-${tabId}" checked style="width: 16px; height: 16px; cursor: pointer;">
+            <input type="date" id="agStartDate-${tabId}" style="flex: 1; padding: 5px 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem; font-family: monospace;">
+          </div>
+        </div>
+
+        <div class="form-group" style="grid-column: span 2;">
+          <label style="font-weight: bold; font-size: 0.85rem; margin-bottom: 4px; display: block;">من مجموعة الحسابات</label>
+          <select id="agGroupFrom-${tabId}" style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem; font-family: var(--font-arabic);"></select>
+        </div>
+
+        <div class="form-group" style="grid-column: span 2;">
+          <label style="font-weight: bold; font-size: 0.85rem; margin-bottom: 4px; display: block;">مدين محلي</label>
+          <input type="text" id="agDebitSum-${tabId}" readonly value="0.00" style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem; font-weight: bold; text-align: left; font-family: monospace; background: #edf2f7; color: var(--success);">
+        </div>
+
+        <div class="form-group" style="grid-column: span 2;">
+          <label style="font-weight: bold; font-size: 0.85rem; margin-bottom: 4px; display: block;">رصيد الفترة</label>
+          <input type="text" id="agPeriodBalance-${tabId}" readonly value="0.00" style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem; font-weight: bold; text-align: left; font-family: monospace; background: #edf2f7; color: #2b6cb0;">
+        </div>
+
+        <!-- Row 2 -->
+        <div class="form-group" style="grid-column: span 3; display: flex; align-items: center; gap: 20px; height: 100%; padding-top: 15px; box-sizing: border-box;">
+          <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 0.85rem; font-weight: bold;">
+            <input type="radio" name="agType-${tabId}" id="agTypeDetails-${tabId}" value="details" checked style="cursor: pointer;">
+            <span>تفاصيل عامة</span>
+          </label>
+          <label style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 0.85rem; font-weight: bold;">
+            <input type="radio" name="agType-${tabId}" id="agTypeTotals-${tabId}" value="totals" style="cursor: pointer;">
+            <span>اجماليات</span>
+          </label>
+        </div>
+
+        <div class="form-group" style="grid-column: span 3;">
+          <label style="font-weight: bold; font-size: 0.85rem; margin-bottom: 4px; display: block;">الى تاريخ</label>
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <input type="checkbox" id="agEndDateCheck-${tabId}" checked style="width: 16px; height: 16px; cursor: pointer;">
+            <input type="date" id="agEndDate-${tabId}" style="flex: 1; padding: 5px 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem; font-family: monospace;">
+          </div>
+        </div>
+
+        <div class="form-group" style="grid-column: span 2;">
+          <label style="font-weight: bold; font-size: 0.85rem; margin-bottom: 4px; display: block;">الى مجموعة الحسابات</label>
+          <select id="agGroupTo-${tabId}" style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem; font-family: var(--font-arabic);"></select>
+        </div>
+
+        <div class="form-group" style="grid-column: span 2;">
+          <label style="font-weight: bold; font-size: 0.85rem; margin-bottom: 4px; display: block;">دائن محلي</label>
+          <input type="text" id="agCreditSum-${tabId}" readonly value="0.00" style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem; font-weight: bold; text-align: left; font-family: monospace; background: #edf2f7; color: var(--danger);">
+        </div>
+
+        <div class="form-group" style="grid-column: span 2;">
+          <label style="font-weight: bold; font-size: 0.85rem; margin-bottom: 4px; display: block;">الرصيد التراكمي</label>
+          <input type="text" id="agCumulativeBalance-${tabId}" readonly value="0.00" style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem; font-weight: bold; text-align: left; font-family: monospace; background: #edf2f7; color: #2b6cb0;">
+        </div>
+
+      </div>
+
+      <!-- Account Group Statement Grid Wrapper -->
+      <div class="mock-table-wrapper" style="margin-top: 15px; border-radius: 8px; border: 1px solid var(--border-color); overflow: auto; max-height: 480px; box-sizing: border-box; width: 100%;">
+        <table class="mock-table" style="width: 100%; border-collapse: collapse; font-size: 0.8rem; direction: rtl; text-align: right; min-width: 1300px;">
+          <thead>
+            <tr style="background-color: #f8fafc; border-bottom: 2px solid #cbd5e1; position: sticky; top: 0; z-index: 10;">
+              <th style="padding: 10px 8px; text-align: right; width: 160px;">مجموعة الحسابات</th>
+              <th style="padding: 10px 8px; text-align: center; width: 80px;">رقم الفرع</th>
+              <th style="padding: 10px 8px; text-align: center; width: 90px;">التاريخ</th>
+              <th style="padding: 10px 8px; text-align: center; width: 80px;">رقم ID</th>
+              <th style="padding: 10px 8px; text-align: center; width: 70px;">الرقم</th>
+              <th style="padding: 10px 8px; text-align: right; width: 180px;">اسم الحساب</th>
+              <th style="padding: 10px 8px; text-align: right; width: 220px;">البيان</th>
+              <th style="padding: 10px 8px; text-align: left; width: 100px; color: var(--danger);">دائن محلي</th>
+              <th style="padding: 10px 8px; text-align: left; width: 100px; color: var(--success);">مدين محلي</th>
+              <th style="padding: 10px 8px; text-align: left; width: 110px;">الرصيد</th>
+            </tr>
+          </thead>
+          <tbody id="agTableBody-${tabId}">
+            <tr>
+              <td colspan="10" style="text-align: center; padding: 30px; color: var(--text-muted);">يرجى تحديد الخيارات والضغط على "استعلام" لعرض البيانات</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    `;
+  } else if (isGeneralLedger) {
+    bodyHtml = `
+      <!-- General Ledger Toolbar -->
+      <div class="accounts-toolbar">
+        <button class="accounts-toolbar-btn" onclick="fetchGeneralLedger('${tabId}')">
+          <i class="fa-solid fa-magnifying-glass" style="color: #3182ce;"></i>استعلام
+        </button>
+        <button class="accounts-toolbar-btn" onclick="printGeneralLedger('${tabId}')">
+          <i class="fa-solid fa-print" style="color: #4a5568;"></i>طباعة
+        </button>
+        <button class="accounts-toolbar-btn" onclick="sendGeneralLedgerWhatsApp('${tabId}')">
+          <i class="fa-brands fa-whatsapp" style="color: #25d366;"></i>واتس اب
+        </button>
+        <button class="accounts-toolbar-btn" onclick="showToast('حذف (غير متوفر لدفتر الأستاذ العام)', 'warning')">
+          <i class="fa-solid fa-trash-can" style="color: #e53e3e;"></i>حذف
+        </button>
+        <button class="accounts-toolbar-btn" onclick="viewSelectedAccountFromTab('${tabId}')">
+          <i class="fa-solid fa-wallet" style="color: #3182ce;"></i>الحساب
+        </button>
+        <button class="accounts-toolbar-btn" onclick="exportCurrentTabTable('${tabId}', 'تقرير_البيانات')">
+          <i class="fa-solid fa-file-excel" style="color: #2f855a;"></i>تصدير
+        </button>
+        <button class="accounts-toolbar-btn" onclick="exportCurrentTabTable('${tabId}', 'تقرير_البيانات')">
+          <i class="fa-solid fa-file-export" style="color: #4a5568;"></i>تصدير XLS
+        </button>
+        <button class="accounts-toolbar-btn" onclick="closeTab('${tabId}')" style="margin-right: auto;">
+          <i class="fa-solid fa-right-from-bracket" style="color: #e53e3e;"></i>خروج
+        </button>
+      </div>
+
+      <!-- General Ledger Layout -->
+      <div class="account-statement-layout" style="display: flex; flex-direction: column; gap: 15px; direction: rtl; text-align: right; margin-top: 15px; font-family: var(--font-arabic);">
+        
+        <!-- Filters Card -->
+        <div class="mock-form" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; background: #fff; padding: 15px; border-radius: 8px; border: 1px solid var(--border-color);">
+          
+          <div class="form-group" style="margin-bottom: 0;">
+            <label style="font-weight: bold; font-size: 0.85rem; margin-bottom: 4px;">الفرع</label>
+            <select id="glBranch-${tabId}" style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem; font-family: var(--font-arabic);"></select>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 0;">
+            <label style="font-weight: bold; font-size: 0.85rem; margin-bottom: 4px;">مجموعة الحساب</label>
+            <select id="glGroup-${tabId}" style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem; font-family: var(--font-arabic);">
+              <option value="">كل المجموعات</option>
+            </select>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 0;">
+            <label style="font-weight: bold; font-size: 0.85rem; margin-bottom: 4px;">العملة</label>
+            <select id="glCurrency-${tabId}" style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem; font-family: var(--font-arabic);">
+              <option value="">كل العملات</option>
+            </select>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 0;">
+            <label style="font-weight: bold; font-size: 0.85rem; margin-bottom: 4px;">بحث سريع</label>
+            <input type="text" id="glSearch-${tabId}" placeholder="ابحث باسم أو رقم الحساب..." style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem; font-family: var(--font-arabic);" oninput="filterGeneralLedgerTable('${tabId}')">
+          </div>
+
+          <div class="form-group" style="margin-bottom: 0;">
+            <label style="font-weight: bold; font-size: 0.85rem; margin-bottom: 4px;">من تاريخ</label>
+            <input type="date" id="glStartDate-${tabId}" style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem; font-family: var(--font-arabic);">
+          </div>
+
+          <div class="form-group" style="margin-bottom: 0;">
+            <label style="font-weight: bold; font-size: 0.85rem; margin-bottom: 4px;">إلى تاريخ</label>
+            <input type="date" id="glEndDate-${tabId}" style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem; font-family: var(--font-arabic);">
+          </div>
+
+        </div>
+
+        <!-- Table Results Card -->
+        <div id="glTableWrapper-${tabId}" class="mock-table-wrapper" style="background: #fff; border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; display: flex; flex-direction: column;">
+          <div style="overflow-x: auto; flex: 1;">
+            <table class="mock-table" style="width: 100%; border-collapse: collapse; min-width: 1000px; font-size: 0.85rem;">
+              <thead>
+                <tr style="background-color: #f8fafc; border-bottom: 2px solid #e2e8f0;">
+                  <th style="width: 12%; padding: 8px; text-align: center;">رقم الحساب</th>
+                  <th style="width: 25%; padding: 8px; text-align: right;">اسم الحساب</th>
+                  <th style="width: 10%; padding: 8px; text-align: center;">العمله</th>
+                  <th style="width: 11%; padding: 8px; text-align: left; font-family: monospace; color: #2f855a;">اجمالي مدين</th>
+                  <th style="width: 11%; padding: 8px; text-align: left; font-family: monospace; color: #c53030;">اجمالي دائن</th>
+                  <th style="width: 11%; padding: 8px; text-align: left; font-family: monospace;">الرصيد</th>
+                  <th style="width: 10%; padding: 8px; text-align: center;">من تاريخ</th>
+                  <th style="width: 10%; padding: 8px; text-align: center;">الى تاريخ</th>
+                </tr>
+              </thead>
+              <tbody id="glTableBody-${tabId}">
+                <tr>
+                  <td colspan="8" style="text-align: center; padding: 40px; color: var(--text-muted);">
+                    <i class="fa-solid fa-info-circle" style="font-size: 1.5rem; margin-bottom: 8px; display: block; color: var(--primary);"></i>
+                    الرجاء الضغط على زر <strong>استعلام</strong> لعرض دفتر الأستاذ العام.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Totals Footer Summary -->
+          <div class="gl-summary-inputs-container">
+            <div class="gl-summary-field">
+              <span>مدين:</span>
+              <input type="text" id="glTotalDebitSum-${tabId}" value="0.00" readonly style="color: #2f855a;">
+            </div>
+            <div class="gl-summary-field">
+              <span>دائن:</span>
+              <input type="text" id="glTotalCreditSum-${tabId}" value="0.00" readonly style="color: #c53030;">
+            </div>
+            <div class="gl-summary-field balance">
+              <span>الرصيد:</span>
+              <input type="text" id="glTotalBalanceSum-${tabId}" value="0.00" readonly>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    `;
+  } else if (isTrialBalance) {
+    bodyHtml = `
+      <!-- Trial Balance Toolbar -->
+      <div class="accounts-toolbar">
+        <button class="accounts-toolbar-btn" onclick="fetchTrialBalance('${tabId}')">
+          <i class="fa-solid fa-magnifying-glass" style="color: #3182ce;"></i>استعلام
+        </button>
+        <button class="accounts-toolbar-btn" onclick="printTrialBalance('${tabId}')">
+          <i class="fa-solid fa-print" style="color: #4a5568;"></i>طباعة
+        </button>
+        <button class="accounts-toolbar-btn" onclick="sendTrialBalanceWhatsApp('${tabId}')">
+          <i class="fa-brands fa-whatsapp" style="color: #25d366;"></i>واتس اب
+        </button>
+        <button class="accounts-toolbar-btn" onclick="showToast('حذف (غير متوفر لميزان المراجعة)', 'warning')">
+          <i class="fa-solid fa-trash-can" style="color: #e53e3e;"></i>حذف
+        </button>
+        <button class="accounts-toolbar-btn" onclick="viewSelectedAccountFromTab('${tabId}')">
+          <i class="fa-solid fa-wallet" style="color: #3182ce;"></i>الحساب
+        </button>
+        <button class="accounts-toolbar-btn" onclick="exportCurrentTabTable('${tabId}', 'تقرير_البيانات')">
+          <i class="fa-solid fa-file-excel" style="color: #2f855a;"></i>تصدير
+        </button>
+        <button class="accounts-toolbar-btn" onclick="closeTab('${tabId}')" style="margin-right: auto;">
+          <i class="fa-solid fa-right-from-bracket" style="color: #e53e3e;"></i>خروج
+        </button>
+      </div>
+
+      <!-- Trial Balance Layout -->
+      <div class="account-statement-layout" style="display: flex; flex-direction: column; gap: 15px; direction: rtl; text-align: right; margin-top: 15px; font-family: var(--font-arabic);">
+        
+        <!-- Filters Card -->
+        <div class="mock-form" style="background: #fff; padding: 15px; border-radius: 8px; border: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 12px;">
+          
+          <!-- Top Row Filters -->
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; width: 100%;">
+            <div class="form-group" style="margin-bottom: 0;">
+              <label style="font-weight: bold; font-size: 0.85rem; margin-bottom: 4px;">الفرع</label>
+              <select id="tbBranch-${tabId}" style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem; font-family: var(--font-arabic);"></select>
+            </div>
+
+
+
+            <div class="form-group" style="margin-bottom: 0;">
+              <label style="font-weight: bold; font-size: 0.85rem; margin-bottom: 4px;">من تاريخ</label>
+              <input type="date" id="tbStartDate-${tabId}" style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem; font-family: var(--font-arabic);">
+            </div>
+
+            <div class="form-group" style="margin-bottom: 0;">
+              <label style="font-weight: bold; font-size: 0.85rem; margin-bottom: 4px;">إلى تاريخ</label>
+              <input type="date" id="tbEndDate-${tabId}" style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem; font-family: var(--font-arabic);">
+            </div>
+
+            <div class="form-group" style="margin-bottom: 0;">
+              <label style="font-weight: bold; font-size: 0.85rem; margin-bottom: 4px;">بحث سريع</label>
+              <input type="text" id="tbSearch-${tabId}" placeholder="ابحث باسم أو رقم الحساب..." style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem; font-family: var(--font-arabic);" oninput="filterTrialBalanceTable('${tabId}')">
+            </div>
+          </div>
+
+          <!-- Bottom Row Options -->
+          <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 15px; border-top: 1px solid #e2e8f0; padding-top: 10px; margin-top: 5px;">
+            <div style="display: flex; align-items: center; gap: 20px;">
+              <label style="display: flex; align-items: center; gap: 6px; font-size: 0.85rem; font-weight: bold; cursor: pointer;">
+                <input type="radio" name="tbType-${tabId}" value="balances-sub" checked onchange="fetchTrialBalance('${tabId}')">
+                <span>ميزانيه بالارصده فرعى</span>
+              </label>
+              <label style="display: flex; align-items: center; gap: 6px; font-size: 0.85rem; font-weight: bold; cursor: pointer;">
+                <input type="radio" name="tbType-${tabId}" value="balances-main" onchange="fetchTrialBalance('${tabId}')">
+                <span>ميزانيه رصيد رئيسى</span>
+              </label>
+              <label style="display: flex; align-items: center; gap: 6px; font-size: 0.85rem; font-weight: bold; cursor: pointer;">
+                <input type="radio" name="tbType-${tabId}" value="totals-main" onchange="fetchTrialBalance('${tabId}')">
+                <span>ميزانيه مجاميع رئيسى</span>
+              </label>
+              <label style="display: flex; align-items: center; gap: 6px; font-size: 0.85rem; font-weight: bold; cursor: pointer;">
+                <input type="radio" name="tbType-${tabId}" value="totals-sub" onchange="fetchTrialBalance('${tabId}')">
+                <span>ميزانيه مجاميع فرعى</span>
+              </label>
+            </div>
+
+            <div>
+              <button id="tbUnbalancedBtn-${tabId}" onclick="toggleUnbalancedEntries('${tabId}')" style="background-color: #fee2e2; color: #991b1b; border: 1px solid #fecaca; padding: 6px 12px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <span>قيود غير متزنه</span>
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Table Results Card -->
+        <div class="mock-table-wrapper" style="background: #fff; border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; display: flex; flex-direction: column;">
+          
+          <!-- 1. Trial Balance Grid Table (Default View) -->
+          <div id="tbTableWrapper-${tabId}" style="overflow-x: auto; flex: 1;">
+            <table class="mock-table" style="width: 100%; border-collapse: collapse; min-width: 1100px; font-size: 0.82rem;">
+              <thead>
+                <!-- Sub header row -->
+                <tr style="background-color: #f8fafc; border-bottom: 1px solid #cbd5e1; font-weight: bold;">
+                  <th colspan="2" style="border: 1px solid #cbd5e1; padding: 6px; text-align: center;">الرصيد الحالي</th>
+                  <th colspan="2" style="border: 1px solid #cbd5e1; padding: 6px; text-align: center;">حركة الفترة</th>
+                  <th colspan="2" style="border: 1px solid #cbd5e1; padding: 6px; text-align: center;">الرصيد الافتتاحي</th>
+                  <th rowspan="2" style="border: 1px solid #cbd5e1; padding: 10px; text-align: right; width: 35%;">اسم الحساب</th>
+                  <th rowspan="2" style="border: 1px solid #cbd5e1; padding: 10px; text-align: center; width: 12%;">رقم الحساب</th>
+                </tr>
+                <tr style="background-color: #f8fafc; border-bottom: 2px solid #cbd5e1;">
+                  <!-- Current -->
+                  <th style="border: 1px solid #cbd5e1; padding: 6px; text-align: left; font-family: monospace; width: 9%;">مدين محلي</th>
+                  <th style="border: 1px solid #cbd5e1; padding: 6px; text-align: left; font-family: monospace; width: 9%;">دائن محلي</th>
+                  <!-- Period -->
+                  <th style="border: 1px solid #cbd5e1; padding: 6px; text-align: left; font-family: monospace; width: 9%;">مدين محلي</th>
+                  <th style="border: 1px solid #cbd5e1; padding: 6px; text-align: left; font-family: monospace; width: 9%;">دائن محلي</th>
+                  <!-- Opening -->
+                  <th style="border: 1px solid #cbd5e1; padding: 6px; text-align: left; font-family: monospace; width: 9%;">مدين محلي</th>
+                  <th style="border: 1px solid #cbd5e1; padding: 6px; text-align: left; font-family: monospace; width: 9%;">دائن محلي</th>
+                </tr>
+              </thead>
+              <tbody id="tbTableBody-${tabId}">
+                <tr>
+                  <td colspan="8" style="text-align: center; padding: 40px; color: var(--text-muted);">
+                    <i class="fa-solid fa-info-circle" style="font-size: 1.5rem; margin-bottom: 8px; display: block; color: var(--primary);"></i>
+                    الرجاء الضغط على زر <strong>استعلام</strong> لعرض ميزان المراجعة.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- 2. Unbalanced Entries Grid Table (Toggled View) -->
+          <div id="unbalancedTableWrapper-${tabId}" style="overflow-x: auto; flex: 1; display: none;">
+            <table class="mock-table" style="width: 100%; border-collapse: collapse; min-width: 1000px; font-size: 0.85rem;">
+              <thead>
+                <tr style="background-color: #fef2f2; border-bottom: 2px solid #fca5a5;">
+                  <th style="width: 10%; padding: 10px; text-align: center; border: 1px solid #fca5a5;">نوع الحركة</th>
+                  <th style="width: 10%; padding: 10px; text-align: center; border: 1px solid #fca5a5;">رقم الحركة</th>
+                  <th style="width: 12%; padding: 10px; text-align: center; border: 1px solid #fca5a5;">تاريخ الحركة</th>
+                  <th style="width: 10%; padding: 10px; text-align: center; border: 1px solid #fca5a5;">رقم المرجع</th>
+                  <th style="width: 28%; padding: 10px; text-align: right; border: 1px solid #fca5a5;">البيان</th>
+                  <th style="width: 10%; padding: 10px; text-align: left; font-family: monospace; border: 1px solid #fca5a5; color: #2f855a;">إجمالي مدين</th>
+                  <th style="width: 10%; padding: 10px; text-align: left; font-family: monospace; border: 1px solid #fca5a5; color: #c53030;">إجمالي دائن</th>
+                  <th style="width: 10%; padding: 10px; text-align: left; font-family: monospace; border: 1px solid #fca5a5; color: #b91c1c; font-weight: bold;">الفارق</th>
+                </tr>
+              </thead>
+              <tbody id="unbalancedTableBody-${tabId}">
+                <tr>
+                  <td colspan="8" style="text-align: center; padding: 40px; color: #991b1b; font-weight: bold;">
+                    لا توجد قيود غير متزنة حالياً.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Totals Footer Summary -->
+          <div class="tb-summary-container">
+            <div class="tb-summary-field">
+              <span>مدين محلي:</span>
+              <input type="text" id="tbTotalDebitSum-${tabId}" value="0.00" readonly style="color: #2f855a;">
+            </div>
+            <div class="tb-summary-field">
+              <span>دائن محلي:</span>
+              <input type="text" id="tbTotalCreditSum-${tabId}" value="0.00" readonly style="color: #c53030;">
+            </div>
+            <div class="tb-summary-field balance" style="display: flex; align-items: center; gap: 8px;">
+              <span>الفارق:</span>
+              <input type="text" id="tbTotalBalanceSum-${tabId}" value="0.00" readonly>
+              <span id="tbBalanceStatus-${tabId}" style="font-weight: bold; font-size: 0.8rem; padding: 2px 8px; border-radius: 4px; display: inline-block;"></span>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    `;
+  } else if (isErrorExplorer) {
+    bodyHtml = `
+      <div class="error-explorer-screen" style="direction: rtl; text-align: right; font-family: var(--font-arabic); display: flex; flex-direction: column; gap: 4px; height: 100%; padding: 4px 6px; background: #f8fafc; box-sizing: border-box;">
+        
+        <!-- Top Category Ribbon Bar (Matching media_1787981081406.png: فحص الكلفه | قائمة الاخطاء 2 | اخطاء يجب اصلاحها | استعلامات) -->
+        <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 4px 8px; display: flex; justify-content: space-between; align-items: center; gap: 6px; flex-wrap: wrap; box-shadow: 0 1px 2px rgba(0,0,0,0.04);">
+          
+          <!-- Category Tabs (Right Side) -->
+          <div style="display: flex; align-items: center; gap: 4px;">
+            <button type="button" id="eeTabCostCheck-${tabId}" class="ee-cat-tab active" onclick="switchErrorExplorerTab('${tabId}', 'cost_check')" style="padding: 4px 14px; height: 32px; background: #e0f2fe; border: 1.5px solid #0284c7; border-radius: 5px; font-weight: 800; font-size: 0.82rem; color: #0369a1; cursor: pointer; display: flex; align-items: center; gap: 5px; transition: all 0.15s;">
+              <i class="fa-solid fa-calculator" style="color: #0284c7; font-size: 0.88rem;"></i>
+              <span>فحص الكلفه</span>
+            </button>
+
+            <button type="button" id="eeTabErrorList2-${tabId}" class="ee-cat-tab" onclick="switchErrorExplorerTab('${tabId}', 'error_list_2')" style="padding: 4px 14px; height: 32px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 5px; font-weight: 700; font-size: 0.82rem; color: #475569; cursor: pointer; display: flex; align-items: center; gap: 5px; transition: all 0.15s;">
+              <i class="fa-solid fa-list-check" style="color: #f59e0b; font-size: 0.88rem;"></i>
+              <span>قائمة الاخطاء 2</span>
+            </button>
+
+            <button type="button" id="eeTabErrorsToFix-${tabId}" class="ee-cat-tab" onclick="switchErrorExplorerTab('${tabId}', 'errors_to_fix')" style="padding: 4px 14px; height: 32px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 5px; font-weight: 700; font-size: 0.82rem; color: #475569; cursor: pointer; display: flex; align-items: center; gap: 5px; transition: all 0.15s;">
+              <i class="fa-solid fa-triangle-exclamation" style="color: #ef4444; font-size: 0.88rem;"></i>
+              <span>اخطاء يجب اصلاحها</span>
+            </button>
+
+            <button type="button" id="eeTabQueries-${tabId}" class="ee-cat-tab" onclick="switchErrorExplorerTab('${tabId}', 'queries')" style="padding: 4px 14px; height: 32px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 5px; font-weight: 700; font-size: 0.82rem; color: #475569; cursor: pointer; display: flex; align-items: center; gap: 5px; transition: all 0.15s;">
+              <i class="fa-solid fa-magnifying-glass" style="color: #6366f1; font-size: 0.88rem;"></i>
+              <span>استعلامات</span>
+            </button>
+          </div>
+
+          <!-- Quick Action Tools (Left Side: Print, XLS, WhatsApp, Refresh) -->
+          <div style="display: flex; align-items: center; gap: 4px;">
+            <button type="button" onclick="printErrorExplorerReport('${tabId}')" class="btn btn-secondary btn-sm" style="height: 30px; padding: 0 10px; font-weight: 800; font-size: 0.78rem; display: flex; align-items: center; gap: 5px; border-radius: 4px;" title="طباعة تقرير الفحص">
+              <i class="fa-solid fa-print"></i>
+              <span>طباعه</span>
+            </button>
+
+            <button type="button" onclick="exportErrorExplorerExcel('${tabId}')" class="btn btn-secondary btn-sm" style="height: 30px; padding: 0 10px; font-weight: 800; font-size: 0.78rem; display: flex; align-items: center; gap: 5px; color: #047857; border-radius: 4px;" title="تصدير إلى إكسل">
+              <i class="fa-solid fa-file-excel"></i>
+              <span>تصدير XLS</span>
+            </button>
+
+            <button type="button" onclick="openErrorExplorerWhatsAppModal('${tabId}')" class="btn btn-sm" style="height: 30px; padding: 0 10px; font-weight: 800; font-size: 0.78rem; background: linear-gradient(135deg, #25D366, #128C7E); color: #ffffff; border: none; border-radius: 4px; display: flex; align-items: center; gap: 5px; cursor: pointer;" title="إرسال التقرير عبر الواتساب">
+              <i class="fa-brands fa-whatsapp" style="font-size: 0.9rem;"></i>
+              <span>إرسال PDF</span>
+            </button>
+
+            <button type="button" onclick="fetchErrorExplorerData('${tabId}')" class="btn btn-primary btn-sm" style="height: 30px; padding: 0 12px; font-weight: 800; font-size: 0.78rem; border-radius: 4px; display: flex; align-items: center; gap: 5px;" title="تحديث التقرير">
+              <i class="fa-solid fa-rotate"></i>
+              <span>تحديث</span>
+            </button>
+          </div>
+
+        </div>
+
+        <!-- Sub-Operations Action Ribbon (Compact, Sleek Height Matching Screenshot) -->
+        <div id="eeSubRibbon-${tabId}" style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 4px 6px; display: flex; align-items: center; gap: 4px; overflow-x: auto; box-shadow: 0 1px 2px rgba(0,0,0,0.04);">
+          
+          <button type="button" id="btn-ee-unposted-${tabId}" class="ee-sub-btn active" onclick="switchErrorExplorerSub('${tabId}', 'unposted', 'العمليات الغير مرحلة')" style="height: 36px; padding: 2px 10px; background: #e0f2fe; border: 1.5px solid #0284c7; border-radius: 4px; font-weight: 800; font-size: 0.75rem; color: #0369a1; cursor: pointer; display: flex; align-items: center; gap: 6px; white-space: nowrap;">
+            <i class="fa-solid fa-chart-line" style="color: #0284c7; font-size: 0.95rem;"></i>
+            <span>العمليات الغير مرحلة</span>
+          </button>
+
+          <button type="button" id="btn-ee-negative_qty-${tabId}" class="ee-sub-btn" onclick="switchErrorExplorerSub('${tabId}', 'negative_qty', 'الكميات السالبه')" style="height: 36px; padding: 2px 10px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 4px; font-weight: 700; font-size: 0.75rem; color: #475569; cursor: pointer; display: flex; align-items: center; gap: 6px; white-space: nowrap;">
+            <i class="fa-solid fa-boxes-stacked" style="color: #f59e0b; font-size: 0.95rem;"></i>
+            <span>الكميات السالبه</span>
+          </button>
+
+          <button type="button" id="btn-ee-no_unit-${tabId}" class="ee-sub-btn" onclick="switchErrorExplorerSub('${tabId}', 'no_unit', 'صنف بدون عبوه')" style="height: 36px; padding: 2px 10px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 4px; font-weight: 700; font-size: 0.75rem; color: #475569; cursor: pointer; display: flex; align-items: center; gap: 6px; white-space: nowrap;">
+            <i class="fa-solid fa-arrows-left-right" style="color: #dc2626; font-size: 0.95rem;"></i>
+            <span>صنف بدون عبوه</span>
+          </button>
+
+          <button type="button" id="btn-ee-cost_maintenance-${tabId}" class="ee-sub-btn" onclick="switchErrorExplorerSub('${tabId}', 'cost_maintenance', 'صيانة الكلفه')" style="height: 36px; padding: 2px 10px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 4px; font-weight: 700; font-size: 0.75rem; color: #475569; cursor: pointer; display: flex; align-items: center; gap: 6px; white-space: nowrap;">
+            <i class="fa-solid fa-font" style="color: #8b5cf6; font-size: 0.95rem;"></i>
+            <span>صيانة الكلفه</span>
+          </button>
+
+          <button type="button" id="btn-ee-zero_cost-${tabId}" class="ee-sub-btn" onclick="switchErrorExplorerSub('${tabId}', 'zero_cost', 'كلفة صفريه')" style="height: 36px; padding: 2px 10px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 4px; font-weight: 700; font-size: 0.75rem; color: #475569; cursor: pointer; display: flex; align-items: center; gap: 6px; white-space: nowrap;">
+            <i class="fa-solid fa-circle-check" style="color: #10b981; font-size: 0.95rem;"></i>
+            <span>كلفة صفريه</span>
+          </button>
+
+          <button type="button" id="btn-ee-cost_diffs-${tabId}" class="ee-sub-btn" onclick="switchErrorExplorerSub('${tabId}', 'cost_diffs', 'فوارق الكلفة للمخزون')" style="height: 36px; padding: 2px 10px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 4px; font-weight: 700; font-size: 0.75rem; color: #475569; cursor: pointer; display: flex; align-items: center; gap: 6px; white-space: nowrap;">
+            <i class="fa-solid fa-coins" style="color: #eab308; font-size: 0.95rem;"></i>
+            <span>فوارق الكلفة للمخزون</span>
+          </button>
+
+          <button type="button" id="btn-ee-issued_price_cost-${tabId}" class="ee-sub-btn" onclick="switchErrorExplorerSub('${tabId}', 'issued_price_cost', 'فحص كلفة السعر المصروفه')" style="height: 36px; padding: 2px 10px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 4px; font-weight: 700; font-size: 0.75rem; color: #475569; cursor: pointer; display: flex; align-items: center; gap: 6px; white-space: nowrap;">
+            <i class="fa-solid fa-clipboard-check" style="color: #06b6d4; font-size: 0.95rem;"></i>
+            <span>فحص كلفة السعر المصروفه</span>
+          </button>
+
+          <button type="button" id="btn-ee-posting_flaw-${tabId}" class="ee-sub-btn" onclick="switchErrorExplorerSub('${tabId}', 'posting_flaw', 'خلل في الترحيل المخزني')" style="height: 36px; padding: 2px 10px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 4px; font-weight: 700; font-size: 0.75rem; color: #475569; cursor: pointer; display: flex; align-items: center; gap: 6px; white-space: nowrap;">
+            <i class="fa-solid fa-bug" style="color: #dc2626; font-size: 0.95rem;"></i>
+            <span>خلل في الترحيل المخزني</span>
+          </button>
+
+          <button type="button" id="btn-ee-repost_diffs-${tabId}" class="ee-sub-btn" onclick="switchErrorExplorerSub('${tabId}', 'repost_diffs', 'اعادة ترحيل الفروقات')" style="height: 36px; padding: 2px 10px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 4px; font-weight: 700; font-size: 0.75rem; color: #475569; cursor: pointer; display: flex; align-items: center; gap: 6px; white-space: nowrap;">
+            <i class="fa-solid fa-rotate-left" style="color: #64748b; font-size: 0.95rem;"></i>
+            <span>اعادة ترحيل الفروقات</span>
+          </button>
+
+          <button type="button" id="btn-ee-inventory_cost-${tabId}" class="ee-sub-btn" onclick="switchErrorExplorerSub('${tabId}', 'inventory_cost', 'كلفة المخزون')" style="height: 36px; padding: 2px 10px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 4px; font-weight: 700; font-size: 0.75rem; color: #475569; cursor: pointer; display: flex; align-items: center; gap: 6px; white-space: nowrap;">
+            <i class="fa-solid fa-chart-simple" style="color: #ec4899; font-size: 0.95rem;"></i>
+            <span>كلفة المخزون</span>
+          </button>
+
+          <button type="button" id="btn-ee-unposted_inventory_cost-${tabId}" class="ee-sub-btn" onclick="switchErrorExplorerSub('${tabId}', 'unposted_inventory_cost', 'كلفة مخزون لم ترحل')" style="height: 36px; padding: 2px 10px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 4px; font-weight: 700; font-size: 0.75rem; color: #475569; cursor: pointer; display: flex; align-items: center; gap: 6px; white-space: nowrap;">
+            <i class="fa-solid fa-database" style="color: #ef4444; font-size: 0.95rem;"></i>
+            <span>كلفة مخزون لم ترحل</span>
+          </button>
+
+        </div>
+
+        <!-- Table Grid Container with Grouping Banner matching media_1787981081406.png -->
+        <div style="flex: 1; min-height: 400px; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 1px 2px rgba(0,0,0,0.04);">
+          
+          <!-- Grouping Bar Header matching screenshot -->
+          <div style="background: #f8fafc; padding: 5px 10px; border-bottom: 1px solid #cbd5e1; font-size: 0.75rem; color: #64748b; font-style: italic; display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <i class="fa-solid fa-table-columns" style="color: #94a3b8;"></i>
+              <span>Drag a column header here to group by that column</span>
+            </div>
+            <div id="eeActiveSubTitle-${tabId}" style="font-weight: 900; color: #0284c7; font-style: normal; font-size: 0.85rem;">العمليات الغير مرحلة</div>
+          </div>
+
+          <!-- Table Container -->
+          <div style="flex: 1; overflow: auto;">
+            <table id="eeTable-${tabId}" class="table table-hover table-bordered" style="width: 100%; min-width: 900px; margin-bottom: 0; font-size: 0.82rem; border-collapse: collapse; text-align: center;">
+              <thead id="eeThead-${tabId}" style="position: sticky; top: 0; z-index: 5; background: #f8fafc; border-bottom: 2px solid #cbd5e1;"></thead>
+              <tbody id="eeTbody-${tabId}"></tbody>
+            </table>
+          </div>
+
+          <!-- Footer Summary Bar -->
+          <div id="eeFooter-${tabId}" style="background: #f8fafc; border-top: 1.5px solid #cbd5e1; padding: 4px 10px; display: flex; justify-content: space-between; align-items: center; font-weight: 800; font-size: 0.8rem; color: #1e293b;">
+            <div id="eeCount-${tabId}">عدد السجلات: 0</div>
+            <div id="eeTotals-${tabId}"></div>
+          </div>
+
+        </div>
+
+      </div>
+    `;
+  } else if (isAccountReports) {
+    bodyHtml = `
+      <div class="account-reports-screen" style="direction: rtl; text-align: right; font-family: var(--font-arabic); display: flex; flex-direction: column; gap: 4px; height: 100%; padding: 4px 6px;">
+        
+        <!-- Top Reports Switcher Ribbon (Matching media_1787906640173.png) -->
+        <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 4px 8px; display: flex; justify-content: space-between; align-items: center; gap: 6px; flex-wrap: wrap; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+          
+          <!-- 9 Report Selector Buttons (Right to Left matching screenshot) -->
+          <div style="display: flex; align-items: center; gap: 4px; flex-wrap: wrap;">
+            
+            <button type="button" id="btn-ar-balances-${tabId}" class="ar-type-btn active" onclick="switchAccountReportType('${tabId}', 'balances')" style="height: 38px; padding: 0 10px; background: #e0f2fe; border: 1.5px solid #0284c7; border-radius: 5px; font-weight: 800; font-size: 0.78rem; color: #0369a1; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; white-space: nowrap;">
+              <i class="fa-solid fa-list-check" style="font-size: 0.9rem;"></i>
+              <span>ارصدة حسابات</span>
+            </button>
+
+            <button type="button" id="btn-ar-debit-${tabId}" class="ar-type-btn" onclick="switchAccountReportType('${tabId}', 'debit')" style="height: 38px; padding: 0 10px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 5px; font-weight: 700; font-size: 0.78rem; color: #475569; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; white-space: nowrap;">
+              <i class="fa-solid fa-user-check" style="color: #059669; font-size: 0.9rem;"></i>
+              <span>تقرير الحسابات المدينه</span>
+            </button>
+
+            <button type="button" id="btn-ar-credit-${tabId}" class="ar-type-btn" onclick="switchAccountReportType('${tabId}', 'credit')" style="height: 38px; padding: 0 10px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 5px; font-weight: 700; font-size: 0.78rem; color: #475569; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; white-space: nowrap;">
+              <i class="fa-solid fa-users" style="color: #dc2626; font-size: 0.9rem;"></i>
+              <span>تقرير الحسابات الدائنه</span>
+            </button>
+
+            <button type="button" id="btn-ar-opening-balances-${tabId}" class="ar-type-btn" onclick="switchAccountReportType('${tabId}', 'opening-balances')" style="height: 38px; padding: 0 10px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 5px; font-weight: 700; font-size: 0.78rem; color: #475569; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; white-space: nowrap;">
+              <i class="fa-solid fa-chart-column" style="color: #8b5cf6; font-size: 0.9rem;"></i>
+              <span>الميزانيه الافتتاحيه</span>
+            </button>
+
+            <button type="button" id="btn-ar-journal-entries-${tabId}" class="ar-type-btn" onclick="switchAccountReportType('${tabId}', 'journal-entries')" style="height: 38px; padding: 0 10px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 5px; font-weight: 700; font-size: 0.78rem; color: #475569; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; white-space: nowrap;">
+              <i class="fa-solid fa-book-journal-whills" style="color: #f59e0b; font-size: 0.9rem;"></i>
+              <span>القيود اليوميه</span>
+            </button>
+
+            <button type="button" id="btn-ar-final-reports-${tabId}" class="ar-type-btn" onclick="switchAccountReportType('${tabId}', 'final-reports')" style="height: 38px; padding: 0 10px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 5px; font-weight: 700; font-size: 0.78rem; color: #475569; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; white-space: nowrap;">
+              <i class="fa-solid fa-chart-pie" style="color: #06b6d4; font-size: 0.9rem;"></i>
+              <span>التقارير الختاميه</span>
+            </button>
+
+            <button type="button" id="btn-ar-currency-diffs-${tabId}" class="ar-type-btn" onclick="switchAccountReportType('${tabId}', 'currency-diffs')" style="height: 38px; padding: 0 10px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 5px; font-weight: 700; font-size: 0.78rem; color: #475569; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; white-space: nowrap;">
+              <i class="fa-solid fa-arrow-right-arrow-left" style="color: #ec4899; font-size: 0.9rem;"></i>
+              <span>كشف حركة فروق العملات</span>
+            </button>
+
+            <button type="button" id="btn-ar-balances-local-${tabId}" class="ar-type-btn" onclick="switchAccountReportType('${tabId}', 'balances-local')" style="height: 38px; padding: 0 10px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 5px; font-weight: 700; font-size: 0.78rem; color: #475569; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; white-space: nowrap;">
+              <i class="fa-solid fa-circle-check" style="color: #10b981; font-size: 0.9rem;"></i>
+              <span>كشف ارصده مع المقابل بالعمله المحليه</span>
+            </button>
+
+            <button type="button" id="btn-ar-all-accounts-${tabId}" class="ar-type-btn" onclick="switchAccountReportType('${tabId}', 'zero-balances')" style="height: 38px; padding: 0 10px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 5px; font-weight: 700; font-size: 0.78rem; color: #475569; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; white-space: nowrap;">
+              <i class="fa-solid fa-globe" style="color: #3b82f6; font-size: 0.9rem;"></i>
+              <span>الحسابات</span>
+            </button>
+
+          </div>
+
+          <!-- Actions: Print, XLS, WhatsApp -->
+          <div style="display: flex; align-items: center; gap: 5px;">
+            <button type="button" onclick="printAccountReports('${tabId}')" class="btn btn-secondary btn-sm" style="height: 32px; padding: 0 10px; font-weight: 800; font-size: 0.8rem; display: flex; align-items: center; gap: 5px;" title="طباعة التقرير">
+              <i class="fa-solid fa-print"></i>
+              <span>طباعه</span>
+            </button>
+
+            <button type="button" onclick="exportAccountReportsExcel('${tabId}')" class="btn btn-secondary btn-sm" style="height: 32px; padding: 0 10px; font-weight: 800; font-size: 0.8rem; display: flex; align-items: center; gap: 5px; color: #047857;" title="تصدير إلى إكسل">
+              <i class="fa-solid fa-file-excel"></i>
+              <span>تصدير XLS</span>
+            </button>
+
+            <button type="button" onclick="openAccountReportsWhatsAppModal('${tabId}')" class="btn btn-sm" style="height: 32px; padding: 0 10px; font-weight: 800; font-size: 0.8rem; background: #25D366; color: #ffffff; border: 1px solid #16a34a; border-radius: 4px; display: flex; align-items: center; gap: 5px;" title="إرسال التقرير عبر الواتساب">
+              <i class="fa-brands fa-whatsapp" style="font-size: 0.95rem;"></i>
+              <span>إرسال PDF</span>
+            </button>
+          </div>
+
+        </div>
+
+        <!-- Centered Dynamic Title Header matching media_1787906640173.png -->
+        <div style="text-align: center; margin: 2px 0;">
+          <h3 id="arReportTitleLabel-${tabId}" style="margin: 0; font-size: 1.15rem; font-weight: 900; color: #0f172a; letter-spacing: -0.2px;">ارصدة حسابات</h3>
+        </div>
+
+        <!-- 3-Row Filter Bar (Matching media_1787906640173.png) -->
+        <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 4px 8px; display: flex; flex-direction: column; gap: 4px; font-size: 0.82rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+          
+          <!-- Row 1: الفرع | من تاريخ | العمله | مركز الكلفه -->
+          <div style="display: grid; grid-template-columns: 1.2fr 1.1fr 1.1fr 1.1fr; gap: 8px; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <label style="min-width: 45px; font-weight: 800; color: #334155;">الفرع:</label>
+              <select id="arBranch-${tabId}" class="form-select form-select-sm" style="font-size: 0.8rem; font-weight: 700;">
+                <option value="0">الفرع الرئيسي</option>
+              </select>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <label style="min-width: 55px; font-weight: 800; color: #334155;">من تاريخ:</label>
+              <input type="date" id="arStartDate-${tabId}" class="form-control form-control-sm" style="font-size: 0.8rem; font-family: monospace;">
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <label style="min-width: 45px; font-weight: 800; color: #334155;">العملة:</label>
+              <select id="arCurrency-${tabId}" class="form-select form-select-sm" style="font-size: 0.8rem;">
+                <option value="">ريال سعودي</option>
+              </select>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <label style="min-width: 70px; font-weight: 800; color: #334155;">مركز الكلفة:</label>
+              <select id="arCostCenter-${tabId}" class="form-select form-select-sm" style="font-size: 0.8rem;">
+                <option value="">كافة المراكز</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Row 2: الحساب الختامي | الى تاريخ | العمله | المجموعه -->
+          <div style="display: grid; grid-template-columns: 1.2fr 1.1fr 1.1fr 1.1fr; gap: 8px; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <label style="min-width: 80px; font-weight: 800; color: #334155;">الحساب الختامي:</label>
+              <select id="arFinalAccount-${tabId}" class="form-select form-select-sm" style="font-size: 0.8rem; font-weight: 700;">
+                <option value="">الكل</option>
+                <option value="1">1- ميزانيه</option>
+                <option value="2">2- أرباح وخسائر</option>
+                <option value="3">3- متاجرة</option>
+                <option value="4">4- تشغيل</option>
+              </select>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <label style="min-width: 55px; font-weight: 800; color: #334155;">إلى تاريخ:</label>
+              <input type="date" id="arEndDate-${tabId}" class="form-control form-control-sm" style="font-size: 0.8rem; font-family: monospace;">
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <label style="min-width: 45px; font-weight: 800; color: #334155;">العملة:</label>
+              <select id="arCurrency2-${tabId}" class="form-select form-select-sm" style="font-size: 0.8rem;">
+                <option value="">ريال سعودي</option>
+              </select>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 4px;">
+              <label style="min-width: 60px; font-weight: 800; color: #334155;">المجموعة:</label>
+              <select id="arGroup-${tabId}" class="form-select form-select-sm" style="font-size: 0.8rem;">
+                <option value="">حساب عام</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Row 3: نوع التقرير | بحث سريع | زر التحديث -->
+          <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+            <div style="display: flex; align-items: center; gap: 6px; max-width: 220px;">
+              <label style="min-width: 65px; font-weight: 800; color: #334155;">نوع التقرير:</label>
+              <select id="arDetailType-${tabId}" class="form-select form-select-sm" style="font-size: 0.8rem; font-weight: 700;">
+                <option value="detailed">تفصيلي</option>
+                <option value="totals">إجمالي</option>
+              </select>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 6px; flex: 1;">
+              <div class="input-group input-group-sm" style="direction: ltr;">
+                <input type="text" id="arSearchInput-${tabId}" class="form-control form-control-sm" placeholder="بحث سريع في التقرير (رقم الحساب، اسم الحساب، العملة)..." style="direction: rtl; font-size: 0.8rem;" oninput="applyAccountReportsQuickSearch('${tabId}')">
+                <button class="btn btn-outline-secondary" type="button" onclick="document.getElementById('arSearchInput-${tabId}').value=''; applyAccountReportsQuickSearch('${tabId}');" title="مسح البحث">
+                  <i class="fa-solid fa-xmark"></i>
+                </button>
+              </div>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <button type="button" onclick="fetchAccountReports('${tabId}')" class="btn btn-primary btn-sm" style="height: 30px; padding: 0 14px; font-weight: 800; font-size: 0.8rem; display: flex; align-items: center; gap: 5px;">
+                <i class="fa-solid fa-arrows-rotate"></i>
+                <span>تحديث التقرير</span>
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Table Grid Container with Grouping Banner matching media_1787906640173.png -->
+        <div style="flex: 1; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+          
+          <!-- Grouping Bar Header -->
+          <div style="background: #f1f5f9; padding: 3px 8px; border-bottom: 1px solid #cbd5e1; font-size: 0.72rem; color: #64748b; font-style: italic; display: flex; align-items: center; gap: 6px;">
+            <i class="fa-solid fa-table-columns" style="color: #94a3b8;"></i>
+            <span>Drag a column header here to group by that column</span>
+          </div>
+
+          <!-- Table with horizontal/vertical scrolling -->
+          <div style="flex: 1; overflow: auto; max-height: calc(100vh - 275px);">
+            <table id="arTable-${tabId}" class="table table-hover table-bordered" style="width: 100%; min-width: 1200px; margin-bottom: 0; font-size: 0.8rem; border-collapse: collapse; text-align: center;">
+              <thead id="arThead-${tabId}" style="position: sticky; top: 0; z-index: 5; background: #f8fafc; border-bottom: 2px solid #cbd5e1;"></thead>
+              <tbody id="arTbody-${tabId}"></tbody>
+            </table>
+          </div>
+
+          <!-- Footer Summary Bar -->
+          <div id="arFooter-${tabId}" style="background: #f8fafc; border-top: 1.5px solid #cbd5e1; padding: 4px 10px; display: flex; justify-content: space-between; align-items: center; font-weight: 800; font-size: 0.8rem; color: #1e293b;">
+            <div id="arCount-${tabId}">عدد السجلات: 0</div>
+            <div id="arTotals-${tabId}"></div>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Account Report WhatsApp Modal -->
+      <div class="modal fade" id="arWhatsAppModal-${tabId}" tabindex="-1" aria-hidden="true" style="direction: rtl;">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content" style="border-radius: 8px; border: 1.5px solid #25D366;">
+            <div class="modal-header" style="background: #25D366; color: #ffffff; padding: 8px 14px;">
+              <h5 class="modal-title" style="font-weight: 900; font-size: 1rem; display: flex; align-items: center; gap: 8px;">
+                <i class="fa-brands fa-whatsapp" style="font-size: 1.3rem;"></i>
+                <span>إرسال تقرير الحسابات (ملف PDF) عبر الواتساب</span>
+              </h5>
+              <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" style="padding: 14px;">
+              <div style="margin-bottom: 12px;">
+                <label style="font-weight: 800; color: #1e293b; margin-bottom: 4px; display: block;">رقم هاتف المستلم (مع مفتاح الدولة أو بدونه):</label>
+                <div class="input-group">
+                  <span class="input-group-text" style="background: #f1f5f9;"><i class="fa-solid fa-phone"></i></span>
+                  <input type="text" id="arWaPhone-${tabId}" class="form-control" placeholder="مثال: 777123456 أو 967777123456" style="font-family: monospace; font-weight: bold; font-size: 0.95rem;">
+                </div>
+              </div>
+
+              <div style="margin-bottom: 12px;">
+                <label style="font-weight: 800; color: #1e293b; margin-bottom: 4px; display: block;">نص الرسالة المرفقة مع الملف:</label>
+                <textarea id="arWaCaption-${tabId}" class="form-control" rows="2" style="font-size: 0.85rem;" placeholder="مرفق لكم تقرير أرصدة الحسابات المعتمد بصيغة PDF..."></textarea>
+              </div>
+
+              <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; padding: 8px 10px; font-size: 0.8rem; color: #166534;">
+                <i class="fa-solid fa-circle-info" style="margin-left: 4px;"></i>
+                سيتم تحويل تقرير الحسابات بالكامل مع الترويسة المعتمدة إلى ملف PDF بحجم A4 وإرساله مباشرة عبر خادم الواتساب المدمج في النظام.
+              </div>
+            </div>
+            <div class="modal-footer" style="padding: 6px 12px; background: #f8fafc;">
+              <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">إلغاء</button>
+              <button type="button" onclick="executeSendAccountReportsWhatsApp('${tabId}')" class="btn btn-sm" style="background: #25D366; color: #ffffff; font-weight: 800; display: flex; align-items: center; gap: 6px;">
+                <i class="fa-solid fa-paper-plane"></i>
+                <span>إرسال PDF الآن</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  } else if (isFinalAccounts) {
+    bodyHtml = `
+      <!-- Final Accounts Toolbar -->
+      <div class="accounts-toolbar" style="display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; height: auto; padding: 8px 15px;">
+        <button class="accounts-toolbar-btn" onclick="fetchFinalAccounts('${tabId}')">
+          <i class="fa-solid fa-magnifying-glass" style="color: #3182ce;"></i>استعلام
+        </button>
+        <button class="accounts-toolbar-btn" onclick="clearFinalAccounts('${tabId}')">
+          <i class="fa-solid fa-file-circle-plus" style="color: #3182ce;"></i>جديد
+        </button>
+        <button class="accounts-toolbar-btn" onclick="showCommodityInventoryModal('${tabId}')">
+          <i class="fa-solid fa-cubes" style="color: #805ad5;"></i>المخزون السلعي
+        </button>
+        <button class="accounts-toolbar-btn" onclick="printFinalAccounts('${tabId}')">
+          <i class="fa-solid fa-print" style="color: #4a5568;"></i>طباعة
+        </button>
+        <button class="accounts-toolbar-btn" onclick="sendFinalAccountsWhatsApp('${tabId}')">
+          <i class="fa-brands fa-whatsapp" style="color: #25d366;"></i>واتس اب
+        </button>
+        <button class="accounts-toolbar-btn" onclick="closeTab('${tabId}')" style="margin-right: auto;">
+          <i class="fa-solid fa-right-from-bracket" style="color: #e53e3e;"></i>خروج
+        </button>
+      </div>
+
+      <!-- Final Accounts Filter Panel -->
+      <div class="mock-form" style="background: #fff; padding: 15px; border-radius: 8px; border: 1px solid var(--border-color); direction: rtl; text-align: right; margin-top: 15px; display: grid; grid-template-columns: repeat(12, 1fr); gap: 15px; box-sizing: border-box; width: 100%;">
+        
+        <div class="form-group" style="grid-column: span 3; display: flex; align-items: center; gap: 15px; justify-content: flex-start; padding-top: 25px;">
+          <label style="display: flex; align-items: center; gap: 6px; font-weight: bold; font-size: 0.85rem; cursor: pointer;">
+            <input type="radio" name="faDetailType-${tabId}" id="faDetailDetailed-${tabId}" value="detailed" checked style="width:16px; height:16px;">
+            <span>تفاصيل عامه</span>
+          </label>
+          <label style="display: flex; align-items: center; gap: 6px; font-weight: bold; font-size: 0.85rem; cursor: pointer;">
+            <input type="radio" name="faDetailType-${tabId}" id="faDetailTotals-${tabId}" value="totals" style="width:16px; height:16px;">
+            <span>اجماليات</span>
+          </label>
+        </div>
+
+        <div class="form-group" style="grid-column: span 3;">
+          <label style="font-weight: bold; font-size: 0.85rem; margin-bottom: 4px; display: block;">العام المالي</label>
+          <select id="faYear-${tabId}" style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem; font-family: monospace;"></select>
+        </div>
+
+        <div class="form-group" style="grid-column: span 3;">
+          <label style="font-weight: bold; font-size: 0.85rem; margin-bottom: 4px; display: block;">حتى تاريخ</label>
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <input type="checkbox" id="faEndDateCheck-${tabId}" checked style="width: 16px; height: 16px; cursor: pointer;">
+            <input type="date" id="faEndDate-${tabId}" style="flex: 1; padding: 5px 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem; font-family: monospace;">
+          </div>
+        </div>
+
+        <div class="form-group" style="grid-column: span 3;">
+          <label style="font-weight: bold; font-size: 0.85rem; margin-bottom: 4px; display: block;">الحساب الختامي</label>
+          <select id="faAccTypeSelect-${tabId}" style="width: 100%; padding: 6px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem; font-family: var(--font-arabic);">
+            <option value="">-- الكل --</option>
+            <option value="1">1 ميزانية عمومية</option>
+            <option value="2">2 أرباح وخسائر</option>
+            <option value="3">3 متاجرة</option>
+          </select>
+        </div>
+
+      </div>
+
+      <!-- Ending Inventory Banner -->
+      <div id="faInventoryBanner-${tabId}" style="display: none; background-color: #f0fff4; border: 1px solid #c6f6d5; border-radius: 6px; padding: 10px 15px; margin-top: 15px; font-weight: bold; font-size: 0.9rem; direction: rtl; text-align: right; color: #2f855a; border-right: 4px solid #38a169;">
+        قيمة بضاعة المخزون السلعي (آخر المدة): <span id="faInventoryBannerVal-${tabId}">0.00</span> $
+      </div>
+
+      <!-- Final Accounts Grid Wrapper -->
+      <div class="mock-table-wrapper" style="margin-top: 15px; border-radius: 8px; border: 1px solid var(--border-color); overflow: auto; max-height: 460px; box-sizing: border-box; width: 100%;">
+        <table class="mock-table" style="width: 100%; border-collapse: collapse; font-size: 0.8rem; direction: rtl; text-align: right; min-width: 1200px;">
+          <thead>
+            <tr style="background-color: #f8fafc; border-bottom: 2px solid #cbd5e1; position: sticky; top: 0; z-index: 10;">
+              <th style="padding: 10px 8px; text-align: center; width: 120px;">رقم الحساب</th>
+              <th style="padding: 10px 8px; text-align: right; width: 300px;">اسم الحساب</th>
+              <th style="padding: 10px 8px; text-align: center; width: 100px;">العمله</th>
+              <th style="padding: 10px 8px; text-align: center; width: 100px;">القيمه</th>
+              <th style="padding: 10px 8px; text-align: left; width: 130px;">اجمالي مدين</th>
+              <th style="padding: 10px 8px; text-align: left; width: 130px;">اجمالي دائن</th>
+              <th style="padding: 10px 8px; text-align: left; width: 140px; color: var(--primary);">مدين محلي</th>
+              <th style="padding: 10px 8px; text-align: left; width: 140px; color: var(--danger);">دائن محلي</th>
+            </tr>
+          </thead>
+          <tbody id="faTableBody-${tabId}">
+            <tr>
+              <td colspan="8" style="text-align: center; padding: 30px; color: var(--text-muted);">يرجى تحديد الخيارات والضغط على "استعلام" لعرض البيانات</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Totals Panel -->
+      <div style="background-color: #fafbfc; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 8px 15px; margin-top: 15px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; align-items: flex-end; font-size: 0.85rem;">
+        <div class="form-group" style="margin-bottom: 0;">
+          <label style="font-weight: bold; margin-bottom: 3px; display: block; color: var(--success);">إجمالي مدين محلي</label>
+          <input type="text" id="faDebitSum-${tabId}" readonly value="0.00" style="width:100%; border:1px solid #cbd5e1; border-radius:4px; padding:4px 8px; font-weight:bold; font-family:monospace; background-color:#edf2f7; text-align:left; color: var(--success);">
+        </div>
+        <div class="form-group" style="margin-bottom: 0;">
+          <label style="font-weight: bold; margin-bottom: 3px; display: block; color: var(--danger);">إجمالي دائن محلي</label>
+          <input type="text" id="faCreditSum-${tabId}" readonly value="0.00" style="width:100%; border:1px solid #cbd5e1; border-radius:4px; padding:4px 8px; font-weight:bold; font-family:monospace; background-color:#edf2f7; text-align:left; color: var(--danger);">
+        </div>
+        <div class="form-group" style="margin-bottom: 0;">
+          <label style="font-weight: bold; margin-bottom: 3px; display: block; color: #2b6cb0;">الرصيد</label>
+          <input type="text" id="faBalanceSum-${tabId}" readonly value="0.00" style="width:100%; border:1px solid #cbd5e1; border-radius:4px; padding:4px 8px; font-weight:bold; font-family:monospace; background-color:#edf2f7; text-align:left; color: #2b6cb0;">
+        </div>
+      </div>
+    `;
+  } else if (isItemCard) {
+    bodyHtml = `
+      <!-- Item Card Toolbar -->
+      <div class="accounts-toolbar" style="display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; height: auto; padding: 8px 15px; direction: rtl;">
+        <button class="accounts-toolbar-btn" onclick="loadItemCardMovement('${tabId}')">
+          <i class="fa-solid fa-magnifying-glass" style="color: #3182ce;"></i>استعلام
+        </button>
+        <button class="accounts-toolbar-btn" onclick="printItemCardMovement('${tabId}')">
+          <i class="fa-solid fa-print" style="color: #4a5568;"></i>طباعة
+        </button>
+        <button class="accounts-toolbar-btn" onclick="whatsappItemCardMovement('${tabId}')">
+          <i class="fa-brands fa-whatsapp" style="color: #38a169;"></i>واتس اب
+        </button>
+        <button class="accounts-toolbar-btn" onclick="openItemCardFromTab('${tabId}')">
+          <i class="fa-solid fa-box" style="color: #b8791f;"></i>الصنف
+        </button>
+        <button class="accounts-toolbar-btn" onclick="recalculateItemCost('${tabId}')">
+          <i class="fa-solid fa-wrench" style="color: #e53e3e;"></i>صيانة الكلفة
+        </button>
+        <button class="accounts-toolbar-btn" onclick="exportCurrentTabTable('${tabId}', 'تقرير_البيانات')">
+          <i class="fa-solid fa-file-excel" style="color: #2f855a;"></i>تصدير
+        </button>
+        <button class="accounts-toolbar-btn" onclick="closeTab('${tabId}')" style="margin-right: auto;">
+          <i class="fa-solid fa-right-from-bracket" style="color: #e53e3e;"></i>خروج
+        </button>
+      </div>
+
+      <!-- Filter Panel -->
+      <div class="mock-form" style="background: #fff; padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border-color); direction: rtl; text-align: right; margin-top: 6px; display: flex; flex-direction: column; gap: 8px; box-sizing: border-box; width: 100%;">
+        
+        <!-- Control Header Grid -->
+        <div style="display: grid; grid-template-columns: repeat(12, 1fr); gap: 8px 12px; align-items: center; background: #f8fafc; padding: 8px 12px; border-radius: 6px; border: 1px solid #cbd5e1;">
+          
+          <!-- 1. الفرع (Branch Selector) - FIRST CONTROL & DEFAULT FOCUSED -->
+          <div style="grid-column: span 3; display: flex; align-items: center; gap: 8px;">
+            <span style="font-weight: bold; font-size: 0.85rem; min-width: 45px; color: #1e3a8a;">الفرع:</span>
+            <select id="itemCardBranch-${tabId}" onchange="loadItemCardMovement('${tabId}')" autofocus style="flex: 1; padding: 5px; border: 1px solid #3b82f6; border-radius: 4px; font-size: 0.85rem; font-family: var(--font-arabic); font-weight: bold; background: #eff6ff; color: #1e3a8a;">
+              <option value="all">جميع الفروع</option>
+            </select>
+          </div>
+
+          <!-- 2. من تاريخ (Start Date) -->
+          <div style="grid-column: span 3; display: flex; align-items: center; gap: 8px;">
+            <span style="font-weight: bold; font-size: 0.85rem; min-width: 55px; color: #334155;">من تاريخ:</span>
+            <input type="date" id="itemCardStartDate-${tabId}" onchange="loadItemCardMovement('${tabId}')" style="flex: 1; padding: 4px 6px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem; font-family: monospace;">
+          </div>
+
+          <!-- 3. إلى تاريخ (End Date) -->
+          <div style="grid-column: span 3; display: flex; align-items: center; gap: 8px;">
+            <span style="font-weight: bold; font-size: 0.85rem; min-width: 55px; color: #334155;">إلى تاريخ:</span>
+            <input type="date" id="itemCardEndDate-${tabId}" onchange="loadItemCardMovement('${tabId}')" style="flex: 1; padding: 4px 6px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem; font-family: monospace;">
+          </div>
+
+          <!-- 4. نوع الحركة (Transaction Type Filter) -->
+          <div style="grid-column: span 3; display: flex; align-items: center; gap: 8px;">
+            <span style="font-weight: bold; font-size: 0.85rem; min-width: 65px; color: #334155;">نوع الحركة:</span>
+            <select id="itemCardTransType-${tabId}" onchange="loadItemCardMovement('${tabId}')" style="flex: 1; padding: 5px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem; font-family: var(--font-arabic); font-weight: bold;">
+              <option value="all">كل الحركات</option>
+              <option value="1">المشتريات</option>
+              <option value="2">المبيعات</option>
+              <option value="8">بضاعة أول المدة</option>
+              <option value="3">مردود مشتريات</option>
+              <option value="4">مردود مبيعات</option>
+              <option value="10">التحويل المخزني</option>
+            </select>
+          </div>
+
+        </div>
+
+        <!-- Row 2: Smart Item Combobox & Serial Number Search -->
+        <div style="display: grid; grid-template-columns: repeat(12, 1fr); gap: 8px 12px; align-items: center;">
+          
+          <!-- Smart Item Search Combobox (الاسم / الباركود / رقم الصنف) -->
+          <div style="grid-column: span 7; position: relative;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-weight: bold; font-size: 0.85rem; min-width: 45px; color: #0f172a;">الصنف:</span>
+              <div style="position: relative; flex: 1;">
+                <input type="text" id="itemCardItemSearch-${tabId}" 
+                       placeholder="ابحث باسم الصنف، الباركود، أو رقم الصنف..." 
+                       oninput="icSearchItemKeyup('${tabId}')"
+                       onkeydown="icSearchItemKeydown(event, '${tabId}')"
+                       autocomplete="off"
+                       style="width: 100%; padding: 5px 30px 5px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem; font-family: var(--font-arabic); font-weight: bold;">
+                <input type="hidden" id="itemCardSelectedItemId-${tabId}" value="">
+                <i class="fa-solid fa-magnifying-glass" style="position: absolute; right: 10px; top: 8px; color: #94a3b8; font-size: 0.85rem;"></i>
+              </div>
+              <button class="btn btn-secondary btn-sm" onclick="clearItemCardSelection('${tabId}')" style="padding: 3px 8px;" title="مسح الاختيار">
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+
+            <!-- Autocomplete Suggestions List -->
+            <div id="itemCardSearchResults-${tabId}" 
+                 style="display: none; position: absolute; top: 100%; right: 53px; left: 40px; max-height: 250px; overflow-y: auto; background: #fff; border: 1px solid #cbd5e1; border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 1000; margin-top: 2px;">
+            </div>
+          </div>
+
+          <!-- Serial Number Search (SN) -->
+          <div style="grid-column: span 5; display: flex; align-items: center; gap: 8px;">
+            <span style="font-weight: bold; font-size: 0.85rem; min-width: 60px; color: #0f172a;">السريال (SN):</span>
+            <div style="position: relative; flex: 1;">
+              <input type="text" id="itemCardSN-${tabId}" 
+                     placeholder="ابحث بالرقم التسلسلي (SN)..." 
+                     oninput="loadItemCardMovement('${tabId}')"
+                     style="width: 100%; padding: 5px 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem; font-family: monospace;">
+            </div>
+            <button class="btn btn-primary btn-sm" onclick="loadItemCardMovement('${tabId}')" style="padding: 3px 10px; font-weight: bold;">
+              <i class="fa-solid fa-filter"></i> عرض
+            </button>
+          </div>
+
+        </div>
+
+        <!-- Row 3: Optional Column Toggles Bar & Report Mode -->
+        <div style="display: flex; justify-content: space-between; align-items: center; background: #eff6ff; border: 1px solid #bfdbfe; padding: 5px 12px; border-radius: 6px; font-size: 0.8rem;">
+          
+          <!-- Optional Column Checkboxes -->
+          <div style="display: flex; gap: 15px; align-items: center;">
+            <span style="font-weight: bold; color: #1e3a8a;"><i class="fa-solid fa-sliders"></i> أعمدة إضافية:</span>
+            <label style="cursor: pointer; display: flex; align-items: center; gap: 4px; font-weight: bold; color: #1e293b;">
+              <input type="checkbox" id="icColExp-${tabId}" onchange="toggleItemCardColumn('${tabId}', 'exp')" style="cursor: pointer;">
+              <span>تاريخ الانتهاء</span>
+            </label>
+            <label style="cursor: pointer; display: flex; align-items: center; gap: 4px; font-weight: bold; color: #1e293b;">
+              <input type="checkbox" id="icColFreeQty-${tabId}" onchange="toggleItemCardColumn('${tabId}', 'free')" style="cursor: pointer;">
+              <span>الكمية المجانية</span>
+            </label>
+            <label style="cursor: pointer; display: flex; align-items: center; gap: 4px; font-weight: bold; color: #1e293b;">
+              <input type="checkbox" id="icColDiscount-${tabId}" onchange="toggleItemCardColumn('${tabId}', 'disc')" style="cursor: pointer;">
+              <span>الخصم</span>
+            </label>
+            <label style="cursor: pointer; display: flex; align-items: center; gap: 4px; font-weight: bold; color: #1e293b;">
+              <input type="checkbox" id="icColSN-${tabId}" checked onchange="toggleItemCardColumn('${tabId}', 'sn')" style="cursor: pointer;">
+              <span>السريال (SN)</span>
+            </label>
+          </div>
+
+          <!-- Report Display Mode Radios -->
+          <div style="display: flex; gap: 14px; align-items: center;">
+            <label style="display: flex; align-items: center; gap: 4px; cursor: pointer; font-weight: bold; color: #334155;">
+              <input type="radio" name="itemCardReportType-${tabId}" id="icTypeGeneral-${tabId}" value="general" checked onchange="loadItemCardMovement('${tabId}')">
+              <span>تفاصيل عامة</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 4px; cursor: pointer; font-weight: bold; color: #334155;">
+              <input type="radio" name="itemCardReportType-${tabId}" id="icTypeTotals-${tabId}" value="totals" onchange="loadItemCardMovement('${tabId}')">
+              <span>إجماليات</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 4px; cursor: pointer; font-weight: bold; color: #334155;">
+              <input type="radio" name="itemCardReportType-${tabId}" id="icTypeBalance-${tabId}" value="balance" onchange="loadItemCardMovement('${tabId}')">
+              <span>الرصيد</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 4px; cursor: pointer; font-weight: bold; color: #334155;">
+              <input type="radio" name="itemCardReportType-${tabId}" id="icTypeProfits-${tabId}" value="profits" onchange="loadItemCardMovement('${tabId}')">
+              <span>أرباح الصنف</span>
+            </label>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Movement Ledger Table -->
+      <div class="mock-table-wrapper" style="margin-top: 6px; border: 1px solid #cbd5e1; border-radius: 6px; overflow: auto; height: calc(100vh - 310px); min-height: 380px;">
+        <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem; text-align: right; direction: rtl; min-width: 1200px;">
+          <thead style="background-color: #f1f5f9; border-bottom: 2px solid #cbd5e1; position: sticky; top: 0; z-index: 10; font-family: var(--font-arabic);">
+            <tr>
+              <th style="padding: 8px 6px; border: 1px solid #cbd5e1; text-align: center; width: 80px; color: #1e3a8a;">اسم العبوة</th>
+              <th style="padding: 8px 6px; border: 1px solid #cbd5e1; text-align: center; width: 70px; color: #475569;">سعة العبوة</th>
+              <th style="padding: 8px 6px; border: 1px solid #cbd5e1; text-align: center; width: 90px; color: #047857;">الكمية / الرصيد</th>
+              <th class="ic-col-exp-${tabId}" style="padding: 8px 6px; border: 1px solid #cbd5e1; text-align: center; width: 90px; display: none;">تاريخ الانتهاء</th>
+              <th class="ic-col-free-${tabId}" style="padding: 8px 6px; border: 1px solid #cbd5e1; text-align: center; width: 80px; display: none;">ك مجانية</th>
+              <th style="padding: 8px 6px; border: 1px solid #cbd5e1; text-align: center; width: 85px;">السعر</th>
+              <th style="padding: 8px 6px; border: 1px solid #cbd5e1; text-align: center; width: 85px;">الكلفة</th>
+              <th style="padding: 8px 6px; border: 1px solid #cbd5e1; text-align: center; width: 95px;">إجمالي الكلفة</th>
+              <th style="padding: 8px 6px; border: 1px solid #cbd5e1; text-align: center; width: 100px; color: #1e3a8a;">إجمالي السعر</th>
+              <th class="ic-col-disc-${tabId}" style="padding: 8px 6px; border: 1px solid #cbd5e1; text-align: center; width: 80px; display: none;">الخصم</th>
+              <th style="padding: 8px 6px; border: 1px solid #cbd5e1; text-align: center; width: 95px; color: #1e3a8a;">رقم الفاتورة</th>
+              <th style="padding: 8px 6px; border: 1px solid #cbd5e1; text-align: center; width: 120px;">نوع الحركة / الفاتورة</th>
+              <th style="padding: 8px 6px; border: 1px solid #cbd5e1; text-align: center; width: 90px;">التاريخ</th>
+              <th style="padding: 8px 6px; border: 1px solid #cbd5e1; text-align: right;">البيان والتفاصيل</th>
+            </tr>
+          </thead>
+          <tbody id="itemCardMovementBody-${tabId}">
+            <tr>
+              <td colspan="14" style="text-align: center; padding: 40px; color: #a0aec0; font-family: var(--font-arabic);">
+                جاري تحميل حركة الصنف...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    `;
+  } else if (isItemsExplorer) {
+    bodyHtml = `
+      <!-- Items Explorer Toolbar -->
+      <div class="accounts-toolbar" style="display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; height: auto; padding: 8px 15px; direction: rtl;">
+        <button class="accounts-toolbar-btn" onclick="explorerNewItem('${tabId}')">
+          <i class="fa-solid fa-plus" style="color: #38a169;"></i>جديد
+        </button>
+        <button class="accounts-toolbar-btn" onclick="explorerEditItem('${tabId}')">
+          <i class="fa-solid fa-pen-to-square" style="color: #d69e2e;"></i>تعديل
+        </button>
+        <button class="accounts-toolbar-btn" onclick="explorerQueryItems('${tabId}')">
+          <i class="fa-solid fa-magnifying-glass" style="color: #319795;"></i>استعلام
+        </button>
+        <button class="accounts-toolbar-btn" onclick="explorerPrintItems('${tabId}')">
+          <i class="fa-solid fa-print" style="color: #4a5568;"></i>طباعة
+        </button>
+        <button class="accounts-toolbar-btn" onclick="explorerShareWhatsapp('${tabId}')">
+          <i class="fa-brands fa-whatsapp" style="color: #38a169;"></i>واتس اب
+        </button>
+        <button class="accounts-toolbar-btn" onclick="explorerDeleteItem('${tabId}')">
+          <i class="fa-solid fa-trash-can" style="color: #e53e3e;"></i>حذف
+        </button>
+        <button class="accounts-toolbar-btn" onclick="explorerOpenItemCard('${tabId}')">
+          <i class="fa-solid fa-cart-shopping" style="color: #dd6b20;"></i>الصنف
+        </button>
+        <button class="accounts-toolbar-btn" onclick="explorerOpenSuppliers('${tabId}')">
+          <i class="fa-solid fa-truck-field" style="color: #805ad5;"></i>الموردون
+        </button>
+        <button class="accounts-toolbar-btn" onclick="explorerOpenGroups('${tabId}')">
+          <i class="fa-solid fa-folder-tree" style="color: #3182ce;"></i>المجموعات
+        </button>
+        <button class="accounts-toolbar-btn" onclick="explorerExportExcel('${tabId}')">
+          <i class="fa-solid fa-file-excel" style="color: #38a169;"></i>تصدير
+        </button>
+        <button class="accounts-toolbar-btn" onclick="explorerImportItems('${tabId}')">
+          <i class="fa-solid fa-file-import" style="color: #b7791f;"></i>استيراد
+        </button>
+        <button class="accounts-toolbar-btn" onclick="closeTab('${tabId}')" style="margin-right: auto;">
+          <i class="fa-solid fa-square-xmark" style="color: #e53e3e; font-size: 1.2rem;"></i>
+        </button>
+      </div>
+
+      <!-- Items Grid View -->
+      <div style="background: #fff; padding: 15px; border-radius: 8px; border: 1px solid var(--border-color); direction: rtl; text-align: right; margin-top: 15px; display: flex; flex-direction: column; gap: 15px; box-sizing: border-box; width: 100%;">
+        
+        <!-- Drag column header header -->
+        <div style="background-color: #cbd5e1; padding: 6px 12px; border-radius: 4px; font-size: 0.75rem; color: #475569; font-style: italic; text-align: left; font-family: sans-serif;">
+          Drag a column header here to group by that column
+        </div>
+
+        <!-- Table Grid Container -->
+        <div style="border: 1px solid #cbd5e1; border-radius: 6px; overflow: auto; height: calc(100vh - 290px); min-height: 500px;">
+          <table style="width: 100%; border-collapse: collapse; font-size: 0.75rem; text-align: right;">
+            <thead style="background-color: #cbd5e1; border-bottom: 2px solid #94a3b8; position: sticky; top: 0; z-index: 10; font-family: var(--font-arabic);">
+              <!-- Top Search Row -->
+              <tr style="background-color: #f8fafc;">
+                <th style="padding: 4px; border: 1px solid #cbd5e1; text-align: center;"><input type="checkbox" id="explorerSelectAll-${tabId}" onclick="explorerToggleAllRows('${tabId}', this)" style="width: 15px; height: 15px; cursor: pointer;"></th>
+                <th style="padding: 4px; border: 1px solid #cbd5e1;"><input type="text" id="filterNotes-${tabId}" onkeyup="filterExplorerTable('${tabId}')" placeholder="ABC" style="width: 90%; padding: 2px 4px; border: 1px solid #cbd5e1; border-radius: 3px;"></th>
+                <th style="padding: 4px; border: 1px solid #cbd5e1;"><input type="text" id="filterSupplier-${tabId}" onkeyup="filterExplorerTable('${tabId}')" placeholder="=" style="width: 90%; padding: 2px 4px; border: 1px solid #cbd5e1; border-radius: 3px;"></th>
+                <th style="padding: 4px; border: 1px solid #cbd5e1;"><input type="text" id="filterGroup-${tabId}" onkeyup="filterExplorerTable('${tabId}')" placeholder="=" style="width: 90%; padding: 2px 4px; border: 1px solid #cbd5e1; border-radius: 3px;"></th>
+                <th style="padding: 4px; border: 1px solid #cbd5e1;"><input type="text" id="filterDesc-${tabId}" onkeyup="filterExplorerTable('${tabId}')" placeholder="ABC" style="width: 90%; padding: 2px 4px; border: 1px solid #cbd5e1; border-radius: 3px;"></th>
+                <th style="padding: 4px; border: 1px solid #cbd5e1;"><input type="text" id="filterName-${tabId}" onkeyup="filterExplorerTable('${tabId}')" placeholder="ABC" style="width: 90%; padding: 2px 4px; border: 1px solid #cbd5e1; border-radius: 3px;"></th>
+                <th style="padding: 4px; border: 1px solid #cbd5e1;"><input type="text" id="filterCode-${tabId}" onkeyup="filterExplorerTable('${tabId}')" placeholder="ABC" style="width: 90%; padding: 2px 4px; border: 1px solid #cbd5e1; border-radius: 3px;"></th>
+                <th style="padding: 4px; border: 1px solid #cbd5e1;"><input type="text" id="filterCurrency-${tabId}" onkeyup="filterExplorerTable('${tabId}')" placeholder="=" style="width: 90%; padding: 2px 4px; border: 1px solid #cbd5e1; border-radius: 3px;"></th>
+              </tr>
+              <!-- Columns Headers -->
+              <tr>
+                <th style="padding: 8px; border: 1px solid #cbd5e1; text-align: center; width: 50px;">نشط</th>
+                <th style="padding: 8px; border: 1px solid #cbd5e1; text-align: center; width: 120px;">البيان</th>
+                <th style="padding: 8px; border: 1px solid #cbd5e1; text-align: center; width: 150px;">المورد</th>
+                <th style="padding: 8px; border: 1px solid #cbd5e1; text-align: center; width: 150px;">المجموعه</th>
+                <th style="padding: 8px; border: 1px solid #cbd5e1; text-align: center; width: 150px;">الوصف</th>
+                <th style="padding: 8px; border: 1px solid #cbd5e1; text-align: center;">اسم الصنف</th>
+                <th style="padding: 8px; border: 1px solid #cbd5e1; text-align: center; width: 120px;">الكود</th>
+                <th style="padding: 8px; border: 1px solid #cbd5e1; text-align: center; width: 120px;">العمله</th>
+              </tr>
+            </thead>
+            <tbody id="explorerTableBody-${tabId}">
+              <tr><td colspan="8" style="text-align: center; padding: 30px; color: #cbd5e1;">جاري تحميل الأصناف...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+  } else if (isOpeningEntry) {
+    bodyHtml = `
       <!-- datalist for searchable accounts -->
       <datalist id="opAccountsDatalist-${tabId}"></datalist>
 
@@ -6897,7 +8891,7 @@ function getScreenContent(tabId, tabTitle, iconClass, colorClass) {
     console.error("Error parsing toolbar:", e);
   }
 
-  if (isErrorExplorer || isAccountReports || isInventoryReports || isSalesReports || isServiceReports) {
+  if (isErrorExplorer || isAccountReports || isInventoryReports || isSalesReports || isServiceReports || isOpeningEntry) {
     return bodyHtml;
   }
 

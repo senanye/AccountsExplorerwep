@@ -3496,5 +3496,54 @@ FROM dbo.tblMenus LEFT OUTER JOIN
     </div>
   </div>
 
+
+  <!-- ======================================================== -->
+  <!-- Error Explorer WhatsApp Modal (نافذة إرسال تقرير فحص الأخطاء واتساب) -->
+  <!-- ======================================================== -->
+  <div class="modal-overlay" id="errorExplorerWhatsAppModal" style="z-index: 1060; display: none;">
+    <div class="modal-container" style="max-width: 520px; width: 92vw; border-radius: 10px; overflow: hidden; border: 2px solid #25D366;">
+      
+      <!-- Modal Header -->
+      <div style="background: linear-gradient(135deg, #25D366, #128C7E); color: white; padding: 12px 18px; display: flex; justify-content: space-between; align-items: center;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <i class="fa-brands fa-whatsapp" style="font-size: 1.5rem;"></i>
+          <h4 style="margin: 0; font-weight: 800; font-size: 1.05rem;">إرسال تقرير مستكشف الأخطاء (PDF)</h4>
+        </div>
+        <button type="button" class="close-btn" onclick="closeErrorExplorerWhatsAppModal()" style="color: white; font-size: 1.6rem; background: transparent; border: none; cursor: pointer;">&times;</button>
+      </div>
+
+      <!-- Modal Body -->
+      <div style="padding: 18px 20px; background: #ffffff; direction: rtl; text-align: right;">
+        <div style="margin-bottom: 14px;">
+          <label style="font-weight: 800; color: #1e293b; margin-bottom: 4px; display: block;">رقم هاتف المستلم (مع مفتاح الدولة أو بدونه):</label>
+          <div style="display: flex; gap: 6px;">
+            <input type="text" id="eeModalWaPhone" class="form-control" placeholder="مثال: 777123456 أو 967777123456" style="direction: ltr; text-align: left; font-family: monospace; font-weight: bold; font-size: 1rem; padding: 8px 12px; border: 1.5px solid #cbd5e1; border-radius: 6px; width: 100%;">
+          </div>
+        </div>
+
+        <div style="margin-bottom: 14px;">
+          <label style="font-weight: 800; color: #1e293b; margin-bottom: 4px; display: block;">نص الرسالة التوضيحية المرفقة:</label>
+          <textarea id="eeModalWaCaption" class="form-control" rows="3" style="width: 100%; padding: 8px 10px; border: 1.5px solid #cbd5e1; border-radius: 6px; font-size: 0.85rem; font-family: var(--font-arabic);" placeholder="مرفق لكم تقرير فحص ومستكشف الأخطاء المعتمد من نظام مستكشف الحسابات بصيغة PDF..."></textarea>
+        </div>
+
+        <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; padding: 10px 12px; font-size: 0.8rem; color: #166534; display: flex; align-items: center; gap: 8px;">
+          <i class="fa-solid fa-circle-check" style="font-size: 1.2rem; color: #16a34a;"></i>
+          <span>يتم إنشاء ملف PDF عالي الدقة بحجم A4 مع الترويسة والشعار وإرساله مباشرة عبر رقم الواتساب المتصل بالبرنامج.</span>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div style="background: #f8fafc; border-top: 1px solid #e2e8f0; padding: 12px 18px; display: flex; justify-content: space-between; align-items: center;">
+        <button type="button" class="btn btn-secondary" onclick="closeErrorExplorerWhatsAppModal()" style="font-weight: bold; padding: 6px 18px;">
+          إلغاء
+        </button>
+        <button type="button" class="btn" onclick="executeSendErrorExplorerWhatsApp()" style="background: linear-gradient(135deg, #25D366, #128C7E); color: white; font-weight: 800; padding: 8px 22px; border-radius: 6px; border: none; display: flex; align-items: center; gap: 8px; cursor: pointer; box-shadow: 0 2px 6px rgba(37,211,102,0.35);">
+          <i class="fa-solid fa-paper-plane"></i> إرسال PDF الآن
+        </button>
+      </div>
+
+    </div>
+  </div>
+
 </body>
 </html>

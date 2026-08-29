@@ -554,7 +554,8 @@ function updateConnectionUI() {
     }
     if (DOM.systemModeIndicator) {
       DOM.systemModeIndicator.className = 'system-mode connected-mode';
-      DOM.systemModeIndicator.innerHTML = '<i class="fa-solid fa-circle-check"></i><span>متصل بقاعدة البيانات</span>';
+      DOM.systemModeIndicator.title = `متصل بـ SQL Server: ${status.details?.server || ''} | القاعدة: ${status.details?.database || ''}`;
+      DOM.systemModeIndicator.innerHTML = '<span class="status-indicator-dot green" title="متصل بقاعدة البيانات" style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background-color: #10b981; box-shadow: 0 0 8px #10b981; margin: 2px 6px;"></span>';
     }
     if (DOM.dashConnectionStatus) {
       DOM.dashConnectionStatus.className = 'stat-value text-green';
@@ -584,8 +585,9 @@ function updateConnectionUI() {
       DOM.dbSettingsBtn.title = 'انقر لتهيئة الاتصال بـ SQL Server';
     }
     if (DOM.systemModeIndicator) {
-      DOM.systemModeIndicator.className = 'system-mode';
-      DOM.systemModeIndicator.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i><span>نمط العرض التجريبي</span>';
+      DOM.systemModeIndicator.className = 'system-mode disconnected-mode';
+      DOM.systemModeIndicator.title = 'انقطاع الاتصال بقاعدة البيانات';
+      DOM.systemModeIndicator.innerHTML = '<span class="status-indicator-dot red" title="غير متصل بقاعدة البيانات" style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background-color: #ef4444; box-shadow: 0 0 8px #ef4444; margin: 2px 6px;"></span>';
     }
     if (DOM.dashConnectionStatus) {
       DOM.dashConnectionStatus.className = 'stat-value text-red';
@@ -610,9 +612,12 @@ function renderSidebar(menus) {
     return;
   }
 
-  // Group menus by MainMenu Name
+  // Group menus by MainMenu Name (Filtering out 'إعدادات النظام')
   const grouped = {};
   menus.forEach(item => {
+    if (item.fldMainMenu && (item.fldMainMenu.includes('اعدادات النظام') || item.fldMainMenu.includes('إعدادات النظام') || item.fldMainMenu.trim() === 'إعدادات النظام' || item.fldMainMenu.trim() === 'اعدادات النظام')) {
+      return; // Skip System Settings menu as requested
+    }
     const mainId = item.fldtblMainMenuID || 999;
     const mainName = item.fldMainMenu || "أخرى";
     if (!grouped[mainId]) {

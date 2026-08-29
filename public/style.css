@@ -6582,3 +6582,133 @@ input:checked + .dark-switch-slider:before {
   background: #450a0a !important;
   color: #f87171 !important;
 }
+
+
+/* ==========================================================================
+   HEADER COMPACT & SLEEK SIZING (User Requested Optimizations)
+   ========================================================================== */
+.window-controls {
+  display: none !important;
+}
+
+.header-right {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+
+.breadcrumbs {
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  font-size: 0.73rem !important;
+  font-weight: 600 !important;
+  white-space: nowrap !important;
+}
+
+.header-right .active-branch {
+  color: #0284c7 !important;
+  font-weight: 700 !important;
+  font-size: 0.73rem !important;
+  white-space: nowrap !important;
+}
+
+.header-right .breadcrumb-item.text-muted {
+  font-size: 0.70rem !important;
+  padding: 1px 6px !important;
+}
+
+.top-menu-dropdown-btn {
+  height: 26px !important;
+  padding: 0 8px !important;
+  font-size: 0.74rem !important;
+  gap: 4px !important;
+}
+
+.top-menu-dropdown-btn i {
+  font-size: 0.78rem !important;
+}
+
+.header-left {
+  display: flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+}
+
+.whatsapp-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  height: 26px !important;
+  padding: 0 8px !important;
+  border-radius: 4px !important;
+  font-family: var(--font-arabic) !important;
+  font-size: 0.72rem !important;
+  font-weight: 700 !important;
+}
+
+.whatsapp-badge i {
+  font-size: 0.80rem !important;
+}
+
+.db-status-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  height: 26px !important;
+  padding: 0 8px !important;
+  border-radius: 4px !important;
+  font-family: var(--font-arabic) !important;
+  font-size: 0.72rem !important;
+  font-weight: 700 !important;
+}
+
+.db-status-btn .pulse-indicator {
+  width: 6px !important;
+  height: 6px !important;
+}
+
+.pos-hdr-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  height: 26px !important;
+  padding: 0 8px !important;
+  border-radius: 4px !important;
+  font-family: var(--font-arabic) !important;
+  font-size: 0.72rem !important;
+  font-weight: 700 !important;
+}
+
+.pos-hdr-btn i {
+  font-size: 0.76rem !important;
+}
+
+.zoom-controls-wrapper {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 2px !important;
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 4px !important;
+  padding: 1px 4px !important;
+  height: 26px !important;
+}
+
+.zoom-controls-wrapper .zoom-btn {
+  width: 18px !important;
+  height: 18px !important;
+  font-size: 0.68rem !important;
+}
+
+.zoom-controls-wrapper .zoom-text {
+  font-size: 0.70rem !important;
+  min-width: 32px !important;
+}
+
+.info-btn {
+  width: 26px !important;
+  height: 26px !important;
+  border-radius: 4px !important;
+  font-size: 0.74rem !important;
+}

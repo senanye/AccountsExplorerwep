@@ -13685,12 +13685,11 @@ window.removeReportHeaderImage = async function() {
 };
 
 window.printOpeningEntry = function(tabId) {
+  tabId = tabId || 'menu-1';
   if (!hasPermission(1, 'fldPrint')) {
     showToast("عذراً، ليس لديك صلاحية طباعة رصيد افتتاحي.", "error");
     return;
   }
-  const printContainer = document.getElementById('opening-entry-print-container');
-  if (!printContainer) return;
 
   const tbody = document.getElementById(`opDetailsBody-${tabId}`);
   const rows = tbody ? tbody.querySelectorAll('tr') : [];
@@ -13700,21 +13699,9 @@ window.printOpeningEntry = function(tabId) {
     return;
   }
 
-  // Check if they are balanced before printing
-  let sumLocalDebit = 0;
-  let sumLocalCredit = 0;
-  rows.forEach(row => {
-    const ldInput = row.querySelector('.op-local-debit-input');
-    const lcInput = row.querySelector('.op-local-credit-input');
-    if (ldInput) sumLocalDebit += parseFloat(ldInput.value) || 0;
-    if (lcInput) sumLocalCredit += parseFloat(lcInput.value) || 0;
-  });
-
-  if (Math.abs(sumLocalDebit - sumLocalCredit) >= 0.01) {
-    showToast("لا يمكن الطباعة! إجمالي المدين المحلي لا يساوي إجمالي الدائن المحلي.", "error");
-    return;
-  }
-
+  const branchSelect = document.getElementById(`opBranch-${tabId}`);
+  const branchName = branchSelect && branchSelect.selectedIndex >= 0 ? branchSelect.options[branchSelect.selectedIndex].text : "الفرع الرئيسي";
+  
   const dateInput = document.getElementById(`opDate-${tabId}`);
   let dateVal = dateInput ? dateInput.value : '';
   if (!dateVal) {
@@ -13722,157 +13709,175 @@ window.printOpeningEntry = function(tabId) {
     dateVal = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
   }
 
-  const headerImage = localStorage.getItem('reportHeaderImage');
-  let headerHtml = '';
-  if (headerImage) {
-    headerHtml = `<img src="${headerImage}" class="print-header-image" alt="Report Header">`;
-  } else {
-    headerHtml = `<div class="print-header-placeholder"></div>`;
-  }
-  
-  const details = [];
-  rows.forEach(row => {
+  const descInput = document.getElementById(`opDescription-${tabId}`);
+  const descVal = descInput ? descInput.value : 'الرصيد الافتتاحي للحسابات';
+
+  const logo = (window.logoSettings && window.logoSettings.dataUrl) || localStorage.getItem('reportHeaderImage') || '';
+
+  const fmt = function(v, d = 2) {
+    const n = parseFloat(v);
+    if (isNaN(n)) return (0).toFixed(d);
+    return n.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+  };
+
+  let rowsHtml = '';
+  let sumDebit = 0;
+  let sumCredit = 0;
+  let sumLocalDebit = 0;
+  let sumLocalCredit = 0;
+  let count = 0;
+
+  rows.forEach((row, idx) => {
     const accSelect = row.querySelector('.op-acc-select');
-    if (!accSelect || !accSelect.value) return;
-
+    const accNoInput = row.querySelector('.op-acc-no-input');
     const curSelect = row.querySelector('.op-cur-select');
-    const curOpt = curSelect && curSelect.selectedIndex >= 0 ? curSelect.options[curSelect.selectedIndex] : null;
-    
-    const branchRowSelect = row.querySelector('.op-row-branch-select');
-    const branchRowName = branchRowSelect && branchRowSelect.selectedIndex >= 0 ? branchRowSelect.options[branchRowSelect.selectedIndex].textContent : "الفرع الرئيسي";
+    const rateInput = row.querySelector('.op-rate-input');
+    const debitInput = row.querySelector('.op-debit-input');
+    const creditInput = row.querySelector('.op-credit-input');
+    const lDebitInput = row.querySelector('.op-local-debit-input');
+    const lCreditInput = row.querySelector('.op-local-credit-input');
+    const rowBranchSelect = row.querySelector('.op-row-branch-select');
 
-    details.push({
-      branchName: branchRowName,
-      accountName: accSelect.options[accSelect.selectedIndex].textContent.split(' - ')[1] || accSelect.options[accSelect.selectedIndex].textContent,
-      currencyName: curOpt ? curOpt.textContent : "ريال يمني",
-      debit: parseFloat(row.querySelector('.op-debit-input').value) || 0.0,
-      credit: parseFloat(row.querySelector('.op-credit-input').value) || 0.0,
-      localDebit: parseFloat(row.querySelector('.op-local-debit-input').value) || 0.0,
-      localCredit: parseFloat(row.querySelector('.op-local-credit-input').value) || 0.0
-    });
-  });
+    if (!accSelect) return;
 
-  const grouped = {};
-  details.forEach(item => {
-    if (!grouped[item.branchName]) {
-      grouped[item.branchName] = {};
+    let accName = '';
+    if (accSelect.selectedIndex >= 0) {
+      const fullText = accSelect.options[accSelect.selectedIndex].textContent;
+      accName = fullText.includes(' - ') ? fullText.split(' - ')[1] : fullText;
     }
-    if (!grouped[item.branchName][item.currencyName]) {
-      grouped[item.branchName][item.currencyName] = [];
-    }
-    grouped[item.branchName][item.currencyName].push(item);
-  });
+    const accNo = accNoInput ? accNoInput.value : '';
+    const curName = curSelect && curSelect.selectedIndex >= 0 ? curSelect.options[curSelect.selectedIndex].textContent : 'ريال سعودي';
+    const rate = parseFloat(rateInput ? rateInput.value : 1) || 1;
+    const debit = parseFloat(debitInput ? debitInput.value : 0) || 0;
+    const credit = parseFloat(creditInput ? creditInput.value : 0) || 0;
+    const lDebit = parseFloat(lDebitInput ? lDebitInput.value : (debit * rate)) || 0;
+    const lCredit = parseFloat(lCreditInput ? lCreditInput.value : (credit * rate)) || 0;
+    const rowBranch = rowBranchSelect && rowBranchSelect.selectedIndex >= 0 ? rowBranchSelect.options[rowBranchSelect.selectedIndex].textContent : branchName;
 
-  let tableRowsHtml = '';
-  let totalLocalDebit = 0;
-  let totalLocalCredit = 0;
+    if (!accName && !accNo && debit === 0 && credit === 0) return;
 
-  for (const bName in grouped) {
-    let branchLocalDebit = 0;
-    let branchLocalCredit = 0;
+    count++;
+    sumDebit += debit;
+    sumCredit += credit;
+    sumLocalDebit += lDebit;
+    sumLocalCredit += lCredit;
 
-    tableRowsHtml += `
-      <tr class="branch-group-row">
-        <td colspan="6" style="background-color: #1e293b; color: #ffffff; padding: 7px 12px; font-weight: bold; font-size: 1rem; text-align: right; border: 1px solid #000;">
-          <i class="fa-solid fa-building" style="margin-left: 6px; color: #38bdf8;"></i> الفرع: ${bName}
-        </td>
+    const bg = count % 2 === 0 ? '#f8fafc' : '#ffffff';
+
+    rowsHtml += `
+      <tr style="background: ${bg};">
+        <td style="border: 1px solid #cbd5e1; padding: 5px; text-align: center;">${count}</td>
+        <td style="border: 1px solid #cbd5e1; padding: 5px; text-align: center; font-family: monospace; font-weight: bold; color: #0284c7;">${accNo}</td>
+        <td style="border: 1px solid #cbd5e1; padding: 5px; text-align: right; font-weight: bold;">${accName}</td>
+        <td style="border: 1px solid #cbd5e1; padding: 5px; text-align: center;">${curName}</td>
+        <td style="border: 1px solid #cbd5e1; padding: 5px; text-align: center; font-family: monospace;">${rate.toFixed(4)}</td>
+        <td style="border: 1px solid #cbd5e1; padding: 5px; text-align: right; font-family: monospace;">${fmt(debit, 2)}</td>
+        <td style="border: 1px solid #cbd5e1; padding: 5px; text-align: right; font-family: monospace;">${fmt(credit, 2)}</td>
+        <td style="border: 1px solid #cbd5e1; padding: 5px; text-align: right; font-family: monospace; font-weight: bold; color: #0284c7;">${fmt(lDebit, 2)}</td>
+        <td style="border: 1px solid #cbd5e1; padding: 5px; text-align: right; font-family: monospace; font-weight: bold; color: #16a34a;">${fmt(lCredit, 2)}</td>
+        <td style="border: 1px solid #cbd5e1; padding: 5px; text-align: center;">${rowBranch}</td>
       </tr>
     `;
-
-    for (const cName in grouped[bName]) {
-      tableRowsHtml += `
-        <tr class="currency-group-row">
-          <td colspan="6" style="background-color: #e2e8f0; color: #1e293b; padding: 5px 12px; font-weight: bold; font-size: 0.88rem; text-align: right; border: 1px solid #000;">
-            عملة الحساب: ${cName}
-          </td>
-        </tr>
-      `;
-
-      grouped[bName][cName].forEach(item => {
-        branchLocalDebit += item.localDebit;
-        branchLocalCredit += item.localCredit;
-        totalLocalDebit += item.localDebit;
-        totalLocalCredit += item.localCredit;
-
-        tableRowsHtml += `
-          <tr>
-            <td style="text-align: right; padding-right: 25px; font-weight: bold; border: 1px solid #000;">${item.accountName}</td>
-            <td style="text-align: left; border: 1px solid #000;">${item.debit > 0 ? item.debit.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '0.00'}</td>
-            <td style="text-align: left; border: 1px solid #000;">${item.credit > 0 ? item.credit.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '0.00'}</td>
-            <td style="text-align: center; border: 1px solid #000;">${item.currencyName}</td>
-            <td style="text-align: left; font-weight: bold; border: 1px solid #000;">${item.localDebit > 0 ? item.localDebit.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '0.00'}</td>
-            <td style="text-align: left; font-weight: bold; border: 1px solid #000;">${item.localCredit > 0 ? item.localCredit.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : '0.00'}</td>
-          </tr>
-        `;
-      });
-    }
-
-    // Branch Subtotal Row
-    tableRowsHtml += `
-      <tr style="background-color: #f1f5f9; font-weight: bold; border-top: 1.5px solid #000;">
-        <td style="text-align: right; padding: 6px 12px; border: 1px solid #000;" colspan="4">إجمالي أصل/فرع (${bName}):</td>
-        <td style="text-align: left; font-weight: bold; border: 1px solid #000; color: #1e3a8a;">${branchLocalDebit.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-        <td style="text-align: left; font-weight: bold; border: 1px solid #000; color: #14532d;">${branchLocalCredit.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
-      </tr>
-    `;
-  }
+  });
 
   const printHtml = `
-    ${headerHtml}
-    
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; margin-top: 15px; direction: rtl; font-family: 'Cairo', 'Tajawal', sans-serif;">
-      <div style="font-size: 1.1rem; font-weight: 700; width: 33%; text-align: right;">تاريخه &nbsp;&nbsp;&nbsp; ${dateVal}</div>
-      <div style="font-size: 1.4rem; font-weight: 800; text-align: center; width: 33%; border-bottom: 2px solid #000; padding-bottom: 2px; display: inline-block;">رصيد افتتاحي</div>
-      <div style="width: 33%;"></div>
-    </div>
-
-    <table class="print-table">
-      <thead>
+    <!DOCTYPE html>
+    <html dir="rtl" lang="ar">
+    <head>
+      <meta charset="UTF-8">
+      <title>تقرير الرصيد الافتتاحي - ${branchName}</title>
+      <style>
+        body { font-family: 'Cairo', 'Segoe UI', Tahoma, sans-serif; padding: 15px; direction: rtl; color: #1e293b; }
+        .header-table { width: 100%; border-bottom: 2px solid #0284c7; padding-bottom: 8px; margin-bottom: 12px; }
+        table.data-table { width: 100%; border-collapse: collapse; font-size: 9.5pt; }
+        table.data-table th { background: #f1f5f9; border: 1px solid #cbd5e1; padding: 6px; font-weight: bold; font-size: 9.5pt; text-align: center; }
+        table.data-table td { border: 1px solid #cbd5e1; padding: 5px; }
+        .footer-totals { background: #e2e8f0; font-weight: bold; }
+        @media print {
+          @page { size: A4 landscape; margin: 8mm; }
+          body { padding: 0; }
+        }
+      </style>
+    </head>
+    <body>
+      <!-- Report Header -->
+      <table class="header-table">
         <tr>
-          <th style="width: 35%; text-align: right;">الحساب</th>
-          <th style="width: 12%; text-align: left;">مدين</th>
-          <th style="width: 12%; text-align: left;">دائن</th>
-          <th style="width: 13%; text-align: center;">العمله</th>
-          <th style="width: 14%; text-align: left;">مدين محلي</th>
-          <th style="width: 14%; text-align: left;">دائن محلي</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${tableRowsHtml}
-      </tbody>
-      <tfoot>
-        <tr style="background-color: #e2e8f0; font-weight: bold;">
-          <td colspan="4" style="text-align: right; padding: 6px 12px; font-weight: bold; border: 1px solid #000; font-size: 11pt;">إجمالي كافة الفروع:</td>
-          <td style="text-align: left; font-weight: bold; border: 1px solid #000; border-bottom: 3px double #000; padding: 6px 8px; font-size: 11pt; color: #1e3a8a;">
-            <span class="double-underline">${totalLocalDebit.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+          <td style="width: 30%; text-align: right; vertical-align: top;">
+            <h3 style="margin: 0; color: #0f172a; font-size: 1.1rem;">مستكشف الحسابات المتكامل</h3>
+            <div style="font-size: 0.85rem; color: #475569; margin-top: 2px;">الفرع: <strong>${branchName}</strong></div>
+            <div style="font-size: 0.82rem; color: #64748b;">البيان: ${descVal}</div>
           </td>
-          <td style="text-align: left; font-weight: bold; border: 1px solid #000; border-bottom: 3px double #000; padding: 6px 8px; font-size: 11pt; color: #14532d;">
-            <span class="double-underline">${totalLocalCredit.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+          <td style="width: 40%; text-align: center; vertical-align: middle;">
+            ${logo ? `<img src="${logo}" style="max-height: 55px; max-width: 140px; margin-bottom: 4px;" /><br>` : ''}
+            <h2 style="margin: 0; color: #0284c7; font-size: 1.25rem;">تقرير القيد والارصدة الافتتاحية</h2>
+          </td>
+          <td style="width: 30%; text-align: left; vertical-align: top; font-size: 0.82rem; color: #64748b;">
+            <div>تاريخ القيد: <strong>${dateVal}</strong></div>
+            <div>تاريخ الطباعة: ${new Date().toLocaleDateString('ar-EG')}</div>
+            <div>الوقت: ${new Date().toLocaleTimeString('ar-EG')}</div>
           </td>
         </tr>
-      </tfoot>
-    </table>
+      </table>
 
-    <div style="display: flex; justify-content: space-around; margin-top: 70px; direction: rtl; font-family: 'Cairo', 'Tajawal', sans-serif;">
-      <div style="font-weight: bold; font-size: 1.1rem; text-align: center; width: 45%;">المدير المالي</div>
-      <div style="font-weight: bold; font-size: 1.1rem; text-align: center; width: 45%;">المدير العام</div>
-    </div>
-    <div class="print-footer"></div>
+      <!-- Table Details -->
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th style="width: 35px;">م</th>
+            <th style="width: 90px;">رقم الحساب</th>
+            <th>اسم الحساب</th>
+            <th style="width: 80px;">العملة</th>
+            <th style="width: 75px;">سعر الصرف</th>
+            <th style="width: 90px;">مدين</th>
+            <th style="width: 90px;">دائن</th>
+            <th style="width: 100px;">مدين محلي</th>
+            <th style="width: 100px;">دائن محلي</th>
+            <th style="width: 100px;">الفرع</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rowsHtml}
+        </tbody>
+        <tfoot>
+          <tr class="footer-totals">
+            <td colspan="7" style="text-align: right; padding: 6px 12px; font-weight: bold; border: 1px solid #cbd5e1; font-size: 10pt;">
+              الإجمالي العام لكافة الحسابات (${count} حساب):
+            </td>
+            <td style="text-align: right; font-weight: 800; border: 1px solid #cbd5e1; font-size: 10.5pt; color: #0284c7; font-family: monospace;">
+              ${fmt(sumLocalDebit, 2)}
+            </td>
+            <td style="text-align: right; font-weight: 800; border: 1px solid #cbd5e1; font-size: 10.5pt; color: #16a34a; font-family: monospace;">
+              ${fmt(sumLocalCredit, 2)}
+            </td>
+            <td style="border: 1px solid #cbd5e1; text-align: center; font-size: 8pt; color: #64748b;">
+              ${Math.abs(sumLocalDebit - sumLocalCredit) < 0.01 ? '✔ متوازن' : '❌ فارق: ' + fmt(Math.abs(sumLocalDebit - sumLocalCredit), 2)}
+            </td>
+          </tr>
+        </tfoot>
+      </table>
+
+      <!-- Signatures Footer -->
+      <div style="display: flex; justify-content: space-around; margin-top: 40px; font-size: 0.95rem; font-weight: bold; color: #334155;">
+        <div>المحاسب: ..............................</div>
+        <div>المراجع الداخلي: ..............................</div>
+        <div>المدير المالي: ..............................</div>
+        <div>المدير العام: ..............................</div>
+      </div>
+    </body>
+    </html>
   `;
 
-  printContainer.innerHTML = printHtml;
-  
-  const imgEl = printContainer.querySelector('.print-header-image');
-  if (imgEl && imgEl.src && !imgEl.complete) {
-    imgEl.onload = function() {
-      window.print();
-    };
-    imgEl.onerror = function() {
-      console.warn("Failed to load header image, printing anyway.");
-      window.print();
-    };
+  const pWin = window.open('', '_blank');
+  if (pWin) {
+    pWin.document.write(printHtml);
+    pWin.document.close();
+    setTimeout(() => {
+      pWin.focus();
+      pWin.print();
+    }, 400);
   } else {
-    window.print();
+    showToast("يرجى السماح بالنوافذ المنبثقة للطباعة في المتصفح.", "warning");
   }
 };
 

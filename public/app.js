@@ -13800,22 +13800,26 @@ window.printOpeningEntry = function(tabId) {
       </style>
     </head>
     <body>
-      <!-- Report Header -->
-      <table class="header-table">
+      <!-- Centered Header Banner (Width: 20cm, Height: 3cm) -->
+      ${logo ? `
+        <div style="width: 100%; display: flex; justify-content: center; align-items: center; margin-bottom: 8px;">
+          <img src="${logo}" style="width: 20cm; height: 3cm; max-width: 100%; object-fit: contain; display: block;" alt="ترويسة التقرير" />
+        </div>
+      ` : ''}
+
+      <!-- Report Header Info Table -->
+      <table class="header-table" style="width: 100%; border-bottom: 2px solid #0284c7; padding-bottom: 6px; margin-bottom: 10px;">
         <tr>
-          <td style="width: 30%; text-align: right; vertical-align: top;">
-            <h3 style="margin: 0; color: #0f172a; font-size: 1.1rem;">مستكشف الحسابات المتكامل</h3>
-            <div style="font-size: 0.85rem; color: #475569; margin-top: 2px;">الفرع: <strong>${branchName}</strong></div>
-            <div style="font-size: 0.82rem; color: #64748b;">البيان: ${descVal}</div>
+          <td style="width: 35%; text-align: right; vertical-align: middle;">
+            <div style="font-size: 0.90rem; color: #1e293b;">الفرع: <strong style="color: #0284c7;">${branchName}</strong></div>
+            <div style="font-size: 0.82rem; color: #475569; margin-top: 2px;">البيان: <strong>${descVal || 'الرصيد الافتتاحي للحسابات'}</strong></div>
           </td>
-          <td style="width: 40%; text-align: center; vertical-align: middle;">
-            ${logo ? `<img src="${logo}" style="max-height: 55px; max-width: 140px; margin-bottom: 4px;" /><br>` : ''}
-            <h2 style="margin: 0; color: #0284c7; font-size: 1.25rem;">تقرير القيد والارصدة الافتتاحية</h2>
+          <td style="width: 30%; text-align: center; vertical-align: middle;">
+            <h2 style="margin: 0; color: #0284c7; font-size: 1.25rem; font-weight: 900; letter-spacing: -0.2px;">تقرير القيد والارصدة الافتتاحية</h2>
           </td>
-          <td style="width: 30%; text-align: left; vertical-align: top; font-size: 0.82rem; color: #64748b;">
-            <div>تاريخ القيد: <strong>${dateVal}</strong></div>
-            <div>تاريخ الطباعة: ${new Date().toLocaleDateString('ar-EG')}</div>
-            <div>الوقت: ${new Date().toLocaleTimeString('ar-EG')}</div>
+          <td style="width: 35%; text-align: left; vertical-align: middle; font-size: 0.82rem; color: #475569;">
+            <div>تاريخ القيد: <strong style="color: #1e293b;">${dateVal}</strong></div>
+            <div>تاريخ الطباعة: <strong>${new Date().toLocaleDateString('ar-EG')} - ${new Date().toLocaleTimeString('ar-EG')}</strong></div>
           </td>
         </tr>
       </table>

@@ -8891,7 +8891,16 @@ function getScreenContent(tabId, tabTitle, iconClass, colorClass) {
     console.error("Error parsing toolbar:", e);
   }
 
-  if (isErrorExplorer || isAccountReports || isInventoryReports || isSalesReports || isServiceReports || isOpeningEntry) {
+  if (isOpeningEntry) {
+    return `
+      <div class="screen-container" style="display: flex; flex-direction: column; height: 100%; gap: 4px;">
+        ${toolbarHtml ? `<div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 4px 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.04);">${toolbarHtml}</div>` : ''}
+        ${bodyHtml}
+      </div>
+    `;
+  }
+
+  if (isErrorExplorer || isAccountReports || isInventoryReports || isSalesReports || isServiceReports) {
     return bodyHtml;
   }
 
